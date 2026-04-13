@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Azi by Bobby</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-1: #1f8f68;
+    --bg-2: #187454;
+    --bg-3: #11563f;
+
+    --rail-1: #2d6d57;
+    --rail-2: #214f40;
+
+    --felt-1: #0d5b42;
+    --felt-2: #0a4b36;
+    --felt-3: #083c2b;
+
+    --soft-shadow: 0 16px 34px rgba(0,0,0,0.28);
+    --card-shadow: 0 10px 18px rgba(0,0,0,0.22);
+
+    --card-w: min(18vw, 76px);
+    --card-h: min(26vw, 108px);
+    --card-min-w: 52px;
+    --card-min-h: 76px;
+
+    --bot-card-w: min(15vw, 62px);
+    --bot-card-h: min(22vw, 90px);
+
+    /* Взятка: зеркально — у каждого игрока слева от него за столом, ~1 см от руки, у края стола */
+    --trick-gap-from-hand: 1cm;
+    --trick-seat-half: min(168px, 48vw);
+    --trick-slot-w: 34px;
+    --table-rail-inset: clamp(8px, 2.2vw, 18px);
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    background:
+        radial-gradient(circle at top, rgba(255,255,255,0.14), transparent 32%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+}
+
+.game {
+    max-width: 980px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 10px 16px 24px;
+    position: relative;
+}
+
+h1 {
+    margin: 8px 0 14px;
+    font-size: 28px;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+.cards {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.card {
+    width: var(--card-w);
+    height: var(--card-h);
+    min-width: var(--card-min-w);
+    min-height: var(--card-min-h);
+    background: linear-gradient(180deg, #fcfcfc 0%, #f0f0f0 100%);
+    color: black;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 24px rgba(0,0,0,0.25);
+}
+
+.card:active {
+    transform: scale(0.96);
+}
+
+.card.disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent 40%);
+    pointer-events: none;
+}
+
+.card-corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: bold;
+    line-height: 1;
+    z-index: 2;
+}
+
+.card-corner.top-left {
+    top: 6px;
+    left: 6px;
+    font-size: clamp(11px, 2.4vw, 16px);
+}
+
+.card-corner.bottom-right {
+    bottom: 6px;
+    right: 6px;
+    font-size: clamp(11px, 2.4vw, 16px);
+    transform: rotate(180deg);
+}
+
+.card-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(20px, 5vw, 32px);
+    font-weight: bold;
+    z-index: 1;
+}
+
+.red { color: #b33a2d; }
+.black { color: #17302a; }
+
+.back {
+    background:
+        linear-gradient(135deg, #a70f22 25%, #7e0c1a 25%, #7e0c1a 50%, #a70f22 50%, #a70f22 75%, #7e0c1a 75%, #7e0c1a 100%);
+    background-size: 18px 18px;
+    border: 3px solid #fff;
+    box-shadow:
+        inset 0 0 0 3px #cfa45f,
+        inset 0 0 0 6px #fff,
+        0 10px 18px rgba(0,0,0,0.28);
+    position: relative;
+}
+
+.back::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 2px solid rgba(255,255,255,0.88);
+    border-radius: 8px;
+}
+
+.back::after {
+    content: "◆";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(255,255,255,0.9);
+}
+
+/* TABLE */
+.table-zone {
+    position: relative;
+    margin-top: 12px;
+    min-height: 640px;
+    padding: 26px 28px;
+    border-radius: 150px;
+    background: linear-gradient(180deg, var(--rail-1), var(--rail-2));
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.08),
+        inset 0 -22px 36px rgba(0,0,0,0.18),
+        0 26px 50px rgba(0,0,0,0.18);
+    overflow: hidden;
+}
+
+.table-zone::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border-radius: 128px;
+    background:
+        radial-gradient(circle at center, rgba(255,255,255,0.06), transparent 45%),
+        linear-gradient(180deg, var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-3) 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.07),
+        inset 0 -18px 30px rgba(0,0,0,0.12);
+    pointer-events: none;
+}
+
+.table-zone.impact-shake {
+    animation: tableImpactShake 180ms ease;
+}
+
+@keyframes tableImpactShake {
+    0%   { transform: translateX(0) scale(1); }
+    20%  { transform: translateX(-1px) scale(0.998); }
+    40%  { transform: translateX(1px) scale(1); }
+    60%  { transform: translateX(-1px) scale(0.999); }
+    80%  { transform: translateX(1px) scale(1); }
+    100% { transform: translateX(0) scale(1); }
+}
+
+.table-content {
+    position: relative;
+    z-index: 2;
+    min-height: 588px;
+}
+
+.impact-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+}
+
+.impact-ring {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 243, 170, 0.9);
+    box-shadow:
+        0 0 18px rgba(255, 235, 140, 0.55),
+        inset 0 0 8px rgba(255,255,255,0.25);
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+    animation: impactRingAnim 280ms ease-out forwards;
+}
+
+@keyframes impactRingAnim {
+    0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+    70% {
+        opacity: 0.55;
+        transform: translate(-50%, -50%) scale(4.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(5.4);
+    }
+}
+
+.middle-left,
+.middle-right {
+    position: absolute;
+    top: 222px;
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.middle-left { left: 108px; }
+.middle-right { right: 108px; }
+
+/* DECK */
+.deck-area {
+    position: relative;
+    width: 96px;
+    height: 154px;
+}
+
+.trump-under-deck {
+    position: absolute;
+    left: 0;
+    top: 54px;
+    z-index: 1;
+}
+
+.trump-card-mini {
+    width: 62px;
+    height: 92px;
+    min-width: 62px;
+    min-height: 92px;
+    border-radius: 12px;
+}
+
+.deck-stack {
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: 64px;
+    height: 94px;
+    z-index: 2;
+}
+
+.deck-layer {
+    position: absolute;
+    width: 62px;
+    height: 92px;
+    border-radius: 12px;
+}
+
+.deck-layer.layer-1 { left: 8px; top: 8px; opacity: 0.88; }
+.deck-layer.layer-2 { left: 4px; top: 4px; opacity: 0.94; }
+.deck-layer.layer-3 { left: 0; top: 0; }
+
+.deck-count {
+    position: absolute;
+    left: 10px;
+    top: 104px;
+    font-size: 13px;
+    color: #fff7d8;
+    background: rgba(0,0,0,0.24);
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    min-width: 54px;
+    z-index: 3;
+}
+
+/* POT */
+.pot-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.pot-label {
+    font-size: 14px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.82);
+}
+
+.pot-stack {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 34px;
+}
+
+.coin-stack {
+    position: relative;
+    width: 34px;
+    height: 22px;
+    flex: 0 0 auto;
+}
+
+.coin {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffe89a, #d8a62d 68%, #8f6510 100%);
+    border: 2px solid rgba(255,255,255,0.45);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.coin:nth-child(1) { left: 0; top: 4px; }
+.coin:nth-child(2) { left: 8px; top: 2px; }
+.coin:nth-child(3) { left: 16px; top: 0; }
+
+.pot-value {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.24);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff2bf;
+}
+
+/* TOP PLAYER */
+.top-player-area {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 170px;
+}
+
+/* Верхний игрок: его левая рука у правого края стола — взятка правее руки на ~1 см, у внутреннего края рельсы */
+.bot-pile-wrap {
+    position: absolute;
+    left: min(
+        calc(50% + var(--trick-seat-half) + var(--trick-gap-from-hand)),
+        calc(100% - var(--table-rail-inset) - var(--trick-slot-w))
+    );
+    right: auto;
+    top: calc(8px + var(--bot-card-h) * 0.32);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.bot-hand-wrap {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-height: 110px;
+}
+
+#botHand {
+    gap: 0;
+    align-items: flex-end;
+    min-height: 110px;
+    position: relative;
+}
+
+#botHand .card {
+    width: var(--bot-card-w);
+    height: var(--bot-card-h);
+    min-width: 48px;
+    min-height: 70px;
+    margin-left: -20px;
+    transform-origin: bottom center;
+    cursor: default;
+}
+
+#botHand .card:first-child { margin-left: 0; }
+#botHand .card:nth-child(1) { transform: rotate(2deg) translateY(1px); z-index: 1; }
+#botHand .card:nth-child(2) { transform: rotate(0deg) translateY(0); z-index: 2; }
+#botHand .card:nth-child(3) { transform: rotate(-2deg) translateY(1px); z-index: 3; }
+
+.bot-bank-wrap {
+    position: absolute;
+    top: 118px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* BOTTOM PLAYER */
+/* На всю ширину стола, чтобы центр руки = 50% совпадал с центром сукна */
+.bottom-player-area {
+    position: absolute;
+    bottom: 6px;
+    left: 0;
+    right: 0;
+    height: 176px;
+}
+
+/* Нижний игрок: взятка слева у края стола, ~1 см правее — до левого края руки */
+.player-pile-wrap {
+    position: absolute;
+    left: max(
+        var(--table-rail-inset),
+        calc(50% - var(--trick-seat-half) - var(--trick-gap-from-hand) - var(--trick-slot-w))
+    );
+    right: auto;
+    top: calc(34px + (var(--card-h) - 52px) * 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.player-bank-wrap {
+    position: absolute;
+    left: 50%;
+    top: -26px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.player-hand-wrap {
+    position: absolute;
+    left: 50%;
+    top: 34px;
+    transform: translateX(-50%);
+    width: 320px;
+}
+
+.bank-value {
+    min-width: 58px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.24);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+    color: #fff7d8;
+    font-weight: bold;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+/* PILES */
+.trick-pile {
+    width: 26px;
+    height: 36px;
+    position: relative;
+}
+
+.pile-mini-back {
+    position: absolute;
+    width: 22px;
+    height: 32px;
+    border-radius: 5px;
+    background:
+        linear-gradient(135deg, #a70f22 25%, #7e0c1a 25%, #7e0c1a 50%, #a70f22 50%, #a70f22 75%, #7e0c1a 75%, #7e0c1a 100%);
+    background-size: 8px 8px;
+    border: 2px solid rgba(255,255,255,0.85);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+}
+
+.pile-count {
+    font-size: 16px;
+    color: #fff6c7;
+    font-weight: bold;
+    line-height: 1;
+    min-height: 16px;
+}
+
+/* PLAYED CARDS — 2 игрока: плотно рядом без наложения; 3+ — наложение сильнее с ростом числа мест */
+.played-area {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    width: max-content;
+    max-width: calc(100% - 32px);
+    min-height: 180px;
+    z-index: 2;
+}
+
+.played-area .table-card {
+    flex: 0 0 auto;
+}
+
+.played-area[data-players="2"] .table-card:not(:first-child),
+.played-area:not([data-players]) .table-card:not(:first-child) {
+    margin-left: 0;
+}
+
+.played-area[data-players="2"],
+.played-area:not([data-players]) {
+    gap: clamp(2px, 1vw, 6px);
+}
+
+.played-area[data-players="3"] {
+    gap: 0;
+}
+.played-area[data-players="3"] .table-card:not(:first-child) {
+    margin-left: clamp(-26px, -7.5vw, -18px);
+}
+
+.played-area[data-players="4"] {
+    gap: 0;
+}
+.played-area[data-players="4"] .table-card:not(:first-child) {
+    margin-left: clamp(-34px, -10vw, -24px);
+}
+
+.played-area[data-players="5"] {
+    gap: 0;
+}
+.played-area[data-players="5"] .table-card:not(:first-child) {
+    margin-left: clamp(-40px, -11.5vw, -30px);
+}
+
+.played-area[data-players="6"] {
+    gap: 0;
+}
+.played-area[data-players="6"] .table-card:not(:first-child) {
+    margin-left: clamp(-48px, -13.5vw, -36px);
+}
+
+.played-area:is([data-players="3"], [data-players="4"], [data-players="5"], [data-players="6"]) .table-card:nth-child(1) { z-index: 1; }
+.played-area:is([data-players="3"], [data-players="4"], [data-players="5"], [data-players="6"]) .table-card:nth-child(2) { z-index: 2; }
+.played-area:is([data-players="3"], [data-players="4"], [data-players="5"], [data-players="6"]) .table-card:nth-child(3) { z-index: 3; }
+.played-area:is([data-players="4"], [data-players="5"], [data-players="6"]) .table-card:nth-child(4) { z-index: 4; }
+.played-area:is([data-players="5"], [data-players="6"]) .table-card:nth-child(5) { z-index: 5; }
+.played-area[data-players="6"] .table-card:nth-child(6) { z-index: 6; }
+
+.table-card {
+    width: var(--card-w);
+    height: var(--card-h);
+    min-width: var(--card-min-w);
+    min-height: var(--card-min-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.table-played-card {
+    animation: placeCard 0.18s ease;
+}
+
+.table-played-card.impact-bounce {
+    animation: impactBounce 220ms ease-out;
+}
+
+.table-played-card.winner-card {
+    animation: winnerGlow 260ms ease-out;
+    box-shadow:
+        0 0 0 2px rgba(255, 239, 150, 0.75),
+        0 0 22px rgba(255, 225, 120, 0.45),
+        0 12px 22px rgba(0,0,0,0.26);
+}
+
+.table-played-card.loser-card {
+    opacity: 0.72;
+    filter: saturate(0.82) brightness(0.95);
+}
+
+@keyframes placeCard {
+    from {
+        transform: translateY(8px) scale(0.95);
+        opacity: 0.4;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes impactBounce {
+    0%   { transform: translateY(-10px) scale(0.96); }
+    55%  { transform: translateY(3px) scale(1.02); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes winnerGlow {
+    0% {
+        transform: scale(1);
+        box-shadow:
+            0 0 0 0 rgba(255, 239, 150, 0),
+            0 12px 22px rgba(0,0,0,0.26);
+    }
+    55% {
+        transform: scale(1.03);
+        box-shadow:
+            0 0 0 2px rgba(255, 239, 150, 0.75),
+            0 0 26px rgba(255, 225, 120, 0.55),
+            0 14px 24px rgba(0,0,0,0.28);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow:
+            0 0 0 2px rgba(255, 239, 150, 0.55),
+            0 0 18px rgba(255, 225, 120, 0.3),
+            0 12px 22px rgba(0,0,0,0.26);
+    }
+}
+
+/* STATUS */
+#result {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    min-height: 28px;
+    z-index: 3;
+    width: 100%;
+    pointer-events: none;
+}
+
+.status-pill {
+    display: inline-block;
+    min-height: 30px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.26);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: white;
+    font-size: 15px;
+    line-height: 1.2;
+    max-width: 78%;
+}
+
+/* AUCTION */
+.auction-bar {
+    margin: 14px auto 0;
+    width: 360px;
+    padding: 8px 10px 10px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: var(--soft-shadow);
+    backdrop-filter: blur(6px);
+}
+
+.auction-summary {
+    font-size: 13px;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    color: rgba(255,255,255,0.88);
+}
+
+.slider-row {
+    margin-top: 4px;
+}
+
+.slider-label {
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: rgba(255,255,255,0.88);
+}
+
+#bidSlider {
+    width: 100%;
+    accent-color: #d4af37;
+}
+
+.auction-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.auction-btn {
+    padding: 10px 8px;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.16);
+}
+
+.auction-btn:active { transform: scale(0.98); }
+.auction-btn:hover { filter: brightness(1.05); }
+.auction-btn:disabled { opacity: 0.45; cursor: default; filter: none; box-shadow: none; }
+
+.btn-pass { background: linear-gradient(180deg, #d33838, #b82323); }
+.btn-call { background: linear-gradient(180deg, #2a7fd7, #1565c0); }
+.btn-raise { background: linear-gradient(180deg, #3c9640, #2e7d32); }
+
+.button {
+    margin-top: 18px;
+    padding: 12px 20px;
+    background: linear-gradient(180deg, #ffd43b, #f0be00);
+    color: #1f1b00;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: bold;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.button:active {
+    transform: scale(0.98);
+}
+
+.fly-card {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    transition:
+        left 0.38s ease,
+        top 0.38s ease,
+        transform 0.38s ease,
+        opacity 0.38s ease,
+        width 0.38s ease,
+        height 0.38s ease;
+}
+
+.fly-chip {
+    position: fixed;
+    z-index: 9999;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.88);
+    background: radial-gradient(circle at 35% 35%, #ffe89a, #d8a62d 68%, #8f6510 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition:
+        left 0.42s ease,
+        top 0.42s ease,
+        transform 0.42s ease,
+        opacity 0.42s ease;
+    pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    :root {
+        --trick-seat-half: min(144px, 44vw);
+    }
+
+    .game {
+        max-width: 520px;
+        padding: 10px 10px 24px;
+    }
+
+    .table-zone {
+        min-height: 620px;
+        border-radius: 36px;
+        padding: 16px;
+    }
+
+    .table-zone::before {
+        inset: 10px;
+        border-radius: 28px;
+    }
+
+    .table-content {
+        min-height: 590px;
+    }
+
+    .middle-left { left: 24px; top: 194px; }
+    .middle-right { right: 24px; top: 194px; }
+
+    .deck-area {
+        left: 0;
+        top: 0;
+    }
+
+    .pot-area {
+        left: auto;
+        top: 0;
+        right: 0;
+        transform: none;
+    }
+
+    .top-player-area {
+        width: 100%;
+        top: 8px;
+        height: 160px;
+    }
+
+    .bot-pile-wrap {
+        top: calc(6px + var(--bot-card-h) * 0.28);
+    }
+
+    .bot-hand-wrap {
+        top: 4px;
+    }
+
+    .bot-bank-wrap {
+        top: 112px;
+        gap: 6px;
+    }
+
+    .bottom-player-area {
+        width: 100%;
+        bottom: 6px;
+        height: 172px;
+    }
+
+    .player-pile-wrap {
+        top: calc(32px + (var(--card-h) - 48px) * 0.42);
+    }
+
+    .player-bank-wrap {
+        top: -22px;
+        gap: 6px;
+    }
+
+    .player-hand-wrap {
+        width: 280px;
+        top: 32px;
+    }
+
+    #botHand .card {
+        margin-left: -12px;
+        width: 58px;
+        height: 84px;
+        min-width: 58px;
+        min-height: 84px;
+    }
+
+    .auction-bar {
+        width: 100%;
+        max-width: none;
+    }
+
+    .auction-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    #result {
+        bottom: 14px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="game">
+    <h1>Azi by Bobby</h1>
+
+    <div class="table-zone" id="tableZone">
+        <div class="impact-layer" id="impactLayer"></div>
+
+        <div class="table-content">
+            <div class="middle-left">
+                <div class="deck-area" id="deckArea">
+                    <div class="trump-under-deck" id="trumpSlot"></div>
+
+                    <div class="deck-stack" id="deckStack">
+                        <div class="deck-layer layer-1 back"></div>
+                        <div class="deck-layer layer-2 back"></div>
+                        <div class="deck-layer layer-3 back"></div>
+                    </div>
+
+                    <div class="deck-count" id="deckCount">0</div>
+                </div>
+            </div>
+
+            <div class="middle-right">
+                <div class="pot-area" id="potArea">
+                    <div class="pot-label">Кон</div>
+                    <div class="pot-stack">
+                        <div class="coin-stack">
+                            <div class="coin"></div>
+                            <div class="coin"></div>
+                            <div class="coin"></div>
+                        </div>
+                    </div>
+                    <div class="pot-value" id="potValue">0</div>
+                </div>
+            </div>
+
+            <div class="top-player-area">
+                <div class="bot-pile-wrap">
+                    <div class="trick-pile" id="botTrickPile"></div>
+                    <div class="pile-count" id="botTrickCount">0</div>
+                </div>
+
+                <div class="bot-hand-wrap">
+                    <div class="cards" id="botHand"></div>
+                </div>
+
+                <div class="bank-wrap bot-bank-wrap" id="botBankWrap">
+                    <div class="coin-stack">
+                        <div class="coin"></div>
+                        <div class="coin"></div>
+                        <div class="coin"></div>
+                    </div>
+                    <div class="bank-value" id="botBankValue">3К</div>
+                </div>
+            </div>
+
+            <div class="played-area" id="playedArea" data-players="2">
+                <div class="table-card" id="playerCard"></div>
+                <div class="table-card" id="botCard"></div>
+            </div>
+
+            <div id="result">
+                <div class="status-pill" id="statusPill">Начинаются торги. Выбери действие.</div>
+            </div>
+
+            <div class="bottom-player-area">
+                <div class="player-pile-wrap">
+                    <div class="trick-pile" id="playerTrickPile"></div>
+                    <div class="pile-count" id="playerTrickCount">0</div>
+                </div>
+
+                <div class="player-bank-wrap" id="playerBankWrap">
+                    <div class="bank-value" id="playerBankValue">3К</div>
+                    <div class="coin-stack">
+                        <div class="coin"></div>
+                        <div class="coin"></div>
+                        <div class="coin"></div>
+                    </div>
+                </div>
+
+                <div class="player-hand-wrap">
+                    <div class="cards" id="playerHand"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auction-bar" id="auctionBar">
+        <div class="auction-summary" id="auctionSummary">
+            Ставка: 0 · Твой ход в торгах
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-label">Поднять до: <strong id="sliderValue">1</strong></div>
+            <input type="range" id="bidSlider" min="1" max="3" value="1" />
+        </div>
+
+        <div class="auction-buttons">
+            <button class="auction-btn btn-pass" id="passBtn">Сброс</button>
+            <button class="auction-btn btn-call" id="callBtn">Уровнять</button>
+            <button class="auction-btn btn-raise" id="raiseBtn">Поднять</button>
+        </div>
+    </div>
+
+    <button class="button" onclick="resetGame()">Новая партия</button>
+</div>
+
+<script>
+let initialPlayerCards = ["K♠", "10♦", "J♦"];
+let initialBotCards = ["A♥", "Q♦", "A♦"];
+let trumpCard = "7♦";
+
+let playerCards = [...initialPlayerCards];
+let botCards = [...initialBotCards];
+
+let playerScore = 0;
+let botScore = 0;
+let trickNumber = 1;
+let gameOver = false;
+let gamePhase = "auction";
+
+let auctionWinner = null;
+let currentBid = 0;
+let playerBid = null;
+let botBid = null;
+let auctionTurn = "player";
+let lastBidder = null;
+
+let currentLeader = null;
+let pendingBotLead = null;
+
+let baseStake = 1000;
+let pot = 0;
+let playerBank = 3000;
+let botBank = 3000;
+
+let playerTrickPileCards = 0;
+let botTrickPileCards = 0;
+
+let actionLock = false;
+let dealingInProgress = false;
+
+const fullDeckSize = 20;
+
+const playerCardEl = document.getElementById("playerCard");
+const botCardEl = document.getElementById("botCard");
+const statusPillEl = document.getElementById("statusPill");
+const trumpSlotEl = document.getElementById("trumpSlot");
+const deckCountEl = document.getElementById("deckCount");
+const deckStackEl = document.getElementById("deckStack");
+const playerHandEl = document.getElementById("playerHand");
+const botHandEl = document.getElementById("botHand");
+const impactLayerEl = document.getElementById("impactLayer");
+const tableZoneEl = document.getElementById("tableZone");
+
+const playerTrickPileEl = document.getElementById("playerTrickPile");
+const botTrickPileEl = document.getElementById("botTrickPile");
+const playerTrickCountEl = document.getElementById("playerTrickCount");
+const botTrickCountEl = document.getElementById("botTrickCount");
+
+const playerBankWrapEl = document.getElementById("playerBankWrap");
+const botBankWrapEl = document.getElementById("botBankWrap");
+const playerBankValueEl = document.getElementById("playerBankValue");
+const botBankValueEl = document.getElementById("botBankValue");
+const potAreaEl = document.getElementById("potArea");
+
+const auctionBarEl = document.getElementById("auctionBar");
+const auctionSummaryEl = document.getElementById("auctionSummary");
+const sliderValueEl = document.getElementById("sliderValue");
+const bidSliderEl = document.getElementById("bidSlider");
+const potValueEl = document.getElementById("potValue");
+
+const passBtn = document.getElementById("passBtn");
+const callBtn = document.getElementById("callBtn");
+const raiseBtn = document.getElementById("raiseBtn");
+
+const power = {
+    "6": 1, "7": 2, "8": 3, "9": 4,
+    "10": 5, "J": 6, "Q": 7, "K": 8, "A": 9
+};
+
+let dealPlayerVisible = 0;
+let dealBotVisible = 0;
+
+bidSliderEl.addEventListener("input", () => {
+    sliderValueEl.innerText = bidSliderEl.value;
+});
+
+passBtn.addEventListener("click", onPlayerPass);
+callBtn.addEventListener("click", onPlayerCall);
+raiseBtn.addEventListener("click", onPlayerRaise);
+
+function setMessage(text) {
+    statusPillEl.innerText = text;
+}
+
+function getRank(card) {
+    return card.slice(0, -1);
+}
+
+function getSuit(card) {
+    return card.slice(-1);
+}
+
+function isRedSuit(suit) {
+    return suit === "♦" || suit === "♥";
+}
+
+function formatCompactMoney(value) {
+    if (value < 1000) return String(value);
+    if (value % 1000 === 0) return String(value / 1000) + "К";
+    return (value / 1000).toFixed(1).replace(".0", "") + "К";
+}
+
+function renderCardFace(card) {
+    const rank = getRank(card);
+    const suit = getSuit(card);
+    const colorClass = isRedSuit(suit) ? "red" : "black";
+
+    return `
+        <div class="card-corner top-left ${colorClass}">
+            <div>${rank}</div>
+            <div>${suit}</div>
+        </div>
+        <div class="card-center ${colorClass}">${suit}</div>
+        <div class="card-corner bottom-right ${colorClass}">
+            <div>${rank}</div>
+            <div>${suit}</div>
+        </div>
+    `;
+}
+
+function triggerTableShake() {
+    tableZoneEl.classList.remove("impact-shake");
+    void tableZoneEl.offsetWidth;
+    tableZoneEl.classList.add("impact-shake");
+}
+
+function spawnImpactAtElement(targetEl) {
+    const tableRect = tableZoneEl.getBoundingClientRect();
+    const rect = targetEl.getBoundingClientRect();
+
+    const ring = document.createElement("div");
+    ring.className = "impact-ring";
+    ring.style.left = (rect.left - tableRect.left + rect.width / 2) + "px";
+    ring.style.top = (rect.top - tableRect.top + rect.height / 2) + "px";
+
+    impactLayerEl.appendChild(ring);
+    triggerTableShake();
+
+    ring.addEventListener("animationend", () => ring.remove(), { once: true });
+}
+
+function markTrickResult(winnerSide) {
+    const playerPlayed = playerCardEl.querySelector(".table-played-card");
+    const botPlayed = botCardEl.querySelector(".table-played-card");
+
+    if (!playerPlayed || !botPlayed) return;
+
+    playerPlayed.classList.remove("winner-card", "loser-card");
+    botPlayed.classList.remove("winner-card", "loser-card");
+
+    if (winnerSide === "player") {
+        playerPlayed.classList.add("winner-card");
+        botPlayed.classList.add("loser-card");
+    } else {
+        botPlayed.classList.add("winner-card");
+        playerPlayed.classList.add("loser-card");
+    }
+}
+
+function addImpactToPlayedCard(side) {
+    const wrap = side === "player" ? playerCardEl : botCardEl;
+    const card = wrap.querySelector(".table-played-card");
+    if (!card) return;
+
+    card.classList.remove("impact-bounce");
+    void card.offsetWidth;
+    card.classList.add("impact-bounce");
+
+    spawnImpactAtElement(card);
+}
+
+function renderPlayerHand(countOverride = null) {
+    playerHandEl.innerHTML = "";
+    const cardsToShow = countOverride === null ? playerCards : initialPlayerCards.slice(0, countOverride);
+
+    cardsToShow.forEach(cardValue => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.cardValue = cardValue;
+        card.innerHTML = renderCardFace(cardValue);
+
+        if (gamePhase !== "play" || actionLock || countOverride !== null) {
+            card.classList.add("disabled");
+        } else {
+            card.addEventListener("click", () => {
+                handlePlayerClick(cardValue);
+            });
+        }
+
+        playerHandEl.appendChild(card);
+    });
+}
+
+function renderBotHand(countOverride = null) {
+    botHandEl.innerHTML = "";
+    const count = countOverride === null ? botCards.length : countOverride;
+
+    for (let i = 0; i < count; i++) {
+        const card = document.createElement("div");
+        card.className = "card back";
+        botHandEl.appendChild(card);
+    }
+}
+
+function renderTableCard(targetEl, cardValue) {
+    targetEl.innerHTML = `
+        <div class="card table-played-card" style="cursor:default; margin:0 auto;">
+            ${renderCardFace(cardValue)}
+        </div>
+    `;
+}
+
+function clearTable() {
+    playerCardEl.innerHTML = "";
+    botCardEl.innerHTML = "";
+}
+
+function compareCards(leadCard, responseCard) {
+    const trumpSuit = getSuit(trumpCard);
+    const leadSuit = getSuit(leadCard);
+    const responseSuit = getSuit(responseCard);
+    const leadRank = getRank(leadCard);
+    const responseRank = getRank(responseCard);
+
+    if (responseSuit === trumpSuit && leadSuit !== trumpSuit) return "response";
+    if (leadSuit === trumpSuit && responseSuit !== trumpSuit) return "lead";
+
+    if (leadSuit === responseSuit) {
+        return power[responseRank] > power[leadRank] ? "response" : "lead";
+    }
+
+    return "lead";
+}
+
+function isValidMove(firstCard, hand, chosenCard) {
+    const firstSuit = getSuit(firstCard);
+    const chosenSuit = getSuit(chosenCard);
+    const trumpSuit = getSuit(trumpCard);
+
+    const hasFirstSuit = hand.some(card => getSuit(card) === firstSuit);
+    const hasTrump = hand.some(card => getSuit(card) === trumpSuit);
+
+    if (hasFirstSuit) return chosenSuit === firstSuit;
+    if (hasTrump) return chosenSuit === trumpSuit;
+    return true;
+}
+
+function findValidBotResponse(firstCard) {
+    for (const card of botCards) {
+        if (isValidMove(firstCard, botCards, card)) {
+            return card;
+        }
+    }
+    return botCards[0];
+}
+
+function findBotLeadCard() {
+    return botCards[0];
+}
+
+function updateDeckCount() {
+    const usedCards = (initialPlayerCards.length - playerCards.length) + (initialBotCards.length - botCards.length) + 1;
+    const remaining = Math.max(0, fullDeckSize - usedCards);
+    deckCountEl.innerText = remaining;
+}
+
+function updateBanks() {
+    playerBankValueEl.innerText = formatCompactMoney(playerBank);
+    botBankValueEl.innerText = formatCompactMoney(botBank);
+}
+
+function updatePot() {
+    potValueEl.innerText = formatCompactMoney(pot);
+}
+
+function updateAuctionUI() {
+    const nextRaiseMin = Math.min(currentBid + 1, 3);
+    bidSliderEl.min = nextRaiseMin;
+    bidSliderEl.max = 3;
+
+    if (Number(bidSliderEl.value) < nextRaiseMin) {
+        bidSliderEl.value = nextRaiseMin;
+    }
+
+    sliderValueEl.innerText = bidSliderEl.value;
+
+    const canAct = gamePhase === "auction" && auctionTurn === "player" && !actionLock && !dealingInProgress;
+    passBtn.disabled = !canAct;
+    callBtn.disabled = !canAct || currentBid === 0;
+    raiseBtn.disabled = !canAct || currentBid >= 3;
+
+    const turnText = auctionTurn === "player" ? "Твой ход" : "Ход бота";
+    const playerText = playerBid === null ? "—" : playerBid;
+    const botText = botBid === null ? "—" : botBid;
+
+    auctionSummaryEl.innerText = `Ставка: ${currentBid} · Ты: ${playerText} · Бот: ${botText} · ${turnText}`;
+}
+
+function renderTrumpOnTable() {
+    trumpSlotEl.innerHTML = `
+        <div class="card trump-card-mini" style="cursor:default;">
+            ${renderCardFace(trumpCard)}
+        </div>
+    `;
+}
+
+function renderTrickPiles() {
+    playerTrickPileEl.innerHTML = "";
+    botTrickPileEl.innerHTML = "";
+
+    const playerLayers = Math.min(playerTrickPileCards, 3);
+    const botLayers = Math.min(botTrickPileCards, 3);
+
+    for (let i = 0; i < playerLayers; i++) {
+        const c = document.createElement("div");
+        c.className = "pile-mini-back";
+        c.style.left = (i * 2) + "px";
+        c.style.top = (playerLayers - i - 1) * 2 + "px";
+        c.style.transform = `rotate(${-4 + i * 2}deg)`;
+        playerTrickPileEl.appendChild(c);
+    }
+
+    for (let i = 0; i < botLayers; i++) {
+        const c = document.createElement("div");
+        c.className = "pile-mini-back";
+        c.style.left = (i * 2) + "px";
+        c.style.top = (botLayers - i - 1) * 2 + "px";
+        c.style.transform = `rotate(${4 - i * 2}deg)`;
+        botTrickPileEl.appendChild(c);
+    }
+
+    playerTrickCountEl.innerText = playerScore;
+    botTrickCountEl.innerText = botScore;
+}
+
+function finishGame() {
+    gameOver = true;
+    gamePhase = "gameover";
+
+    if (playerScore >= 2) {
+        setMessage("ПОБЕДА 🔥 Ты взял 2 взятки");
+    } else if (botScore >= 2) {
+        setMessage("ПОРАЖЕНИЕ ❌ Бот взял 2 взятки");
+    } else {
+        setMessage("Партия завершена");
+    }
+}
+
+function getPileTargetRect(winner) {
+    const pileEl = winner === "player" ? playerTrickPileEl : botTrickPileEl;
+    return pileEl.getBoundingClientRect();
+}
+
+function animateTableCardsToPile(winner, callback) {
+    const playedCards = [];
+    const playerPlayed = playerCardEl.querySelector(".card");
+    const botPlayed = botCardEl.querySelector(".card");
+
+    if (playerPlayed) playedCards.push(playerPlayed);
+    if (botPlayed) playedCards.push(botPlayed);
+
+    if (!playedCards.length) {
+        callback();
+        return;
+    }
+
+    const pileRect = getPileTargetRect(winner);
+    let finished = 0;
+
+    playedCards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const clone = card.cloneNode(true);
+
+        clone.classList.add("fly-card");
+        clone.style.left = rect.left + "px";
+        clone.style.top = rect.top + "px";
+        clone.style.width = rect.width + "px";
+        clone.style.height = rect.height + "px";
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.left = (pileRect.left + 1 + index * 3) + "px";
+                clone.style.top = (pileRect.top + 2 + index * 2) + "px";
+                clone.style.transform = `scale(0.42) rotate(${winner === "player" ? -10 + index * 8 : 10 - index * 8}deg)`;
+                clone.style.opacity = "0.45";
+            });
+        });
+
+        clone.addEventListener("transitionend", () => {
+            clone.remove();
+            finished++;
+            if (finished === playedCards.length) callback();
+        }, { once: true });
+    });
+}
+
+function animateMoneyToPot(fromEl, amount, callback) {
+    if (amount <= 0) {
+        callback();
+        return;
+    }
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const potRect = potAreaEl.getBoundingClientRect();
+    let done = 0;
+    const chipsToFly = 3;
+
+    for (let i = 0; i < chipsToFly; i++) {
+        const chip = document.createElement("div");
+        chip.className = "fly-chip";
+        chip.style.left = (fromRect.left + fromRect.width / 2 - 9) + "px";
+        chip.style.top = (fromRect.top + 8 + i * 2) + "px";
+        document.body.appendChild(chip);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                chip.style.left = (potRect.left + potRect.width / 2 - 9 + (i - 1) * 8) + "px";
+                chip.style.top = (potRect.top + 24 + i * 2) + "px";
+                chip.style.transform = "scale(0.92)";
+                chip.style.opacity = "0.9";
+            });
+        });
+
+        chip.addEventListener("transitionend", () => {
+            chip.remove();
+            done++;
+            if (done === chipsToFly) callback();
+        }, { once: true });
+    }
+}
+
+function addToPotFromPlayer(amount, callback) {
+    if (playerBank < amount) amount = playerBank;
+    playerBank -= amount;
+    updateBanks();
+
+    animateMoneyToPot(playerBankWrapEl, amount, () => {
+        pot += amount;
+        updatePot();
+        callback();
+    });
+}
+
+function addToPotFromBot(amount, callback) {
+    if (botBank < amount) amount = botBank;
+    botBank -= amount;
+    updateBanks();
+
+    animateMoneyToPot(botBankWrapEl, amount, () => {
+        pot += amount;
+        updatePot();
+        callback();
+    });
+}
+
+function afterTrick(winner) {
+    if (winner === "player") {
+        playerScore++;
+        playerTrickPileCards++;
+        currentLeader = "player";
+        setMessage("Ты забрал взятку");
+    } else {
+        botScore++;
+        botTrickPileCards++;
+        currentLeader = "bot";
+        setMessage("Соперник забрал взятку");
+    }
+
+    renderTrickPiles();
+    markTrickResult(winner);
+
+    setTimeout(() => {
+        animateTableCardsToPile(winner, () => {
+            clearTable();
+
+            if (playerScore >= 2 || botScore >= 2 || trickNumber >= 3) {
+                finishGame();
+                return;
+            }
+
+            trickNumber++;
+            startNextTrick();
+        });
+    }, 420);
+}
+
+function getDeckTopRect() {
+    const rect = deckStackEl.getBoundingClientRect();
+    return {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+    };
+}
+
+function getHandCardTargetRect(handEl, index, total) {
+    const handRect = handEl.getBoundingClientRect();
+    const cardW = Math.min(76, handRect.width / 4.2);
+    const cardH = cardW * 1.42;
+    const spacing = Math.min(cardW * 0.9, 82);
+    const totalWidth = spacing * (total - 1) + cardW;
+    const startLeft = handRect.left + (handRect.width - totalWidth) / 2;
+
+    return {
+        left: startLeft + index * spacing,
+        top: handRect.top + Math.max(0, (handRect.height - cardH) / 2),
+        width: cardW,
+        height: cardH
+    };
+}
+
+function animateDealSequence(callback) {
+    dealingInProgress = true;
+    actionLock = true;
+    updateAuctionUI();
+
+    playerHandEl.innerHTML = "";
+    botHandEl.innerHTML = "";
+    dealPlayerVisible = 0;
+    dealBotVisible = 0;
+
+    const sequence = [
+        { owner: "bot", index: 0 },
+        { owner: "player", index: 0 },
+        { owner: "bot", index: 1 },
+        { owner: "player", index: 1 },
+        { owner: "bot", index: 2 },
+        { owner: "player", index: 2 }
+    ];
+
+    let i = 0;
+
+    function dealNext() {
+        if (i >= sequence.length) {
+            renderBotHand();
+            renderPlayerHand();
+            dealingInProgress = false;
+            actionLock = false;
+            updateAuctionUI();
+            callback();
+            return;
+        }
+
+        const item = sequence[i];
+        const from = getDeckTopRect();
+        const targetHand = item.owner === "bot" ? botHandEl : playerHandEl;
+        const visibleCount = item.owner === "bot" ? dealBotVisible + 1 : dealPlayerVisible + 1;
+        const to = getHandCardTargetRect(targetHand, item.index, visibleCount);
+
+        const clone = document.createElement("div");
+        clone.className = "card back fly-card";
+        clone.style.left = from.left + "px";
+        clone.style.top = from.top + "px";
+        clone.style.width = from.width + "px";
+        clone.style.height = from.height + "px";
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.left = to.left + "px";
+                clone.style.top = to.top + "px";
+                clone.style.width = to.width + "px";
+                clone.style.height = to.height + "px";
+            });
+        });
+
+        clone.addEventListener("transitionend", () => {
+            clone.remove();
+
+            if (item.owner === "player") {
+                dealPlayerVisible++;
+                renderPlayerHand(dealPlayerVisible);
+            } else {
+                dealBotVisible++;
+                renderBotHand(dealBotVisible);
+            }
+
+            i++;
+            setTimeout(dealNext, 80);
+        }, { once: true });
+    }
+
+    dealNext();
+}
+
+function animatePlayerPlayToTable(cardValue, callback) {
+    const sourceEl = playerHandEl.querySelector(`[data-card-value="${CSS.escape(cardValue)}"]`);
+    if (!sourceEl) {
+        callback();
+        return;
+    }
+
+    const from = sourceEl.getBoundingClientRect();
+    const to = playerCardEl.getBoundingClientRect();
+
+    const clone = sourceEl.cloneNode(true);
+    clone.classList.add("fly-card");
+    clone.style.left = from.left + "px";
+    clone.style.top = from.top + "px";
+    clone.style.width = from.width + "px";
+    clone.style.height = from.height + "px";
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            clone.style.left = to.left + "px";
+            clone.style.top = to.top + "px";
+        });
+    });
+
+    clone.addEventListener("transitionend", () => {
+        clone.remove();
+        callback();
+    }, { once: true });
+}
+
+function animateBotPlayToTable(botIndex, callback) {
+    const botEls = botHandEl.querySelectorAll(".card");
+    const sourceEl = botEls[botIndex];
+    if (!sourceEl) {
+        callback();
+        return;
+    }
+
+    const from = sourceEl.getBoundingClientRect();
+    const to = botCardEl.getBoundingClientRect();
+
+    const clone = document.createElement("div");
+    clone.className = "card back fly-card";
+    clone.style.left = from.left + "px";
+    clone.style.top = from.top + "px";
+    clone.style.width = from.width + "px";
+    clone.style.height = from.height + "px";
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            clone.style.left = to.left + "px";
+            clone.style.top = to.top + "px";
+        });
+    });
+
+    clone.addEventListener("transitionend", () => {
+        clone.remove();
+        callback();
+    }, { once: true });
+}
+
+function startNextTrick() {
+    if (gameOver || gamePhase !== "play") return;
+
+    renderPlayerHand();
+    renderBotHand();
+    updateDeckCount();
+
+    if (currentLeader === "player") {
+        pendingBotLead = null;
+        actionLock = false;
+        setMessage("Твой ход");
+    } else {
+        actionLock = true;
+        const botLead = findBotLeadCard();
+        const botIndex = botCards.indexOf(botLead);
+
+        setMessage("Соперник ходит...");
+        animateBotPlayToTable(botIndex, () => {
+            botCards.splice(botIndex, 1);
+            renderBotHand();
+            updateDeckCount();
+
+            pendingBotLead = botLead;
+            renderTableCard(botCardEl, botLead);
+            addImpactToPlayedCard("bot");
+            playerCardEl.innerHTML = "";
+
+            actionLock = false;
+            setMessage("Соперник ходит. Ответь картой");
+            renderPlayerHand();
+        });
+    }
+}
+
+function handlePlayerClick(playerCard) {
+    if (gameOver || gamePhase !== "play" || actionLock) return;
+
+    if (currentLeader === "player" && pendingBotLead === null) {
+        actionLock = true;
+
+        animatePlayerPlayToTable(playerCard, () => {
+            const playerIndex = playerCards.indexOf(playerCard);
+            playerCards.splice(playerIndex, 1);
+            renderPlayerHand();
+            updateDeckCount();
+            renderTableCard(playerCardEl, playerCard);
+            addImpactToPlayedCard("player");
+
+            const botResponse = findValidBotResponse(playerCard);
+            const botIndex = botCards.indexOf(botResponse);
+
+            setMessage("Соперник отвечает...");
+            animateBotPlayToTable(botIndex, () => {
+                botCards.splice(botIndex, 1);
+                renderBotHand();
+                updateDeckCount();
+                renderTableCard(botCardEl, botResponse);
+                addImpactToPlayedCard("bot");
+
+                const trickWinner = compareCards(playerCard, botResponse);
+                actionLock = false;
+                setTimeout(() => {
+                    trickWinner === "lead" ? afterTrick("player") : afterTrick("bot");
+                }, 180);
+            });
+        });
+
+        return;
+    }
+
+    if (currentLeader === "bot" && pendingBotLead !== null) {
+        const valid = isValidMove(pendingBotLead, playerCards, playerCard);
+
+        if (!valid) {
+            setMessage("Нужно ходить в масть или козырем");
+            return;
+        }
+
+        actionLock = true;
+
+        animatePlayerPlayToTable(playerCard, () => {
+            const playerIndex = playerCards.indexOf(playerCard);
+            playerCards.splice(playerIndex, 1);
+            renderPlayerHand();
+            updateDeckCount();
+            renderTableCard(playerCardEl, playerCard);
+            addImpactToPlayedCard("player");
+
+            const trickWinner = compareCards(pendingBotLead, playerCard);
+            pendingBotLead = null;
+            actionLock = false;
+
+            setTimeout(() => {
+                trickWinner === "lead" ? afterTrick("bot") : afterTrick("player");
+            }, 180);
+        });
+    }
+}
+
+function startPlayPhase() {
+    gamePhase = "play";
+    auctionBarEl.classList.add("hidden");
+
+    currentLeader = auctionWinner;
+    pendingBotLead = null;
+
+    setMessage("Торги завершены. Первый ход: " + (auctionWinner === "player" ? "ты" : "бот"));
+    renderPlayerHand();
+    renderBotHand();
+    updateDeckCount();
+
+    setTimeout(() => {
+        startNextTrick();
+    }, 700);
+}
+
+function resolveAuctionAfterPass(passedBy) {
+    if (actionLock) return;
+
+    if (passedBy === "player") {
+        animatePlayerFoldToCenter(() => {
+            auctionWinner = botBid !== null ? "bot" : (lastBidder || "bot");
+            setMessage("Ты спасовал. Первый ход за ботом");
+            updateAuctionUI();
+
+            setTimeout(() => {
+                startPlayPhase();
+            }, 500);
+        });
+        return;
+    }
+
+    auctionWinner = playerBid !== null ? "player" : (lastBidder || "player");
+    setMessage("Бот спасовал. Первый ход за тобой");
+    updateAuctionUI();
+
+    setTimeout(() => {
+        startPlayPhase();
+    }, 500);
+}
+
+function resolveAuctionByCall(caller) {
+    if (currentBid === 0) return;
+
+    if (caller === "player") {
+        playerBid = currentBid;
+        auctionWinner = lastBidder || "player";
+    } else {
+        botBid = currentBid;
+        auctionWinner = lastBidder || "bot";
+    }
+
+    setMessage("Торги завершены.");
+    updateAuctionUI();
+
+    setTimeout(() => {
+        startPlayPhase();
+    }, 500);
+}
+
+function botAuctionDecision() {
+    if (gamePhase !== "auction" || auctionTurn !== "bot" || actionLock) return;
+
+    setMessage("Бот думает над ставкой...");
+
+    setTimeout(() => {
+        const maxBotBid = evaluateBotAuctionStrength();
+
+        if (currentBid === 0) {
+            const openingBid = maxBotBid >= 2 ? 2 : 1;
+            currentBid = openingBid;
+            botBid = openingBid;
+            lastBidder = "bot";
+            auctionTurn = "player";
+
+            const targetPot = currentBid * baseStake;
+            const addAmount = Math.max(0, targetPot - pot);
+
+            addToPotFromBot(addAmount, () => {
+                setMessage("Бот открыл торги со ставки " + openingBid);
+                updateAuctionUI();
+            });
+            return;
+        }
+
+        if (currentBid < maxBotBid) {
+            const newBid = currentBid + 1;
+            currentBid = newBid;
+            botBid = newBid;
+            lastBidder = "bot";
+            auctionTurn = "player";
+
+            const targetPot = currentBid * baseStake;
+            const addAmount = Math.max(0, targetPot - pot);
+
+            addToPotFromBot(addAmount, () => {
+                setMessage("Бот поднял ставку до " + newBid);
+                updateAuctionUI();
+            });
+            return;
+        }
+
+        if (currentBid <= maxBotBid) {
+            resolveAuctionByCall("bot");
+            return;
+        }
+
+        resolveAuctionAfterPass("bot");
+    }, 650);
+}
+
+function evaluateBotAuctionStrength() {
+    let score = 0;
+    const trumpSuit = getSuit(trumpCard);
+
+    for (const card of initialBotCards) {
+        const rank = getRank(card);
+        const suit = getSuit(card);
+
+        score += power[rank];
+        if (suit === trumpSuit) score += 2;
+    }
+
+    if (score >= 24) return 3;
+    if (score >= 18) return 2;
+    return 1;
+}
+
+function onPlayerPass() {
+    if (gamePhase !== "auction" || auctionTurn !== "player" || actionLock || dealingInProgress) return;
+    resolveAuctionAfterPass("player");
+}
+
+function onPlayerCall() {
+    if (gamePhase !== "auction" || auctionTurn !== "player" || currentBid === 0 || actionLock || dealingInProgress) return;
+    playerBid = currentBid;
+    resolveAuctionByCall("player");
+}
+
+function onPlayerRaise() {
+    if (gamePhase !== "auction" || auctionTurn !== "player" || actionLock || dealingInProgress) return;
+
+    const raiseTo = Number(bidSliderEl.value);
+
+    if (raiseTo <= currentBid) {
+        setMessage("Нужно поднять выше текущей ставки");
+        return;
+    }
+
+    currentBid = raiseTo;
+    playerBid = raiseTo;
+    lastBidder = "player";
+    auctionTurn = "bot";
+
+    const targetPot = currentBid * baseStake;
+    const addAmount = Math.max(0, targetPot - pot);
+
+    addToPotFromPlayer(addAmount, () => {
+        setMessage("Ты поднял ставку до " + raiseTo);
+        updateAuctionUI();
+        botAuctionDecision();
+    });
+}
+
+function beginAuctionAfterDeal() {
+    gamePhase = "auction";
+    auctionBarEl.classList.remove("hidden");
+
+    currentBid = 0;
+    playerBid = null;
+    botBid = null;
+    auctionTurn = "player";
+    lastBidder = null;
+    auctionWinner = null;
+
+    pot = 0;
+    updatePot();
+
+    clearTable();
+    renderPlayerHand();
+    renderBotHand();
+    updateDeckCount();
+    updateAuctionUI();
+
+    setMessage("Начинаются торги. Выбери действие.");
+}
+
+function resetBanks() {
+    playerBank = 3000;
+    botBank = 3000;
+    updateBanks();
+}
+
+function resetGame() {
+    playerCards = [...initialPlayerCards];
+    botCards = [...initialBotCards];
+    playerScore = 0;
+    botScore = 0;
+    trickNumber = 1;
+    gameOver = false;
+
+    currentLeader = null;
+    pendingBotLead = null;
+
+    playerTrickPileCards = 0;
+    botTrickPileCards = 0;
+
+    actionLock = true;
+    dealingInProgress = false;
+
+    resetBanks();
+    pot = 0;
+    updatePot();
+    renderTrumpOnTable();
+    renderTrickPiles();
+    updateDeckCount();
+    clearTable();
+    impactLayerEl.innerHTML = "";
+
+    playerHandEl.innerHTML = "";
+    botHandEl.innerHTML = "";
+    auctionBarEl.classList.add("hidden");
+    setMessage("Раздача карт...");
+
+    animateDealSequence(() => {
+        beginAuctionAfterDeal();
+    });
+}
+
+function animatePlayerFoldToCenter(callback) {
+    actionLock = true;
+    const cards = Array.from(playerHandEl.querySelectorAll(".card"));
+    const targetRect = statusPillEl.getBoundingClientRect();
+
+    if (!cards.length) {
+        playerCards = [];
+        renderPlayerHand();
+        actionLock = false;
+        callback();
+        return;
+    }
+
+    let finished = 0;
+
+    cards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect();
+        const clone = card.cloneNode(true);
+
+        clone.classList.add("fly-card");
+        clone.style.left = rect.left + "px";
+        clone.style.top = rect.top + "px";
+        clone.style.width = rect.width + "px";
+        clone.style.height = rect.height + "px";
+
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.left = (targetRect.left + targetRect.width / 2 - rect.width / 2 + (index - 1) * 12) + "px";
+                clone.style.top = (targetRect.top - 20) + "px";
+                clone.style.transform = "scale(0.82) rotate(" + ((index - 1) * 10) + "deg)";
+                clone.style.opacity = "0.15";
+            });
+        });
+
+        clone.addEventListener("transitionend", () => {
+            clone.remove();
+            finished++;
+            if (finished === cards.length) {
+                playerCards = [];
+                renderPlayerHand();
+                actionLock = false;
+                callback();
+            }
+        }, { once: true });
+    });
+}
+
+renderTrumpOnTable();
+resetGame();
+</script>
+</body>
+</html>
