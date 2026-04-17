@@ -808,6 +808,173 @@ h1 {
     pointer-events: none;
 }
 
+.start-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(5, 28, 20, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+.start-screen.hidden {
+    display: none;
+}
+
+.start-card {
+    width: min(100%, 420px);
+    padding: 22px 18px 20px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(14, 70, 52, 0.97), rgba(10, 50, 38, 0.97));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+}
+
+.start-title {
+    margin: 0 0 14px;
+    font-size: 30px;
+    line-height: 1.1;
+}
+
+.start-controls {
+    display: grid;
+    gap: 10px;
+}
+
+.start-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.start-select {
+    width: 100%;
+    height: 42px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+    color: #1c2b24;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.start-button {
+    margin-top: 4px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: bold;
+    color: #1f1b00;
+    cursor: pointer;
+    background: linear-gradient(180deg, #ffd43b, #f0be00);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.start-button:active {
+    transform: scale(0.98);
+}
+
+.start-input {
+    width: 100%;
+    height: 42px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+    color: #1c2b24;
+    font-size: 16px;
+    font-weight: bold;
+    outline: none;
+}
+
+.lobby-mode {
+    padding: 12px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.lobby-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.ghost-button {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.ghost-button:active {
+    transform: scale(0.98);
+}
+
+.ghost-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 13000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-card {
+    width: min(100%, 560px);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(14, 70, 52, 0.96), rgba(10, 50, 38, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+    padding: 18px 16px 16px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 10px;
+}
+
+.modal-body {
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.35;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+
+.game.lobby-active {
+    filter: blur(3px) saturate(0.92);
+    opacity: 0.35;
+    pointer-events: none;
+    user-select: none;
+}
+
 @media (max-width: 700px) {
     :root {
         --trick-seat-half: min(144px, 44vw);
@@ -912,7 +1079,47 @@ h1 {
 </head>
 
 <body>
-<div class="game">
+<div class="start-screen" id="startScreen">
+    <div class="start-card">
+        <h2 class="start-title">Azi Game</h2>
+        <div class="start-controls">
+            <label class="start-label" for="playerNameInput">Имя игрока</label>
+            <input class="start-input" id="playerNameInput" placeholder="Например, Вася" maxlength="20" />
+
+            <label class="start-label" for="playersCountSelect">Количество игроков</label>
+            <select class="start-select" id="playersCountSelect">
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+
+            <label class="start-label">Режим</label>
+            <div class="lobby-mode">Игрок + боты</div>
+
+            <button class="start-button" id="startGameBtn">Начать игру</button>
+
+            <div class="lobby-actions">
+                <button class="ghost-button" id="rulesBtn" type="button">Правила</button>
+                <button class="ghost-button" id="settingsBtn" type="button" disabled>Настройки</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="rulesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal-card">
+        <div class="modal-title" id="rulesTitle">Правила Azi (MVP)</div>
+        <div class="modal-body">
+            Здесь будут полные правила игры Azi. В текущем MVP реализована базовая механика торгов, раздачи
+            и взяток для режима «Игрок + бот» (пока остальные участники — боты и не участвуют в логике по-настоящему).
+        </div>
+        <button class="start-button" id="closeRulesBtn" type="button">Понятно</button>
+    </div>
+</div>
+
+<div class="game" id="gameRoot">
     <h1>Azi by Bobby</h1>
 
     <div class="table-zone" id="tableZone">
@@ -1052,8 +1259,12 @@ let botTrickPileCards = 0;
 
 let actionLock = false;
 let dealingInProgress = false;
+let selectedPlayersCount = 2;
+let gamePlayers = [];
+let uiState = "lobby";
+let playerName = "";
 
-const fullDeckSize = 20;
+const fullDeckSize = 27;
 
 const playerCardEl = document.getElementById("playerCard");
 const botCardEl = document.getElementById("botCard");
@@ -1065,6 +1276,16 @@ const playerHandEl = document.getElementById("playerHand");
 const botHandEl = document.getElementById("botHand");
 const impactLayerEl = document.getElementById("impactLayer");
 const tableZoneEl = document.getElementById("tableZone");
+const playedAreaEl = document.getElementById("playedArea");
+const startScreenEl = document.getElementById("startScreen");
+const gameRootEl = document.getElementById("gameRoot");
+const playerNameInputEl = document.getElementById("playerNameInput");
+const playersCountSelectEl = document.getElementById("playersCountSelect");
+const startGameBtnEl = document.getElementById("startGameBtn");
+const rulesBtnEl = document.getElementById("rulesBtn");
+const settingsBtnEl = document.getElementById("settingsBtn");
+const rulesModalEl = document.getElementById("rulesModal");
+const closeRulesBtnEl = document.getElementById("closeRulesBtn");
 
 const playerTrickPileEl = document.getElementById("playerTrickPile");
 const botTrickPileEl = document.getElementById("botTrickPile");
@@ -1091,6 +1312,8 @@ const power = {
     "6": 1, "7": 2, "8": 3, "9": 4,
     "10": 5, "J": 6, "Q": 7, "K": 8, "A": 9
 };
+const ranks = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+const suits = ["♠", "♥", "♦"];
 
 let dealPlayerVisible = 0;
 let dealBotVisible = 0;
@@ -1102,6 +1325,17 @@ bidSliderEl.addEventListener("input", () => {
 passBtn.addEventListener("click", onPlayerPass);
 callBtn.addEventListener("click", onPlayerCall);
 raiseBtn.addEventListener("click", onPlayerRaise);
+startGameBtnEl.addEventListener("click", onStartGameClick);
+rulesBtnEl.addEventListener("click", () => {
+    rulesModalEl.classList.remove("hidden");
+});
+closeRulesBtnEl.addEventListener("click", () => {
+    rulesModalEl.classList.add("hidden");
+});
+settingsBtnEl.addEventListener("click", (e) => {
+    // Заглушка: кнопка отключена, но обработчик оставляем на всякий случай.
+    e.preventDefault();
+});
 
 function setMessage(text) {
     statusPillEl.innerText = text;
@@ -1123,6 +1357,48 @@ function formatCompactMoney(value) {
     if (value < 1000) return String(value);
     if (value % 1000 === 0) return String(value / 1000) + "К";
     return (value / 1000).toFixed(1).replace(".0", "") + "К";
+}
+
+function buildDeck() {
+    const deck = [];
+    for (const suit of suits) {
+        for (const rank of ranks) {
+            deck.push(rank + suit);
+        }
+    }
+    return deck;
+}
+
+function shuffleDeck(deck) {
+    const shuffled = [...deck];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function dealNewRoundCards() {
+    const shuffledDeck = shuffleDeck(buildDeck());
+    initialPlayerCards = shuffledDeck.slice(0, 3);
+    initialBotCards = shuffledDeck.slice(3, 6);
+    trumpCard = shuffledDeck[6];
+}
+
+function createPlayersForNewGame(playersCount) {
+    const players = [];
+
+    for (let i = 0; i < playersCount; i++) {
+        players.push({
+            id: i === 0 ? "player" : `bot-${i}`,
+            type: i === 0 ? "human" : "bot",
+            hand: [],
+            bank: 3000,
+            tricks: 0
+        });
+    }
+
+    return players;
 }
 
 function renderCardFace(card) {
@@ -1967,8 +2243,14 @@ function resetBanks() {
 }
 
 function resetGame() {
+    dealNewRoundCards();
+    gamePlayers = createPlayersForNewGame(selectedPlayersCount);
+
     playerCards = [...initialPlayerCards];
     botCards = [...initialBotCards];
+    if (gamePlayers[0]) gamePlayers[0].hand = [...playerCards];
+    if (gamePlayers[1]) gamePlayers[1].hand = [...botCards];
+
     playerScore = 0;
     botScore = 0;
     trickNumber = 1;
@@ -2051,8 +2333,43 @@ function animatePlayerFoldToCenter(callback) {
     });
 }
 
-renderTrumpOnTable();
-resetGame();
+function applyPlayersCountSelection() {
+    playedAreaEl.dataset.players = String(selectedPlayersCount);
+}
+
+function setUiState(nextUiState) {
+    uiState = nextUiState;
+
+    if (uiState === "lobby") {
+        startScreenEl.classList.remove("hidden");
+        gameRootEl.classList.add("lobby-active");
+        rulesModalEl.classList.add("hidden");
+        return;
+    }
+
+    startScreenEl.classList.add("hidden");
+    gameRootEl.classList.remove("lobby-active");
+    rulesModalEl.classList.add("hidden");
+}
+
+function onStartGameClick() {
+    selectedPlayersCount = Number(playersCountSelectEl.value);
+    applyPlayersCountSelection();
+
+    playerName = (playerNameInputEl.value || "").trim();
+    if (!playerName) playerName = "Игрок";
+
+    setUiState("game");
+    resetGame();
+}
+
+function initGame() {
+    renderTrumpOnTable();
+    applyPlayersCountSelection();
+    setUiState("lobby");
+}
+
+initGame();
 </script>
 </body>
 </html>
