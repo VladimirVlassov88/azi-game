@@ -1276,6 +1276,452 @@ h1 {
     gap: 10px;
 }
 
+/* ===== Main Menu (premium private card club) ===== */
+#mainMenuScreen .splash-inner {
+    padding: 0;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.menu-panel--main {
+    position: relative;
+    width: min(520px, 100% - 40px);
+    padding: clamp(18px, 4vw, 30px) clamp(14px, 3vw, 28px) clamp(14px, 3vw, 22px);
+    margin: auto;
+    text-align: center;
+    animation: splashRise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* ----- Top bar ----- */
+.menu-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 18px;
+}
+
+.menu-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    color: #e6c86a;
+    max-width: 58%;
+    min-width: 0;
+}
+
+.menu-avatar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    width: clamp(42px, 10vw, 52px);
+    height: clamp(42px, 10vw, 52px);
+    border-radius: 50%;
+    border: 1.5px solid #d8b24c;
+    box-shadow: 0 0 10px rgba(216, 178, 76, 0.25), 0 2px 8px rgba(0, 0, 0, 0.5);
+    color: #c9a23a;
+    overflow: hidden;
+    background: radial-gradient(circle at 30% 25%, rgba(247, 227, 165, 0.3), rgba(10, 4, 8, 0.85) 80%);
+}
+.menu-avatar svg { width: 100%; height: 100%; display: block; }
+
+.menu-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.menu-user-name {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(15px, 3.4vw, 17px);
+    font-weight: 600;
+    color: #f7e3a5;
+    line-height: 1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu-user-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 12.5px;
+    color: rgba(216, 178, 76, 0.82);
+    line-height: 1;
+    white-space: nowrap;
+}
+.menu-user-level strong { font-weight: 600; color: #f7e3a5; }
+.menu-level-crown { width: 11px; height: 11px; color: #d8b24c; flex: 0 0 auto; }
+
+.menu-level-bar {
+    display: block;
+    width: 100%;
+    max-width: 140px;
+    height: 3px;
+    margin-top: 3px;
+    background: rgba(10, 4, 8, 0.6);
+    border: 1px solid rgba(201, 162, 58, 0.35);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.menu-level-bar > span {
+    display: block;
+    height: 100%;
+    width: 60%;
+    background: linear-gradient(90deg, #8c6a2a, #d8b24c 55%, #f7e3a5);
+    box-shadow: 0 0 6px rgba(216, 178, 76, 0.5);
+}
+
+.menu-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 4px 4px 8px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.menu-balance-coin { display: inline-flex; width: 20px; height: 20px; flex: 0 0 auto; }
+.menu-balance-coin svg { width: 100%; height: 100%; display: block; }
+
+.menu-balance-value {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: clamp(14px, 3vw, 16px);
+    color: #f7e3a5;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.menu-balance-plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #d8b24c;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.28), rgba(140, 106, 42, 0.38));
+    color: #f7e3a5;
+    font-family: "Cinzel", serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 0;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(216, 178, 76, 0.25) inset;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.menu-balance-plus:hover { transform: scale(1.08); }
+.menu-balance-plus:active { transform: scale(0.96); }
+
+.menu-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(32px, 7.5vw, 38px);
+    height: clamp(32px, 7.5vw, 38px);
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    border-radius: 50%;
+    color: #c9a23a;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.menu-bell svg { width: 55%; height: 55%; }
+.menu-bell:hover { transform: scale(1.06); border-color: #d8b24c; }
+
+.menu-bell-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #d13a3a;
+    color: #fff;
+    border-radius: 999px;
+    font-family: "Cinzel", serif;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: 0 0 6px rgba(209, 58, 58, 0.55), 0 0 0 1.5px rgba(0, 0, 0, 0.45);
+}
+.menu-bell-badge[hidden] { display: none; }
+
+/* ----- Brand block ----- */
+.menu-brand-block { margin: 0 0 16px; }
+
+.menu-brand-title {
+    margin: 0;
+    font-family: "Cormorant Garamond", "Playfair Display", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(46px, 10vw, 76px);
+    line-height: 1;
+    letter-spacing: 0.5px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #e6c86a 38%, #c9a23a 72%, #8c6a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.menu-brand-block .splash-divider { margin-top: 8px; }
+
+.menu-brand-since {
+    margin: 8px 0 0;
+    font-family: "Cinzel", serif;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    text-transform: uppercase;
+    color: #c9a23a;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* ----- Primary actions ----- */
+.menu-primary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 10px 0 16px;
+}
+
+.menu-primary-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 18px 10px 10px;
+    background: linear-gradient(180deg, rgba(70, 18, 30, 0.9) 0%, rgba(50, 12, 22, 0.95) 100%);
+    border: 1.2px solid rgba(201, 162, 58, 0.7);
+    border-radius: 14px;
+    color: #f7e3a5;
+    font-family: "Cormorant Garamond", serif;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.45),
+        0 0 10px rgba(216, 178, 76, 0.08) inset,
+        0 0 0 1px rgba(0, 0, 0, 0.25) inset;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.menu-primary-btn::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(201, 162, 58, 0.32);
+    border-radius: 11px;
+    pointer-events: none;
+}
+.menu-primary-btn:hover {
+    transform: translateY(-1px);
+    border-color: #d8b24c;
+    box-shadow:
+        0 10px 22px rgba(0, 0, 0, 0.5),
+        0 0 18px rgba(216, 178, 76, 0.18) inset;
+}
+.menu-primary-btn:active { transform: translateY(0); }
+
+.menu-primary-btn-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(44px, 10vw, 52px);
+    height: clamp(44px, 10vw, 52px);
+    border-radius: 50%;
+    border: 1.2px solid rgba(201, 162, 58, 0.7);
+    background: radial-gradient(circle at 30% 30%, rgba(216, 178, 76, 0.18), rgba(10, 4, 8, 0.8) 80%);
+    color: #e6c86a;
+    box-shadow: 0 0 8px rgba(216, 178, 76, 0.12) inset, 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.menu-primary-btn-icon svg { width: 56%; height: 56%; display: block; }
+
+.menu-primary-btn-label {
+    flex: 1 1 auto;
+    font-size: clamp(18px, 3.4vw, 22px);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #f7e3a5;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.menu-primary-btn-chevron {
+    flex: 0 0 auto;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 24px;
+    color: rgba(216, 178, 76, 0.75);
+    line-height: 1;
+    padding-left: 4px;
+}
+
+/* ----- Footer actions ----- */
+.menu-footer-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.menu-footer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 8px;
+    background: rgba(10, 4, 8, 0.5);
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    border-radius: 10px;
+    color: #e6c86a;
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(13px, 2.7vw, 14.5px);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.menu-footer-btn svg { width: 15px; height: 15px; color: #c9a23a; flex: 0 0 auto; }
+.menu-footer-btn:hover {
+    transform: translateY(-1px);
+    border-color: #d8b24c;
+    background: rgba(10, 4, 8, 0.65);
+}
+
+/* ----- Tagline ----- */
+.menu-tagline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 6px 0 2px;
+    font-family: "Cinzel", serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    text-transform: uppercase;
+    color: rgba(201, 162, 58, 0.75);
+}
+.menu-tagline-line {
+    display: block;
+    width: clamp(22px, 6vw, 40px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 58, 0.7), transparent);
+}
+
+/* ----- Toast ----- */
+.menu-toast {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    transform: translate(-50%, 8px);
+    padding: 8px 16px;
+    background: rgba(10, 4, 8, 0.92);
+    border: 1px solid rgba(201, 162, 58, 0.6);
+    border-radius: 999px;
+    color: #f7e3a5;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 14px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 10px rgba(216, 178, 76, 0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 15;
+    white-space: nowrap;
+    max-width: calc(100% - 40px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.menu-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* ----- Settings sheet ----- */
+.menu-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: splashFadeIn 0.25s ease-out both;
+}
+.menu-sheet.hidden { display: none; }
+
+.menu-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 4, 8, 0.62);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    cursor: pointer;
+}
+
+.menu-sheet-panel {
+    position: relative;
+    width: min(380px, 100% - 32px);
+    padding: 22px;
+    background: linear-gradient(180deg, rgba(58, 13, 24, 0.98), rgba(36, 7, 15, 0.98));
+    border: 1px solid rgba(201, 162, 58, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 20px rgba(216, 178, 76, 0.1);
+    text-align: center;
+    animation: splashRise 0.28s ease-out both;
+}
+
+.menu-sheet-title {
+    margin: 0 0 6px;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 24px;
+    color: #f7e3a5;
+}
+
+.menu-sheet-hint {
+    margin: 0 0 14px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 14px;
+    color: rgba(216, 178, 76, 0.75);
+}
+
+.menu-sheet-panel .auth-btn { margin: 6px 0 0; }
+
+@media (max-width: 360px) {
+    .menu-balance-value { font-size: 13px; }
+    .menu-balance-plus { width: 20px; height: 20px; font-size: 14px; }
+    .menu-footer-btn { font-size: 12px; gap: 4px; padding: 8px 6px; }
+    .menu-footer-btn svg { width: 13px; height: 13px; }
+}
+
 @media (max-width: 700px) {
     :root {
         --trick-seat-half: min(144px, 44vw);
@@ -1562,13 +2008,174 @@ h1 {
 <!-- ============ MAIN MENU ============ -->
 <div id="mainMenuScreen" class="ui-screen hidden" data-frame="true">
     <div class="splash-inner">
-        <div class="menu-panel">
-            <h2 class="auth-brand">Azi</h2>
-            <p class="auth-brand-sub">Главное меню</p>
-            <p class="menu-welcome">С возвращением, <strong data-menu-name>Игрок</strong></p>
-            <div class="menu-actions">
-                <button type="button" class="auth-btn auth-btn--primary" data-menu-play>Играть</button>
-                <button type="button" class="auth-btn auth-btn--ghost" data-menu-logout>Выйти</button>
+        <div class="menu-panel menu-panel--main">
+            <!-- Top bar: profile, balance, notifications -->
+            <div class="menu-topbar">
+                <button class="menu-profile" type="button" data-menu-profile aria-label="Профиль">
+                    <span class="menu-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                            <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                            <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                        </svg>
+                    </span>
+                    <span class="menu-user-info">
+                        <span class="menu-user-name" data-menu-name>Игрок</span>
+                        <span class="menu-user-level">
+                            <svg class="menu-level-crown" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                            </svg>
+                            <span>Уровень <strong data-menu-level>12</strong></span>
+                        </span>
+                        <span class="menu-level-bar" aria-hidden="true"><span data-menu-level-fill></span></span>
+                    </span>
+                </button>
+
+                <div class="menu-topbar-right">
+                    <div class="menu-balance">
+                        <span class="menu-balance-coin" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <defs>
+                                    <linearGradient id="coinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0" stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1" stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="10" cy="10" r="9" fill="url(#coinGrad)" />
+                                <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                                <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                                <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="menu-balance-value" data-menu-balance>5 420</span>
+                        <button class="menu-balance-plus" type="button" data-menu-topup aria-label="Пополнить баланс">+</button>
+                    </div>
+                    <button class="menu-bell" type="button" data-menu-bell aria-label="Уведомления">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                            <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+                        </svg>
+                        <span class="menu-bell-badge" data-menu-notifications>3</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Brand block -->
+            <div class="menu-brand-block">
+                <h2 class="menu-brand-title">Azi</h2>
+                <div class="splash-divider">
+                    <span class="splash-divider-line"></span>
+                    <span class="splash-divider-diamond"></span>
+                    <span class="splash-byline">by Bobby</span>
+                    <span class="splash-divider-diamond"></span>
+                    <span class="splash-divider-line"></span>
+                </div>
+                <p class="menu-brand-since">Since 2026</p>
+            </div>
+
+            <!-- Primary actions -->
+            <div class="menu-primary">
+                <button class="menu-primary-btn" type="button" data-menu-action="find">
+                    <span class="menu-primary-btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <ellipse cx="12" cy="12.5" rx="9" ry="5.2" fill="rgba(120,24,36,0.5)" stroke="currentColor" stroke-width="1.3" />
+                            <ellipse cx="12" cy="12.5" rx="5.5" ry="2.6" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55" />
+                            <rect x="7.4" y="10.2" width="3" height="4" rx="0.5" fill="currentColor" />
+                            <rect x="10.5" y="9.7" width="3" height="4" rx="0.5" fill="currentColor" />
+                            <rect x="13.6" y="10.2" width="3" height="4" rx="0.5" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <span class="menu-primary-btn-label">Найти стол</span>
+                    <span class="menu-primary-btn-chevron" aria-hidden="true">›</span>
+                </button>
+
+                <button class="menu-primary-btn" type="button" data-menu-action="create">
+                    <span class="menu-primary-btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.45" />
+                            <path d="M12 5.5 L12 18.5 M5.5 12 L18.5 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                    <span class="menu-primary-btn-label">Создать стол</span>
+                    <span class="menu-primary-btn-chevron" aria-hidden="true">›</span>
+                </button>
+
+                <button class="menu-primary-btn" type="button" data-menu-action="friends">
+                    <span class="menu-primary-btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="9" cy="9.5" r="3.4" fill="currentColor" />
+                            <circle cx="16" cy="10.5" r="2.9" fill="currentColor" opacity="0.82" />
+                            <path d="M3 20 C 3.6 15.5, 14.4 15.5, 15 20 Z" fill="currentColor" />
+                            <path d="M12.5 20 C 13 16.2, 20.5 16.2, 21 20 Z" fill="currentColor" opacity="0.82" />
+                        </svg>
+                    </span>
+                    <span class="menu-primary-btn-label">Друзья</span>
+                    <span class="menu-primary-btn-chevron" aria-hidden="true">›</span>
+                </button>
+
+                <button class="menu-primary-btn" type="button" data-menu-action="share">
+                    <span class="menu-primary-btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8 11 L16 7 M8 13 L16 17" stroke="currentColor" stroke-width="1.4" />
+                            <circle cx="6" cy="12" r="2.6" fill="currentColor" />
+                            <circle cx="18" cy="6" r="2.6" fill="currentColor" />
+                            <circle cx="18" cy="18" r="2.6" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <span class="menu-primary-btn-label">Поделиться</span>
+                    <span class="menu-primary-btn-chevron" aria-hidden="true">›</span>
+                </button>
+            </div>
+
+            <!-- Footer actions -->
+            <div class="menu-footer-actions">
+                <button class="menu-footer-btn" type="button" data-menu-action="rules">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 5 C 5 4, 6 3.2, 7 3.2 L 12 3.2 L 12 20.5 L 7 20.5 C 6 20.5, 5 19.7, 5 18.7 Z" fill="none" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M12 3.2 L 17 3.2 C 18 3.2, 19 4, 19 5 L 19 18.7 C 19 19.7, 18 20.5, 17 20.5 L 12 20.5 Z" fill="none" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M7 7.5 L 10 7.5 M 7 10.5 L 10 10.5 M 14 7.5 L 17 7.5 M 14 10.5 L 17 10.5" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" />
+                    </svg>
+                    <span>Правила</span>
+                </button>
+                <button class="menu-footer-btn" type="button" data-menu-action="faq">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3" />
+                        <path d="M9 9.7 C 9 8, 10.4 7, 12 7 C 13.6 7, 15 8, 15 9.7 C 15 11.4, 12 11.8, 12 13.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                        <circle cx="12" cy="16.6" r="0.9" fill="currentColor" />
+                    </svg>
+                    <span>FAQ</span>
+                </button>
+                <button class="menu-footer-btn" type="button" data-menu-action="settings">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.3" />
+                        <g stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                            <path d="M12 3 L 12 5.5 M 12 18.5 L 12 21 M 3 12 L 5.5 12 M 18.5 12 L 21 12 M 5.3 5.3 L 7.1 7.1 M 16.9 16.9 L 18.7 18.7 M 5.3 18.7 L 7.1 16.9 M 16.9 7.1 L 18.7 5.3" />
+                        </g>
+                    </svg>
+                    <span>Настройки</span>
+                </button>
+            </div>
+
+            <!-- Tagline -->
+            <div class="menu-tagline">
+                <span class="menu-tagline-line" aria-hidden="true"></span>
+                <span>PRIVATE CARD CLUB</span>
+                <span class="menu-tagline-line" aria-hidden="true"></span>
+            </div>
+        </div>
+
+        <!-- Toast / Sheet висят на уровне .splash-inner, чтобы их позиционирование
+             не зависело от transform-анимации панели. -->
+        <div class="menu-toast" data-menu-toast aria-live="polite"></div>
+
+        <div class="menu-sheet hidden" data-menu-sheet>
+            <div class="menu-sheet-backdrop" data-menu-sheet-close aria-hidden="true"></div>
+            <div class="menu-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="menuSheetTitle">
+                <h3 class="menu-sheet-title" id="menuSheetTitle">Настройки</h3>
+                <p class="menu-sheet-hint">Скоро здесь появятся настройки аккаунта и игры.</p>
+                <button type="button" class="auth-btn auth-btn--primary" data-menu-logout>Выйти из аккаунта</button>
+                <button type="button" class="auth-btn auth-btn--ghost" data-menu-sheet-close>Закрыть</button>
             </div>
         </div>
     </div>
@@ -2835,14 +3442,30 @@ const UI_TEXT = Object.freeze({
         subtitle:        "Главное меню",
         welcomeBack:     "С возвращением,",
         fallbackName:    "Игрок",
-        btnPlay:         "Играть",
-        btnCreateTable:  "Создать стол",
-        btnJoinTable:    "Присоединиться к столу",
-        btnRules:        "Правила",
-        btnAboutGame:    "Об игре",
-        btnLogout:       "Выйти",
-        tableTypePublic:  "Публичный",
-        tableTypePrivate: "Приватный",
+        levelPrefix:     "Уровень",
+        tagline:         "PRIVATE CARD CLUB",
+        btnPlay:             "Играть",
+        btnFindTable:        "Найти стол",
+        btnCreateTable:      "Создать стол",
+        btnJoinTable:        "Присоединиться к столу",
+        btnFriends:          "Друзья",
+        btnShare:            "Поделиться",
+        btnRules:            "Правила",
+        btnFaq:              "FAQ",
+        btnAboutGame:        "Об игре",
+        btnSettings:         "Настройки",
+        btnLogout:           "Выйти",
+        logoutFull:          "Выйти из аккаунта",
+        sheetTitle:          "Настройки",
+        sheetHint:           "Скоро здесь появятся настройки аккаунта и игры.",
+        sheetClose:          "Закрыть",
+        toastSoon:           "Скоро",
+        toastLinkCopied:     "Ссылка скопирована",
+        toastNoNotifications: "Нет новых уведомлений",
+        shareTitle:          "Azi by Bobby",
+        shareText:           "Присоединяйся ко мне в Azi — private card club.",
+        tableTypePublic:     "Публичный",
+        tableTypePrivate:    "Приватный",
     },
 });
 
@@ -2852,6 +3475,15 @@ const appState = {
     isAuthenticated: false,
     pendingAuthData: null,
     user: null,
+    /* profile — отдельный блок для главного меню. Сейчас мокаются значения для
+       визуала, при подключении бэка сюда будет записываться ответ /me или /profile. */
+    profile: {
+        level: 12,
+        xp: 0.6,          // 0..1 прогресс текущего уровня
+        balance: 5420,
+        notifications: 3,
+        avatarUrl: null,
+    },
 };
 
 /* ---------- sessionStore ---------- */
@@ -3144,17 +3776,102 @@ function renderAuthScreen() {
 }
 
 /* ---------- Main menu handlers ---------- */
+/* ---------- Main menu: toast, sheet, share, handlers ---------- */
+
+let menuToastTimer = null;
+function showMenuToast(text) {
+    const toastEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-toast]");
+    if (!toastEl) return;
+    toastEl.textContent = text;
+    toastEl.classList.add("is-visible");
+    if (menuToastTimer) clearTimeout(menuToastTimer);
+    menuToastTimer = setTimeout(() => {
+        toastEl.classList.remove("is-visible");
+        menuToastTimer = null;
+    }, 2000);
+}
+
+function openMenuSheet() {
+    const sheetEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-sheet]");
+    if (sheetEl) sheetEl.classList.remove("hidden");
+}
+function closeMenuSheet() {
+    const sheetEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-sheet]");
+    if (sheetEl) sheetEl.classList.add("hidden");
+}
+
+async function handleMenuShare() {
+    const shareData = {
+        title: UI_TEXT.menu.shareTitle,
+        text: UI_TEXT.menu.shareText,
+        url: (typeof window !== "undefined" && window.location) ? window.location.href : "",
+    };
+    if (navigator.share) {
+        try { await navigator.share(shareData); return; }
+        catch (e) { if (e && e.name === "AbortError") return; /* cancelled */ }
+    }
+    if (navigator.clipboard && shareData.url) {
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            showMenuToast(UI_TEXT.menu.toastLinkCopied);
+            return;
+        } catch (e) { /* fallthrough */ }
+    }
+    showMenuToast(UI_TEXT.menu.toastSoon);
+}
+
+/* Словарь «действие меню → обработчик». Легко расширять: добавить экран
+   создания стола — подменить `create` на переход в SCREENS.CREATE_TABLE и т.п. */
+const MENU_ACTION_HANDLERS = {
+    find: () => {
+        setScreen(SCREENS.GAME);
+        resetGame();
+    },
+    create:   () => showMenuToast(UI_TEXT.menu.toastSoon),
+    friends:  () => showMenuToast(UI_TEXT.menu.toastSoon),
+    share:    () => { handleMenuShare(); },
+    rules:    () => showMenuToast(UI_TEXT.menu.toastSoon),
+    faq:      () => showMenuToast(UI_TEXT.menu.toastSoon),
+    settings: () => openMenuSheet(),
+};
+
 function bindMainMenuHandlers() {
     if (!mainMenuScreenEl) return;
 
-    const playBtn = mainMenuScreenEl.querySelector("[data-menu-play]");
-    if (playBtn) {
-        playBtn.addEventListener("click", () => {
-            setScreen(SCREENS.GAME);
-            resetGame();
+    // Основные и нижние pill-кнопки — через делегирование по data-menu-action
+    mainMenuScreenEl.querySelectorAll("[data-menu-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.menuAction;
+            const handler = MENU_ACTION_HANDLERS[action];
+            if (handler) handler();
         });
-    }
+    });
 
+    // Топбар: баланс+топап, колокольчик, аватар (профиль)
+    const topupBtn = mainMenuScreenEl.querySelector("[data-menu-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+
+    const bellBtn = mainMenuScreenEl.querySelector("[data-menu-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", () => {
+        const n = (appState.profile && appState.profile.notifications) || 0;
+        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    });
+
+    const profileBtn = mainMenuScreenEl.querySelector("[data-menu-profile]");
+    if (profileBtn) profileBtn.addEventListener("click", () => {
+        // Профиль пока открывает тот же sheet (настройки/выход) — единая точка.
+        openMenuSheet();
+    });
+
+    // Settings sheet: закрытие по backdrop и кнопке «Закрыть»
+    mainMenuScreenEl.querySelectorAll("[data-menu-sheet-close]").forEach((el) => {
+        el.addEventListener("click", closeMenuSheet);
+    });
+
+    // Logout (лежит внутри sheet)
     const logoutBtn = mainMenuScreenEl.querySelector("[data-menu-logout]");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
@@ -3164,18 +3881,71 @@ function bindMainMenuHandlers() {
             appState.isAuthenticated = false;
             appState.user = null;
             appState.pendingAuthData = null;
+            closeMenuSheet();
             setAuthMode(AUTH_MODES.LOGIN);
             setScreen(SCREENS.AUTH);
         });
     }
+
+    // Esc закрывает sheet, если он открыт и мы в меню
+    document.addEventListener("keydown", (e) => {
+        if (appState.currentScreen !== SCREENS.MAIN_MENU) return;
+        if (e.key !== "Escape") return;
+        const sheetEl = mainMenuScreenEl.querySelector("[data-menu-sheet]");
+        if (sheetEl && !sheetEl.classList.contains("hidden")) {
+            e.preventDefault();
+            closeMenuSheet();
+        }
+    });
+}
+
+function formatBalance(value) {
+    const n = Number(value) || 0;
+    // Разряды разделяем неразрывным пробелом — премиально и не ломается при переносе
+    return n.toLocaleString("ru-RU").replace(/\s/g, "\u202F");
 }
 
 function renderMainMenu() {
-    const nameEl = document.querySelector("#mainMenuScreen [data-menu-name]");
+    if (!mainMenuScreenEl) return;
+
+    const profile = appState.profile || {};
+
+    // Имя игрока
+    const nameEl = mainMenuScreenEl.querySelector("[data-menu-name]");
     if (nameEl) {
         const name = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
         nameEl.textContent = name;
     }
+
+    // Уровень и прогресс
+    const levelEl = mainMenuScreenEl.querySelector("[data-menu-level]");
+    if (levelEl) levelEl.textContent = String(profile.level != null ? profile.level : 1);
+
+    const levelFillEl = mainMenuScreenEl.querySelector("[data-menu-level-fill]");
+    if (levelFillEl) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        levelFillEl.style.width = (xp * 100).toFixed(1) + "%";
+    }
+
+    // Баланс
+    const balanceEl = mainMenuScreenEl.querySelector("[data-menu-balance]");
+    if (balanceEl) balanceEl.textContent = formatBalance(profile.balance);
+
+    // Уведомления
+    const notifEl = mainMenuScreenEl.querySelector("[data-menu-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+
+    // Закрыть sheet при каждом входе в меню (на случай если остался открыт)
+    closeMenuSheet();
 }
 
 /* ---------- Splash flow (минимум 3с + tap) ---------- */
