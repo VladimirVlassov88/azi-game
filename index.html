@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Azi by Bobby</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&display=swap" rel="stylesheet">
+
 <style>
 * {
     box-sizing: border-box;
@@ -840,41 +844,241 @@ h1 {
     display: none;
 }
 
+/* ===== Splash screen (premium card-club) ===== */
 .splash-inner {
+    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 0;
+    overflow: hidden;
     background:
-        radial-gradient(circle at 50% 38%, rgba(255, 220, 140, 0.06), transparent 36%),
-        linear-gradient(180deg, #3a0d18 0%, #2e0a12 52%, #24070f 100%);
+        radial-gradient(ellipse at 50% 42%, rgba(255, 205, 130, 0.10) 0%, rgba(255, 205, 130, 0.04) 28%, transparent 58%),
+        radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, 0.55) 0%, transparent 65%),
+        linear-gradient(180deg, #3a0d18 0%, #2e0a12 48%, #1d060b 100%);
+    animation: splashFadeIn 0.6s ease-out both;
+}
+
+/* Мягкая "пыль" и искры на фоне */
+.splash-inner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(1.2px 1.2px at 12% 18%, rgba(240, 200, 120, 0.55), transparent 60%),
+        radial-gradient(1px 1px at 82% 12%, rgba(240, 200, 120, 0.5), transparent 60%),
+        radial-gradient(1.4px 1.4px at 22% 72%, rgba(240, 200, 120, 0.45), transparent 60%),
+        radial-gradient(1px 1px at 78% 60%, rgba(240, 200, 120, 0.45), transparent 60%),
+        radial-gradient(1.2px 1.2px at 44% 88%, rgba(240, 200, 120, 0.45), transparent 60%),
+        radial-gradient(1px 1px at 66% 28%, rgba(240, 200, 120, 0.4), transparent 60%),
+        radial-gradient(0.9px 0.9px at 8% 52%, rgba(240, 200, 120, 0.4), transparent 60%),
+        radial-gradient(1px 1px at 92% 82%, rgba(240, 200, 120, 0.4), transparent 60%),
+        radial-gradient(1.1px 1.1px at 34% 38%, rgba(240, 200, 120, 0.35), transparent 60%),
+        radial-gradient(0.9px 0.9px at 58% 74%, rgba(240, 200, 120, 0.35), transparent 60%);
+    opacity: 0.9;
+    animation: splashTwinkle 5.5s ease-in-out infinite alternate;
+}
+
+/* Лёгкая виньетка поверх, чтобы углы были глубже */
+.splash-inner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* Двойная золотая рамка */
+.splash-frame {
+    position: absolute;
+    inset: clamp(14px, 3.2vw, 28px);
+    pointer-events: none;
+    border: 1px solid rgba(201, 162, 58, 0.78);
+    border-radius: 2px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.25) inset,
+        0 0 18px rgba(201, 162, 58, 0.08);
+}
+
+.splash-frame::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    border-radius: 1px;
+}
+
+/* Угловые орнаменты */
+.splash-corner {
+    position: absolute;
+    width: clamp(60px, 11vw, 110px);
+    height: clamp(60px, 11vw, 110px);
+    color: #d8b24c;
+    filter: drop-shadow(0 0 6px rgba(216, 178, 76, 0.25));
+    pointer-events: none;
+}
+
+.splash-corner svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.splash-corner--tl { top: -1px; left: -1px; }
+.splash-corner--tr { top: -1px; right: -1px; transform: scaleX(-1); }
+.splash-corner--bl { bottom: -1px; left: -1px; transform: scaleY(-1); }
+.splash-corner--br { bottom: -1px; right: -1px; transform: scale(-1, -1); }
+
+/* Контент */
+.splash-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px;
+    transform: translateY(-4%);
+    animation: splashRise 1.1s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .splash-title {
     margin: 0;
-    color: #c9a23a;
-    font-size: clamp(44px, 7vw, 84px);
-    font-family: "Kapakana", "Brush Script MT", "Segoe Script", "Times New Roman", cursive;
-    font-weight: 400;
-    letter-spacing: 0.6px;
+    font-family: "Cormorant Garamond", "Playfair Display", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(92px, 18vw, 180px);
+    line-height: 1;
+    letter-spacing: 0.5px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #e6c86a 38%, #c9a23a 72%, #8c6a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
     text-shadow:
-        0 0 16px rgba(240, 194, 79, 0.2),
-        0 8px 20px rgba(0, 0, 0, 0.35);
+        0 0 28px rgba(231, 197, 104, 0.18),
+        0 10px 34px rgba(0, 0, 0, 0.45);
+    filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
 }
 
-.splash-subtitle {
+/* Разделитель: линия — ромб — by Bobby — ромб — линия */
+.splash-divider {
+    margin-top: clamp(14px, 3vw, 26px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 1.6vw, 18px);
+    color: #d8b24c;
+}
+
+.splash-divider-line {
+    display: block;
+    width: clamp(44px, 9vw, 90px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c9a23a 45%, #c9a23a 55%, transparent);
+}
+
+.splash-divider-diamond {
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: #d8b24c;
+    transform: rotate(45deg);
+    box-shadow: 0 0 6px rgba(216, 178, 76, 0.45);
+}
+
+.splash-byline {
+    font-family: "Cormorant Garamond", "Playfair Display", "Times New Roman", serif;
+    font-weight: 500;
+    font-size: clamp(22px, 3.6vw, 36px);
+    letter-spacing: 0.5px;
+    color: #e6c86a;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.splash-since {
+    margin: clamp(22px, 4.5vw, 44px) 0 0;
+    font-family: "Cinzel", "Cormorant Garamond", "Times New Roman", serif;
+    font-weight: 500;
+    font-size: clamp(12px, 1.7vw, 18px);
+    letter-spacing: 0.55em;
+    text-indent: 0.55em; /* компенсация trailing letter-spacing */
+    color: #c9a23a;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes splashFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes splashRise {
+    from { opacity: 0; transform: translateY(calc(-4% + 10px)); }
+    to   { opacity: 1; transform: translateY(-4%); }
+}
+
+@keyframes splashTwinkle {
+    from { opacity: 0.55; }
+    to   { opacity: 1;    }
+}
+
+/* Подсказка «Tap anywhere to continue» */
+.splash-hint {
     position: absolute;
     left: 50%;
-    bottom: max(22px, env(safe-area-inset-bottom));
+    bottom: clamp(36px, 8vh, 88px);
     transform: translateX(-50%);
+    z-index: 3;
     margin: 0;
-    color: #c9a23a;
-    font-size: clamp(16px, 2vw, 30px);
-    letter-spacing: 0.4px;
-    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    padding: 0 18px;
+    font-family: "Cinzel", "Cormorant Garamond", "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(11px, 1.4vw, 14px);
+    letter-spacing: 0.32em;
+    text-indent: 0.32em; /* компенсация trailing letter-spacing */
+    text-transform: uppercase;
+    color: rgba(216, 178, 76, 0.78);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+}
+
+.splash-hint::before,
+.splash-hint::after {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    width: clamp(14px, 3vw, 28px);
+    height: 1px;
+    margin: 0 clamp(8px, 1.4vw, 14px);
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 58, 0.7), transparent);
+}
+
+.splash-inner.is-ready .splash-hint {
+    visibility: visible;
+    opacity: 1;
+    animation: splashHintPulse 2.6s ease-in-out 0.9s infinite;
+}
+
+@keyframes splashHintPulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1;    }
+}
+
+/* На splash принимаем клики, чтобы «тап в любом месте» работал */
+#splashScreen { cursor: pointer; }
+#splashScreen .splash-inner { pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+    .splash-inner.is-ready .splash-hint { animation: none; opacity: 0.85; }
+    .splash-inner, .splash-content { animation: none; }
 }
 
 @media (max-width: 700px) {
@@ -983,8 +1187,118 @@ h1 {
 <body>
 <div id="splashScreen" class="ui-screen">
     <div class="splash-inner">
-        <h2 class="splash-title">Azi by Bobby</h2>
-        <p class="splash-subtitle">Since 2026</p>
+        <div class="splash-frame" aria-hidden="true">
+            <span class="splash-corner splash-corner--tl">
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+                        <path d="M2 40 C 2 18, 18 2, 40 2" />
+                        <path d="M10 40 C 10 22, 22 10, 40 10" opacity="0.8" />
+                        <path d="M40 10 C 52 10, 58 18, 58 28 C 58 36, 52 42, 44 42 C 38 42, 34 38, 34 32 C 34 27, 38 24, 42 24" />
+                        <path d="M10 40 C 10 52, 18 58, 28 58 C 36 58, 42 52, 42 44 C 42 38, 38 34, 32 34 C 27 34, 24 38, 24 42" />
+                        <path d="M40 2 C 56 6, 68 12, 78 22" opacity="0.75" />
+                        <path d="M2 40 C 6 56, 12 68, 22 78" opacity="0.75" />
+                        <path d="M50 18 C 62 18, 72 24, 80 34" opacity="0.55" />
+                        <path d="M18 50 C 18 62, 24 72, 34 80" opacity="0.55" />
+                        <path d="M58 28 C 66 28, 74 34, 80 44" opacity="0.45" />
+                        <path d="M28 58 C 28 66, 34 74, 44 80" opacity="0.45" />
+                    </g>
+                    <g fill="currentColor">
+                        <circle cx="40" cy="2" r="1.6" />
+                        <circle cx="2" cy="40" r="1.6" />
+                        <circle cx="42" cy="24" r="1.3" />
+                        <circle cx="24" cy="42" r="1.3" />
+                        <circle cx="80" cy="22" r="1.1" opacity="0.85" />
+                        <circle cx="22" cy="80" r="1.1" opacity="0.85" />
+                    </g>
+                </svg>
+            </span>
+            <span class="splash-corner splash-corner--tr">
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+                        <path d="M2 40 C 2 18, 18 2, 40 2" />
+                        <path d="M10 40 C 10 22, 22 10, 40 10" opacity="0.8" />
+                        <path d="M40 10 C 52 10, 58 18, 58 28 C 58 36, 52 42, 44 42 C 38 42, 34 38, 34 32 C 34 27, 38 24, 42 24" />
+                        <path d="M10 40 C 10 52, 18 58, 28 58 C 36 58, 42 52, 42 44 C 42 38, 38 34, 32 34 C 27 34, 24 38, 24 42" />
+                        <path d="M40 2 C 56 6, 68 12, 78 22" opacity="0.75" />
+                        <path d="M2 40 C 6 56, 12 68, 22 78" opacity="0.75" />
+                        <path d="M50 18 C 62 18, 72 24, 80 34" opacity="0.55" />
+                        <path d="M18 50 C 18 62, 24 72, 34 80" opacity="0.55" />
+                        <path d="M58 28 C 66 28, 74 34, 80 44" opacity="0.45" />
+                        <path d="M28 58 C 28 66, 34 74, 44 80" opacity="0.45" />
+                    </g>
+                    <g fill="currentColor">
+                        <circle cx="40" cy="2" r="1.6" />
+                        <circle cx="2" cy="40" r="1.6" />
+                        <circle cx="42" cy="24" r="1.3" />
+                        <circle cx="24" cy="42" r="1.3" />
+                        <circle cx="80" cy="22" r="1.1" opacity="0.85" />
+                        <circle cx="22" cy="80" r="1.1" opacity="0.85" />
+                    </g>
+                </svg>
+            </span>
+            <span class="splash-corner splash-corner--bl">
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+                        <path d="M2 40 C 2 18, 18 2, 40 2" />
+                        <path d="M10 40 C 10 22, 22 10, 40 10" opacity="0.8" />
+                        <path d="M40 10 C 52 10, 58 18, 58 28 C 58 36, 52 42, 44 42 C 38 42, 34 38, 34 32 C 34 27, 38 24, 42 24" />
+                        <path d="M10 40 C 10 52, 18 58, 28 58 C 36 58, 42 52, 42 44 C 42 38, 38 34, 32 34 C 27 34, 24 38, 24 42" />
+                        <path d="M40 2 C 56 6, 68 12, 78 22" opacity="0.75" />
+                        <path d="M2 40 C 6 56, 12 68, 22 78" opacity="0.75" />
+                        <path d="M50 18 C 62 18, 72 24, 80 34" opacity="0.55" />
+                        <path d="M18 50 C 18 62, 24 72, 34 80" opacity="0.55" />
+                        <path d="M58 28 C 66 28, 74 34, 80 44" opacity="0.45" />
+                        <path d="M28 58 C 28 66, 34 74, 44 80" opacity="0.45" />
+                    </g>
+                    <g fill="currentColor">
+                        <circle cx="40" cy="2" r="1.6" />
+                        <circle cx="2" cy="40" r="1.6" />
+                        <circle cx="42" cy="24" r="1.3" />
+                        <circle cx="24" cy="42" r="1.3" />
+                        <circle cx="80" cy="22" r="1.1" opacity="0.85" />
+                        <circle cx="22" cy="80" r="1.1" opacity="0.85" />
+                    </g>
+                </svg>
+            </span>
+            <span class="splash-corner splash-corner--br">
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+                        <path d="M2 40 C 2 18, 18 2, 40 2" />
+                        <path d="M10 40 C 10 22, 22 10, 40 10" opacity="0.8" />
+                        <path d="M40 10 C 52 10, 58 18, 58 28 C 58 36, 52 42, 44 42 C 38 42, 34 38, 34 32 C 34 27, 38 24, 42 24" />
+                        <path d="M10 40 C 10 52, 18 58, 28 58 C 36 58, 42 52, 42 44 C 42 38, 38 34, 32 34 C 27 34, 24 38, 24 42" />
+                        <path d="M40 2 C 56 6, 68 12, 78 22" opacity="0.75" />
+                        <path d="M2 40 C 6 56, 12 68, 22 78" opacity="0.75" />
+                        <path d="M50 18 C 62 18, 72 24, 80 34" opacity="0.55" />
+                        <path d="M18 50 C 18 62, 24 72, 34 80" opacity="0.55" />
+                        <path d="M58 28 C 66 28, 74 34, 80 44" opacity="0.45" />
+                        <path d="M28 58 C 28 66, 34 74, 44 80" opacity="0.45" />
+                    </g>
+                    <g fill="currentColor">
+                        <circle cx="40" cy="2" r="1.6" />
+                        <circle cx="2" cy="40" r="1.6" />
+                        <circle cx="42" cy="24" r="1.3" />
+                        <circle cx="24" cy="42" r="1.3" />
+                        <circle cx="80" cy="22" r="1.1" opacity="0.85" />
+                        <circle cx="22" cy="80" r="1.1" opacity="0.85" />
+                    </g>
+                </svg>
+            </span>
+        </div>
+
+        <div class="splash-content">
+            <h1 class="splash-title">Azi</h1>
+            <div class="splash-divider">
+                <span class="splash-divider-line"></span>
+                <span class="splash-divider-diamond"></span>
+                <span class="splash-byline">by Bobby</span>
+                <span class="splash-divider-diamond"></span>
+                <span class="splash-divider-line"></span>
+            </div>
+            <p class="splash-since">Since 2026</p>
+        </div>
+
+        <p class="splash-hint" id="splashHint">Tap anywhere to continue</p>
     </div>
 </div>
 
@@ -2197,11 +2511,58 @@ function initGame() {
     applyPlayersCountSelection();
     gameRootEl.classList.remove("lobby-active");
     setUiLayerState("splash");
+    startSplashFlow();
+}
 
-    setTimeout(() => {
+function startSplashFlow() {
+    const splashInnerEl = splashScreenEl.querySelector(".splash-inner");
+    if (!splashInnerEl) {
         setUiLayerState("game");
         resetGame();
-    }, 2400);
+        return;
+    }
+
+    const MIN_SHOW_MS = 3000;
+    const startedAt = Date.now();
+    let ready = false;
+    let dismissed = false;
+
+    splashInnerEl.classList.remove("is-ready");
+
+    const leaveSplash = () => {
+        if (dismissed) return;
+        dismissed = true;
+        splashScreenEl.removeEventListener("click", onTap);
+        splashScreenEl.removeEventListener("touchstart", onTap);
+        splashScreenEl.removeEventListener("keydown", onKey);
+        document.removeEventListener("keydown", onKey);
+        setUiLayerState("game");
+        resetGame();
+    };
+
+    const onTap = (e) => {
+        if (!ready) return;
+        e.preventDefault();
+        leaveSplash();
+    };
+
+    const onKey = (e) => {
+        if (!ready) return;
+        if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+            e.preventDefault();
+            leaveSplash();
+        }
+    };
+
+    setTimeout(() => {
+        if (dismissed) return;
+        ready = true;
+        splashInnerEl.classList.add("is-ready");
+    }, MIN_SHOW_MS);
+
+    splashScreenEl.addEventListener("click", onTap);
+    splashScreenEl.addEventListener("touchstart", onTap, { passive: false });
+    document.addEventListener("keydown", onKey);
 }
 
 initGame();
