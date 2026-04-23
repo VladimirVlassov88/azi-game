@@ -1081,6 +1081,201 @@ h1 {
     .splash-inner, .splash-content { animation: none; }
 }
 
+/* ===== Auth + Main Menu screens (shared luxury style) ===== */
+.auth-panel,
+.menu-panel {
+    position: relative;
+    z-index: 2;
+    width: min(460px, 100% - 64px);
+    padding: clamp(26px, 5vw, 44px) clamp(22px, 4vw, 40px);
+    text-align: center;
+    color: #e6c86a;
+    animation: splashRise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.auth-brand {
+    margin: 0;
+    font-family: "Cormorant Garamond", "Playfair Display", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(52px, 9vw, 88px);
+    line-height: 1;
+    letter-spacing: 0.5px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #e6c86a 38%, #c9a23a 72%, #8c6a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.auth-brand-sub {
+    margin: 6px 0 22px;
+    font-family: "Cinzel", "Cormorant Garamond", "Times New Roman", serif;
+    font-size: clamp(11px, 1.5vw, 14px);
+    font-weight: 500;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    text-transform: uppercase;
+    color: #c9a23a;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 4px;
+    margin: 0 0 18px;
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    border-radius: 8px;
+    background: rgba(20, 6, 12, 0.55);
+}
+
+.auth-tabs.is-hidden { display: none; }
+
+.auth-tab {
+    background: transparent;
+    border: 0;
+    padding: 10px 12px;
+    color: #c9a23a;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-tab.is-active {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.2), rgba(140, 106, 42, 0.26));
+    color: #f7e3a5;
+    box-shadow: 0 0 14px rgba(216, 178, 76, 0.18) inset;
+}
+
+.auth-mode { display: none; }
+.auth-mode.is-active { display: block; }
+
+.auth-field {
+    margin: 0 0 12px;
+    text-align: left;
+}
+
+.auth-field label {
+    display: block;
+    margin: 0 0 6px;
+    padding-left: 2px;
+    font-family: "Cinzel", serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(216, 178, 76, 0.78);
+}
+
+.auth-field input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(201, 162, 58, 0.5);
+    border-radius: 7px;
+    color: #f3e3b3;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-field input::placeholder { color: rgba(216, 178, 76, 0.35); }
+
+.auth-field input:focus {
+    border-color: #d8b24c;
+    background: rgba(10, 4, 8, 0.7);
+    box-shadow: 0 0 0 3px rgba(216, 178, 76, 0.14);
+}
+
+.auth-btn {
+    display: block;
+    width: 100%;
+    margin: 14px 0 0;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1px solid rgba(201, 162, 58, 0.55);
+    color: #f7e3a5;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.auth-btn:hover { transform: translateY(-1px); }
+.auth-btn:active { transform: translateY(0); }
+.auth-btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+.auth-btn--primary {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.22), rgba(140, 106, 42, 0.3));
+    border-color: #d8b24c;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38), 0 0 14px rgba(216, 178, 76, 0.16) inset;
+}
+
+.auth-btn--ghost {
+    background: transparent;
+    color: rgba(216, 178, 76, 0.75);
+}
+
+.auth-error {
+    min-height: 18px;
+    margin: 10px 0 0;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 14px;
+    color: #e67a76;
+    letter-spacing: 0.01em;
+}
+
+.auth-switch {
+    margin: 16px 0 0;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 15px;
+    color: rgba(216, 178, 76, 0.75);
+}
+
+.auth-switch button {
+    background: none;
+    border: 0;
+    padding: 0 2px;
+    color: #f7e3a5;
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.auth-hint {
+    margin: 0 0 14px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 15px;
+    color: rgba(216, 178, 76, 0.85);
+}
+
+.auth-hint strong { color: #f7e3a5; font-weight: 600; }
+
+/* Main menu */
+.menu-welcome {
+    margin: 6px 0 26px;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 18px;
+    color: rgba(216, 178, 76, 0.85);
+}
+
+.menu-welcome strong { color: #f7e3a5; font-weight: 600; }
+
+.menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 @media (max-width: 700px) {
     :root {
         --trick-seat-half: min(144px, 44vw);
@@ -1298,7 +1493,84 @@ h1 {
             <p class="splash-since">Since 2026</p>
         </div>
 
-        <p class="splash-hint" id="splashHint">Tap anywhere to continue</p>
+        <p class="splash-hint" id="splashHint">Нажмите, чтобы продолжить</p>
+    </div>
+</div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="auth-panel">
+            <h2 class="auth-brand">Azi</h2>
+            <p class="auth-brand-sub">Добро пожаловать</p>
+
+            <div class="auth-tabs" data-auth-tabs>
+                <button type="button" class="auth-tab is-active" data-mode="login">Вход</button>
+                <button type="button" class="auth-tab" data-mode="signup">Регистрация</button>
+            </div>
+
+            <form class="auth-mode is-active" data-mode="login" id="authLoginForm" novalidate autocomplete="off">
+                <div class="auth-field">
+                    <label for="authLoginEmail">Почта или телефон</label>
+                    <input type="text" id="authLoginEmail" name="email" autocomplete="username" required />
+                </div>
+                <div class="auth-field">
+                    <label for="authLoginPassword">Пароль</label>
+                    <input type="password" id="authLoginPassword" name="password" autocomplete="current-password" required />
+                </div>
+                <button class="auth-btn auth-btn--primary" type="submit">Войти</button>
+                <p class="auth-error" data-error></p>
+                <p class="auth-switch">Нет аккаунта? <button type="button" data-goto="signup">Регистрация</button></p>
+            </form>
+
+            <form class="auth-mode" data-mode="signup" id="authSignupForm" novalidate autocomplete="off">
+                <div class="auth-field">
+                    <label for="authSignupName">Имя</label>
+                    <input type="text" id="authSignupName" name="name" autocomplete="name" required />
+                </div>
+                <div class="auth-field">
+                    <label for="authSignupEmail">Почта или телефон</label>
+                    <input type="text" id="authSignupEmail" name="email" autocomplete="username" required />
+                </div>
+                <div class="auth-field">
+                    <label for="authSignupPassword">Пароль</label>
+                    <input type="password" id="authSignupPassword" name="password" autocomplete="new-password" required />
+                </div>
+                <button class="auth-btn auth-btn--primary" type="submit">Создать аккаунт</button>
+                <p class="auth-error" data-error></p>
+                <p class="auth-switch">Уже есть аккаунт? <button type="button" data-goto="login">Вход</button></p>
+            </form>
+
+            <form class="auth-mode" data-mode="verify" id="authVerifyForm" novalidate autocomplete="off">
+                <p class="auth-hint">Мы отправили код подтверждения на <strong data-verify-target>вашу почту</strong></p>
+                <div class="auth-field">
+                    <label for="authVerifyCode">Код подтверждения</label>
+                    <input type="text" id="authVerifyCode" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required />
+                </div>
+                <button class="auth-btn auth-btn--primary" type="submit">Продолжить</button>
+                <p class="auth-error" data-error></p>
+                <p class="auth-switch">
+                    <button type="button" data-resend>Отправить код ещё раз</button>
+                    <span> · </span>
+                    <button type="button" data-goto="login">Назад</button>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MAIN MENU ============ -->
+<div id="mainMenuScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="menu-panel">
+            <h2 class="auth-brand">Azi</h2>
+            <p class="auth-brand-sub">Главное меню</p>
+            <p class="menu-welcome">С возвращением, <strong data-menu-name>Игрок</strong></p>
+            <div class="menu-actions">
+                <button type="button" class="auth-btn auth-btn--primary" data-menu-play>Играть</button>
+                <button type="button" class="auth-btn auth-btn--ghost" data-menu-logout>Выйти</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1444,7 +1716,6 @@ let actionLock = false;
 let dealingInProgress = false;
 let selectedPlayersCount = 2;
 let gamePlayers = [];
-let uiLayerState = "splash";
 
 const fullDeckSize = 27;
 
@@ -2501,29 +2772,418 @@ function applyPlayersCountSelection() {
     playedAreaEl.dataset.players = String(selectedPlayersCount);
 }
 
+/* ==========================================================================
+   AUTH / SESSION / SCREEN ARCHITECTURE
+   --------------------------------------------------------------------------
+   Здесь собраны слои, которые потом легко заменить на реальный backend:
+     - sessionStore   — персистентность (localStorage), легко меняется на cookie/JWT
+     - authService    — API-слой (сейчас mock, все методы async → { ok, user?, error? })
+     - appState       — единый источник правды про экраны/режимы/юзера
+     - setScreen/setAuthMode — менеджер UI-переходов
+   ========================================================================== */
+
+const SCREENS = Object.freeze({
+    SPLASH: "splash",
+    AUTH: "auth",
+    MAIN_MENU: "mainMenu",
+    GAME: "game",
+});
+
+const AUTH_MODES = Object.freeze({
+    LOGIN: "login",
+    SIGNUP: "signup",
+    VERIFY: "verify",
+});
+
+/* ---------- UI TEXT (ru) ----------
+   Единый словарь пользовательских текстов. Держим здесь, чтобы:
+     1) легко пройти i18n-аудит;
+     2) при появлении новых экранов (лобби, правила, об игре) не искать строки по DOM;
+     3) подмена языка в будущем — тривиальна (свитч словаря).
+   Ключи, которых пока нет в DOM (лобби), заранее переведены под будущее использование. */
+const UI_TEXT = Object.freeze({
+    splash: {
+        hint:        "Нажмите, чтобы продолжить",
+    },
+    auth: {
+        brand:       "Azi",
+        subtitle:    "Добро пожаловать",
+        tabLogin:    "Вход",
+        tabSignup:   "Регистрация",
+        fieldName:         "Имя",
+        fieldEmail:        "Почта или телефон",
+        fieldPassword:     "Пароль",
+        fieldCode:         "Код подтверждения",
+        btnLogin:          "Войти",
+        btnSignup:         "Создать аккаунт",
+        btnVerify:         "Продолжить",
+        btnSendCode:       "Отправить код",
+        btnResendCode:     "Отправить код ещё раз",
+        btnBack:           "Назад",
+        btnForgot:         "Забыли пароль?",
+        switchToSignup:    "Нет аккаунта?",
+        switchToLogin:     "Уже есть аккаунт?",
+        verifyHintPrefix:  "Мы отправили код подтверждения на",
+        verifyTargetDefault: "вашу почту",
+        errEmptyCreds:     "Введите почту и пароль",
+        errShortCode:      "Введите код из 4+ символов",
+        errLoginFailed:    "Не удалось войти",
+        errSignupFailed:   "Не удалось зарегистрироваться",
+        errInvalidCode:    "Неверный код",
+    },
+    menu: {
+        subtitle:        "Главное меню",
+        welcomeBack:     "С возвращением,",
+        fallbackName:    "Игрок",
+        btnPlay:         "Играть",
+        btnCreateTable:  "Создать стол",
+        btnJoinTable:    "Присоединиться к столу",
+        btnRules:        "Правила",
+        btnAboutGame:    "Об игре",
+        btnLogout:       "Выйти",
+        tableTypePublic:  "Публичный",
+        tableTypePrivate: "Приватный",
+    },
+});
+
+const appState = {
+    currentScreen: SCREENS.SPLASH,
+    authMode: AUTH_MODES.LOGIN,
+    isAuthenticated: false,
+    pendingAuthData: null,
+    user: null,
+};
+
+/* ---------- sessionStore ---------- */
+const SESSION_STORAGE_KEY = "azi.session.v1";
+
+const sessionStore = {
+    load() {
+        try {
+            const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            return (data && data.user) ? data : null;
+        } catch (e) {
+            return null;
+        }
+    },
+    save(session) {
+        try {
+            localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+        } catch (e) { /* private mode, quota, etc. — silently ignore */ }
+    },
+    clear() {
+        try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) { /* ignore */ }
+    },
+};
+
+/* ---------- authService (mock, backend-ready) ----------
+   Все методы async и возвращают { ok, user?, pending?, error? }.
+   Чтобы подключить сервер — подменить тела методов на fetch('/api/...'),
+   наружу ничего менять не придётся. */
+
+function _fakeDelay(ms) {
+    return new Promise((r) => setTimeout(r, ms == null ? 260 : ms));
+}
+function _mockToken() {
+    return "local-" + Math.random().toString(36).slice(2);
+}
+function _nameFromEmail(email) {
+    return String(email || "").split("@")[0] || "Игрок";
+}
+function _buildUser(email, name) {
+    return {
+        id: "local-" + Math.random().toString(36).slice(2),
+        email: String(email || ""),
+        name: name || _nameFromEmail(email),
+        createdAt: new Date().toISOString(),
+    };
+}
+
+const authService = {
+    async login({ email, password }) {
+        await _fakeDelay();
+        if (!email || !password) {
+            return { ok: false, error: UI_TEXT.auth.errEmptyCreds };
+        }
+        const user = _buildUser(email);
+        sessionStore.save({ user, token: _mockToken() });
+        return { ok: true, user };
+    },
+
+    async signup({ email, password, name }) {
+        await _fakeDelay();
+        if (!email || !password) {
+            return { ok: false, error: UI_TEXT.auth.errEmptyCreds };
+        }
+        return { ok: true, pending: { email, name: name || _nameFromEmail(email) } };
+    },
+
+    async verify({ email, code, name }) {
+        await _fakeDelay();
+        if (!code || String(code).length < 4) {
+            return { ok: false, error: UI_TEXT.auth.errShortCode };
+        }
+        const user = _buildUser(email, name);
+        sessionStore.save({ user, token: _mockToken() });
+        return { ok: true, user };
+    },
+
+    async resendCode({ email }) {
+        await _fakeDelay(200);
+        return { ok: true };
+    },
+
+    async logout() {
+        await _fakeDelay(120);
+        sessionStore.clear();
+        return { ok: true };
+    },
+
+    async loadSession() {
+        const s = sessionStore.load();
+        return (s && s.user) ? { ok: true, user: s.user } : { ok: false };
+    },
+};
+
+/* ---------- DOM refs для экранов ---------- */
+const authScreenEl = document.getElementById("authScreen");
+const mainMenuScreenEl = document.getElementById("mainMenuScreen");
+
+const screenEls = {
+    [SCREENS.SPLASH]: splashScreenEl,
+    [SCREENS.AUTH]: authScreenEl,
+    [SCREENS.MAIN_MENU]: mainMenuScreenEl,
+};
+
+/* ---------- Screen manager ---------- */
+function setScreen(screen) {
+    appState.currentScreen = screen;
+
+    Object.keys(screenEls).forEach((name) => {
+        const el = screenEls[name];
+        if (!el) return;
+        el.classList.toggle("hidden", name !== screen);
+    });
+
+    if (screen === SCREENS.AUTH) renderAuthScreen();
+    if (screen === SCREENS.MAIN_MENU) renderMainMenu();
+}
+
+function setAuthMode(mode) {
+    appState.authMode = mode;
+
+    document.querySelectorAll("#authScreen .auth-mode").forEach((el) => {
+        el.classList.toggle("is-active", el.dataset.mode === mode);
+    });
+    document.querySelectorAll("#authScreen [data-auth-tabs] .auth-tab").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.mode === mode);
+    });
+
+    const tabsEl = document.querySelector("#authScreen [data-auth-tabs]");
+    if (tabsEl) tabsEl.classList.toggle("is-hidden", mode === AUTH_MODES.VERIFY);
+
+    // при входе в mode — чистим ошибки и фокусим первый input
+    const activeForm = document.querySelector(`#authScreen .auth-mode[data-mode="${mode}"]`);
+    if (activeForm) {
+        const errEl = activeForm.querySelector("[data-error]");
+        if (errEl) errEl.textContent = "";
+        const firstInput = activeForm.querySelector("input");
+        if (firstInput) setTimeout(() => firstInput.focus({ preventScroll: true }), 40);
+    }
+}
+
+/* Backward-compat: кое-где в игровом коде ещё может вызываться setUiLayerState. */
 function setUiLayerState(nextState) {
-    uiLayerState = nextState;
-    splashScreenEl.classList.toggle("hidden", uiLayerState !== "splash");
+    if (nextState === "splash") setScreen(SCREENS.SPLASH);
+    else if (nextState === "game") setScreen(SCREENS.GAME);
+    else setScreen(nextState);
 }
 
-function initGame() {
-    renderTrumpOnTable();
-    applyPlayersCountSelection();
-    gameRootEl.classList.remove("lobby-active");
-    setUiLayerState("splash");
-    startSplashFlow();
+/* ---------- Декоративная рамка для всех .ui-screen[data-frame] ---------- */
+function injectSplashFrames() {
+    const CORNER_SVG = `
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+                <path d="M2 40 C 2 18, 18 2, 40 2" />
+                <path d="M10 40 C 10 22, 22 10, 40 10" opacity="0.8" />
+                <path d="M40 10 C 52 10, 58 18, 58 28 C 58 36, 52 42, 44 42 C 38 42, 34 38, 34 32 C 34 27, 38 24, 42 24" />
+                <path d="M10 40 C 10 52, 18 58, 28 58 C 36 58, 42 52, 42 44 C 42 38, 38 34, 32 34 C 27 34, 24 38, 24 42" />
+                <path d="M40 2 C 56 6, 68 12, 78 22" opacity="0.75" />
+                <path d="M2 40 C 6 56, 12 68, 22 78" opacity="0.75" />
+                <path d="M50 18 C 62 18, 72 24, 80 34" opacity="0.55" />
+                <path d="M18 50 C 18 62, 24 72, 34 80" opacity="0.55" />
+                <path d="M58 28 C 66 28, 74 34, 80 44" opacity="0.45" />
+                <path d="M28 58 C 28 66, 34 74, 44 80" opacity="0.45" />
+            </g>
+            <g fill="currentColor">
+                <circle cx="40" cy="2" r="1.6" />
+                <circle cx="2" cy="40" r="1.6" />
+                <circle cx="42" cy="24" r="1.3" />
+                <circle cx="24" cy="42" r="1.3" />
+                <circle cx="80" cy="22" r="1.1" opacity="0.85" />
+                <circle cx="22" cy="80" r="1.1" opacity="0.85" />
+            </g>
+        </svg>`;
+    document.querySelectorAll(".ui-screen[data-frame='true']").forEach((screen) => {
+        const inner = screen.querySelector(".splash-inner");
+        if (!inner || inner.querySelector(".splash-frame")) return;
+        const frame = document.createElement("div");
+        frame.className = "splash-frame";
+        frame.setAttribute("aria-hidden", "true");
+        ["tl", "tr", "bl", "br"].forEach((pos) => {
+            const span = document.createElement("span");
+            span.className = "splash-corner splash-corner--" + pos;
+            span.innerHTML = CORNER_SVG;
+            frame.appendChild(span);
+        });
+        inner.prepend(frame);
+    });
 }
 
-function startSplashFlow() {
-    const splashInnerEl = splashScreenEl.querySelector(".splash-inner");
-    if (!splashInnerEl) {
-        setUiLayerState("game");
-        resetGame();
-        return;
+/* ---------- Auth UI handlers ---------- */
+function bindAuthHandlers() {
+    if (!authScreenEl) return;
+
+    authScreenEl.querySelectorAll("[data-auth-tabs] .auth-tab").forEach((btn) => {
+        btn.addEventListener("click", () => setAuthMode(btn.dataset.mode));
+    });
+
+    authScreenEl.querySelectorAll("[data-goto]").forEach((btn) => {
+        btn.addEventListener("click", () => setAuthMode(btn.dataset.goto));
+    });
+
+    const loginForm = document.getElementById("authLoginForm");
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errorEl = loginForm.querySelector("[data-error]");
+            errorEl.textContent = "";
+            const submitBtn = loginForm.querySelector("button[type='submit']");
+            submitBtn.disabled = true;
+            try {
+                const data = Object.fromEntries(new FormData(loginForm).entries());
+                const res = await authService.login(data);
+                if (!res.ok) { errorEl.textContent = res.error || UI_TEXT.auth.errLoginFailed; return; }
+                appState.isAuthenticated = true;
+                appState.user = res.user;
+                appState.pendingAuthData = null;
+                setScreen(SCREENS.MAIN_MENU);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
     }
 
+    const signupForm = document.getElementById("authSignupForm");
+    if (signupForm) {
+        signupForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errorEl = signupForm.querySelector("[data-error]");
+            errorEl.textContent = "";
+            const submitBtn = signupForm.querySelector("button[type='submit']");
+            submitBtn.disabled = true;
+            try {
+                const data = Object.fromEntries(new FormData(signupForm).entries());
+                const res = await authService.signup(data);
+                if (!res.ok) { errorEl.textContent = res.error || UI_TEXT.auth.errSignupFailed; return; }
+                appState.pendingAuthData = {
+                    email: data.email,
+                    password: data.password,
+                    name: (res.pending && res.pending.name) || data.name,
+                };
+                setAuthMode(AUTH_MODES.VERIFY);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    const verifyForm = document.getElementById("authVerifyForm");
+    if (verifyForm) {
+        verifyForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errorEl = verifyForm.querySelector("[data-error]");
+            errorEl.textContent = "";
+            const submitBtn = verifyForm.querySelector("button[type='submit']");
+            submitBtn.disabled = true;
+            try {
+                const code = new FormData(verifyForm).get("code");
+                const pending = appState.pendingAuthData || {};
+                const res = await authService.verify({ email: pending.email, code, name: pending.name });
+                if (!res.ok) { errorEl.textContent = res.error || UI_TEXT.auth.errInvalidCode; return; }
+                appState.isAuthenticated = true;
+                appState.user = res.user;
+                appState.pendingAuthData = null;
+                setScreen(SCREENS.MAIN_MENU);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+    const resendBtn = authScreenEl.querySelector("[data-resend]");
+    if (resendBtn) {
+        resendBtn.addEventListener("click", async () => {
+            const email = appState.pendingAuthData && appState.pendingAuthData.email;
+            if (!email) return;
+            resendBtn.disabled = true;
+            try { await authService.resendCode({ email }); }
+            finally { resendBtn.disabled = false; }
+        });
+    }
+}
+
+function renderAuthScreen() {
+    document.querySelectorAll("#authScreen [data-error]").forEach((el) => { el.textContent = ""; });
+    const tEl = document.querySelector("#authScreen [data-verify-target]");
+    if (tEl) {
+        tEl.textContent = (appState.pendingAuthData && appState.pendingAuthData.email) || UI_TEXT.auth.verifyTargetDefault;
+    }
+}
+
+/* ---------- Main menu handlers ---------- */
+function bindMainMenuHandlers() {
+    if (!mainMenuScreenEl) return;
+
+    const playBtn = mainMenuScreenEl.querySelector("[data-menu-play]");
+    if (playBtn) {
+        playBtn.addEventListener("click", () => {
+            setScreen(SCREENS.GAME);
+            resetGame();
+        });
+    }
+
+    const logoutBtn = mainMenuScreenEl.querySelector("[data-menu-logout]");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            logoutBtn.disabled = true;
+            try { await authService.logout(); }
+            finally { logoutBtn.disabled = false; }
+            appState.isAuthenticated = false;
+            appState.user = null;
+            appState.pendingAuthData = null;
+            setAuthMode(AUTH_MODES.LOGIN);
+            setScreen(SCREENS.AUTH);
+        });
+    }
+}
+
+function renderMainMenu() {
+    const nameEl = document.querySelector("#mainMenuScreen [data-menu-name]");
+    if (nameEl) {
+        const name = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
+        nameEl.textContent = name;
+    }
+}
+
+/* ---------- Splash flow (минимум 3с + tap) ---------- */
+function startSplashFlow() {
+    const splashInnerEl = splashScreenEl.querySelector(".splash-inner");
+    if (!splashInnerEl) { goAfterSplash(); return; }
+
     const MIN_SHOW_MS = 3000;
-    const startedAt = Date.now();
     let ready = false;
     let dismissed = false;
 
@@ -2534,10 +3194,8 @@ function startSplashFlow() {
         dismissed = true;
         splashScreenEl.removeEventListener("click", onTap);
         splashScreenEl.removeEventListener("touchstart", onTap);
-        splashScreenEl.removeEventListener("keydown", onKey);
         document.removeEventListener("keydown", onKey);
-        setUiLayerState("game");
-        resetGame();
+        goAfterSplash();
     };
 
     const onTap = (e) => {
@@ -2545,7 +3203,6 @@ function startSplashFlow() {
         e.preventDefault();
         leaveSplash();
     };
-
     const onKey = (e) => {
         if (!ready) return;
         if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
@@ -2563,6 +3220,45 @@ function startSplashFlow() {
     splashScreenEl.addEventListener("click", onTap);
     splashScreenEl.addEventListener("touchstart", onTap, { passive: false });
     document.addEventListener("keydown", onKey);
+}
+
+function goAfterSplash() {
+    if (appState.isAuthenticated && appState.user) {
+        setScreen(SCREENS.MAIN_MENU);
+    } else {
+        setAuthMode(AUTH_MODES.LOGIN);
+        setScreen(SCREENS.AUTH);
+    }
+}
+
+/* ---------- Bootstrap ---------- */
+async function bootstrap() {
+    renderTrumpOnTable();
+    applyPlayersCountSelection();
+    gameRootEl.classList.remove("lobby-active");
+
+    injectSplashFrames();
+    bindAuthHandlers();
+    bindMainMenuHandlers();
+
+    try {
+        const res = await authService.loadSession();
+        if (res.ok) {
+            appState.isAuthenticated = true;
+            appState.user = res.user;
+        }
+    } catch (e) { /* fail silent — просто пойдём на auth */ }
+
+    setScreen(SCREENS.SPLASH);
+    startSplashFlow();
+}
+
+function initGame() {
+    bootstrap().catch((err) => {
+        console.error("bootstrap failed", err);
+        setAuthMode(AUTH_MODES.LOGIN);
+        setScreen(SCREENS.AUTH);
+    });
 }
 
 initGame();
