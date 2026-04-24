@@ -2060,6 +2060,77 @@ h1 {
     margin-bottom: 18px;
     line-height: 1.45;
 }
+/* Таймер удержания места (только для away-режима). */
+.spectator-timer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin: 0 auto 16px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(36, 12, 18, 0.9), rgba(24, 8, 14, 0.95));
+    border: 1px solid rgba(218, 174, 98, 0.5);
+    box-shadow: inset 0 1px 0 rgba(247, 227, 165, 0.15);
+}
+.spectator-timer.hidden { display: none !important; }
+.spectator-timer-label {
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(243, 219, 160, 0.75);
+}
+.spectator-timer-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #f7e3a5;
+    font-variant-numeric: tabular-nums;
+}
+/* Away-плашка на самом seat (место сохранено за отошедшим игроком). */
+.seat-away-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 2px 9px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #f3dba0;
+    background: linear-gradient(135deg, rgba(64, 24, 32, 0.95), rgba(36, 12, 20, 0.95));
+    border: 1px solid rgba(218, 174, 98, 0.65);
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(247, 227, 165, 0.2);
+}
+.seat-away-pill[data-seat-away-timer]::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e5b066;
+    box-shadow: 0 0 6px rgba(229, 176, 102, 0.8);
+    animation: awayDotPulse 1.4s ease-in-out infinite;
+}
+@keyframes awayDotPulse {
+    0%, 100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+}
+.seat-away-timer {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #f7e3a5;
+}
+.game-seat.is-away .seat-card {
+    opacity: 0.75;
+}
+.game-seat.is-away .seat-hand .cards {
+    opacity: 0.25;
+    pointer-events: none;
+    filter: grayscale(0.4);
+}
 .spectator-actions {
     display: flex;
     flex-direction: column;
@@ -5132,14 +5203,20 @@ h1 {
         </div>
     </div>
 
-    <!-- Наблюдатель: оверлей поверх арены, когда игрок встал из-за стола. -->
-    <div class="spectator-overlay hidden" id="spectatorOverlay" role="status">
+    <!-- Оверлей away-режима. Показывается, когда игрок нажал «Встать»:
+         место за ним удерживается 7 минут, идёт обратный отсчёт, доступны
+         «Вернуться» (возврат в игру) и «Покинуть стол» (полный выход в лобби). -->
+    <div class="spectator-overlay hidden" id="spectatorOverlay" role="status" aria-live="polite">
         <div class="spectator-card">
-            <div class="spectator-title">Вы наблюдаете за столом</div>
-            <div class="spectator-hint">Вы вышли из партии, но остались в комнате.</div>
+            <div class="spectator-title" data-spectator-title>Вы отошли от стола</div>
+            <div class="spectator-hint" data-spectator-hint>Ваше место сохранено. Вернитесь, чтобы продолжить игру.</div>
+            <div class="spectator-timer hidden" data-spectator-timer aria-live="polite">
+                <span class="spectator-timer-label">Место занято</span>
+                <span class="spectator-timer-value" data-spectator-timer-value>07:00</span>
+            </div>
             <div class="spectator-actions">
-                <button type="button" class="spectator-sit" data-spectator-sit>Сесть снова</button>
-                <button type="button" class="spectator-lobby" data-spectator-lobby>В список столов</button>
+                <button type="button" class="spectator-sit" data-spectator-sit>Вернуться</button>
+                <button type="button" class="spectator-lobby" data-spectator-lobby>Покинуть стол</button>
             </div>
         </div>
     </div>
@@ -6439,6 +6516,18 @@ const UI_TEXT = Object.freeze({
         statusMessage:   "Идёт текущая партия. Вы подключены к столу и ожидаете следующую раздачу.",
         nextHandSoon:    "Раздача завершена. Начинаем следующую…",
     },
+    /* Тексты для временного выхода («Встать»): место сохраняется на 7 минут. */
+    seatAway: {
+        statusShort:     "Отошёл",
+        pillLabel:       "Место занято",
+        overlayTitle:    "Вы отошли от стола",
+        overlayHint:     "Ваше место сохранено. Вернитесь, чтобы продолжить игру.",
+        overlayHintTime: "Ваше место сохранено на 7 минут. Вернитесь до окончания таймера.",
+        overlayTimeout:  "Время истекло — место освобождено.",
+        btnReturn:       "Вернуться",
+        btnLobby:        "Покинуть стол",
+        statusMessage:   "Вы отошли от стола. Место удерживается за вами.",
+    },
 });
 
 const appState = {
@@ -6493,20 +6582,23 @@ const appState = {
        садится как waiting (не участвует в текущей раздаче). Только созданные
        пользователем пустые столы идут со status==="waiting". */
     tables: [
-        { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low",  status: "playing", isListed: true },
-        { id: 18, stake: 100,   players: 4, capacity: 6, tier: "low",  status: "playing", isListed: true },
-        { id: 22, stake: 150,   players: 1, capacity: 4, tier: "low",  status: "playing", isListed: true },
-        { id: 27, stake: 200,   players: 3, capacity: 6, tier: "low",  status: "playing", isListed: true },
-        { id: 34, stake: 200,   players: 4, capacity: 6, tier: "low",  status: "playing", isListed: true },
-        { id: 41, stake: 300,   players: 5, capacity: 6, tier: "low",  status: "playing", isListed: true },
-        { id: 45, stake: 500,   players: 5, capacity: 6, tier: "low",  status: "playing", isListed: true },
-        { id: 52, stake: 750,   players: 2, capacity: 4, tier: "mid",  status: "playing", isListed: true },
-        { id: 58, stake: 1000,  players: 2, capacity: 6, tier: "mid",  status: "playing", isListed: true },
-        { id: 63, stake: 1000,  players: 6, capacity: 6, tier: "mid",  status: "playing", isListed: true },
-        { id: 71, stake: 1500,  players: 3, capacity: 6, tier: "mid",  status: "playing", isListed: true },
-        { id: 78, stake: 2000,  players: 4, capacity: 6, tier: "high", status: "playing", isListed: true },
-        { id: 82, stake: 3000,  players: 1, capacity: 4, tier: "high", status: "playing", isListed: true },
-        { id: 88, stake: 5000,  players: 2, capacity: 4, tier: "high", status: "playing", isListed: true },
+        /* Смесь столов в состоянии "playing" (игра уже идёт, новый игрок войдёт
+           как waiting) и "waiting" (стол в lobby, новая раздача стартует сразу
+           после посадки). Это проверяет оба сценария жизненного цикла стола. */
+        { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low",  status: "playing", isListed: true, type: "public" },
+        { id: 18, stake: 100,   players: 3, capacity: 6, tier: "low",  status: "waiting", isListed: true, type: "public" },
+        { id: 22, stake: 150,   players: 1, capacity: 4, tier: "low",  status: "waiting", isListed: true, type: "public" },
+        { id: 27, stake: 200,   players: 3, capacity: 6, tier: "low",  status: "playing", isListed: true, type: "public" },
+        { id: 34, stake: 200,   players: 2, capacity: 6, tier: "low",  status: "waiting", isListed: true, type: "public" },
+        { id: 41, stake: 300,   players: 5, capacity: 6, tier: "low",  status: "playing", isListed: true, type: "public" },
+        { id: 45, stake: 500,   players: 3, capacity: 6, tier: "low",  status: "waiting", isListed: true, type: "public" },
+        { id: 52, stake: 750,   players: 2, capacity: 4, tier: "mid",  status: "playing", isListed: true, type: "public" },
+        { id: 58, stake: 1000,  players: 1, capacity: 6, tier: "mid",  status: "waiting", isListed: true, type: "public" },
+        { id: 63, stake: 1000,  players: 5, capacity: 6, tier: "mid",  status: "playing", isListed: true, type: "public" },
+        { id: 71, stake: 1500,  players: 3, capacity: 6, tier: "mid",  status: "waiting", isListed: true, type: "public" },
+        { id: 78, stake: 2000,  players: 4, capacity: 6, tier: "high", status: "playing", isListed: true, type: "public" },
+        { id: 82, stake: 3000,  players: 1, capacity: 4, tier: "high", status: "waiting", isListed: true, type: "public" },
+        { id: 88, stake: 5000,  players: 2, capacity: 4, tier: "high", status: "playing", isListed: true, type: "public" },
         { id: 91, stake: 10000, players: 3, capacity: 4, tier: "vip",  status: "playing", isListed: true },
         { id: 99, stake: 25000, players: 1, capacity: 4, tier: "vip",  status: "playing", isListed: true },
     ],
@@ -7070,11 +7162,12 @@ function bindGameTopbarHandlers() {
     const rootEl = document.getElementById("gameRoot");
     if (!rootEl) return;
 
-    /* "Лобби" = вернуться в список столов ("Найти стол"), а не в главный хаб.
-       Это именно лобби комнат, поэтому логично возвращать именно сюда. */
+    /* "Лобби" = ПОЛНЫЙ выход со стола. Место сразу освобождается, игрок
+       удаляется из seatedPlayers (status === "removed"), далее — на экран
+       "Найти стол". Отличается от "Встать", которое сохраняет место на 7 минут. */
     const lobbyBtn = rootEl.querySelector("[data-game-lobby]");
     if (lobbyBtn) lobbyBtn.addEventListener("click", () => {
-        setScreen(SCREENS.FIND_TABLE);
+        engineExitTable({ navigateToLobby: true });
     });
 
     /* "Пригласить" — открыть модалку приглашений (видна только в waiting-режиме
@@ -7343,6 +7436,12 @@ function bindFindTableHandlers() {
             tier:     tbl.tier,
             capacity: tbl.capacity,
             players:  tbl.players + 1, // +1 = локальный игрок только что сел
+            /* Фаза / тип / владелец стола пробрасываются в resetGame(), чтобы
+               правильно выбрать сценарий старта (см. tablePhaseFromStatus). */
+            status:   tbl.status || "playing",
+            type:     tbl.type || "public",
+            ownerId:  tbl.ownerId || null,
+            isListed: tbl.isListed !== false,
         };
         selectedPlayersCount = appState.findTable.currentTable.players;
         setScreen(SCREENS.GAME);
@@ -7858,6 +7957,130 @@ const engine = {
     pendingAuctionResolve: false,
 };
 
+/* ======================================================================
+   TABLE LIFECYCLE API
+   ======================================================================
+   Публичные функции-обёртки над engine. Дают ясную семантику стола:
+   стол — это живой матч со своей фазой, участниками текущей раздачи и
+   списком ожидающих следующую. Это то, что управляет «жизнью» стола,
+   а не просто отрисовкой UI.
+
+   Маппинг engine.phase → table.phase:
+     "idle"     → "lobby"            (стол не инициализирован)
+     "waiting"  → "waitingPlayers"   (lobby, ждём минимум игроков)
+     "dealing"  → "bidding"          (короткая фаза раздачи)
+     "auction"  → "bidding"          (идут торги)
+     "play"     → "playing"          (разыгрывают взятки)
+     "gameover" → "roundFinished"    (пауза перед следующей раздачей)
+
+   Состав игроков:
+     activePlayers  — участвуют в ТЕКУЩЕЙ раздаче (карты на руках + ходят)
+     waitingPlayers — сели во время идущей раздачи, ждут следующую
+     seatedPlayers  — сели в lobby, ждут первой раздачи
+     awayPlayers    — временно отсутствуют (место занято AWAY_KICK_MS)
+   ====================================================================== */
+
+const TABLE_MIN_PLAYERS = 2;
+
+function tableGetPhase() {
+    if (!engine.currentTable) return "lobby";
+    const p = engine.phase;
+    if (p === "waiting")  return "waitingPlayers";
+    if (p === "dealing")  return "bidding";
+    if (p === "auction")  return "bidding";
+    if (p === "play")     return "playing";
+    if (p === "gameover") return "roundFinished";
+    return "lobby";
+}
+
+function tableHasActiveRound() {
+    const p = engine.phase;
+    return p === "dealing" || p === "auction" || p === "play";
+}
+
+function tableActivePlayers() {
+    return engine.players.filter((p) => p.status === "active");
+}
+
+function tableWaitingPlayers() {
+    return engine.players.filter((p) => p.status === "waiting");
+}
+
+function tableSeatedOnlyPlayers() {
+    return engine.players.filter((p) => p.status === "seated");
+}
+
+function tableAwayPlayers() {
+    return engine.players.filter((p) => p.status === "away");
+}
+
+/** Все, кто держит за собой место (включая away — они заняли слот). */
+function tableSeatedPlayers() {
+    return engine.players.filter((p) =>
+        p.status === "active"  ||
+        p.status === "seated"  ||
+        p.status === "waiting" ||
+        p.status === "away"
+    );
+}
+
+/** Игроки, готовые войти в СЛЕДУЮЩУЮ раздачу (не away, не removed/spectator). */
+function tableReadyForRound() {
+    return engine.players.filter((p) =>
+        p.status === "active"  ||
+        p.status === "seated"  ||
+        p.status === "waiting"
+    );
+}
+
+/**
+ * Можно ли запустить новую раздачу прямо сейчас.
+ * Требования: стол инициализирован, активной раздачи нет, и за столом
+ * достаточно «живых» игроков.
+ */
+function tableCanStartRound() {
+    if (!engine.currentTable) return false;
+    if (tableHasActiveRound()) return false;
+    return tableReadyForRound().length >= TABLE_MIN_PLAYERS;
+}
+
+/**
+ * Запустить новую раздачу. Безопасная точка входа: если раздача уже идёт —
+ * no-op; если игроков мало — переводит стол в waitingPlayers; иначе
+ * промоутит seated/waiting → active, раздаёт карты, стартует торги.
+ */
+function tableStartRound() {
+    if (!engine.currentTable) return false;
+    if (tableHasActiveRound()) return false;
+
+    if (!tableCanStartRound()) {
+        /* Недостаточно игроков — стол ждёт. Это валидное состояние. */
+        engine.phase = "waiting";
+        if (typeof renderGameTopbar === "function") renderGameTopbar();
+        if (typeof setMessage === "function") {
+            setMessage(UI_TEXT && UI_TEXT.seatWaiting
+                ? "Ожидаем, пока игроки займут места."
+                : "Waiting for players...");
+        }
+        return false;
+    }
+
+    engineStartNextHand();
+    return true;
+}
+
+/**
+ * Вызывается после любых изменений состава (посадка/выход/возврат из away).
+ * Если стол в lobby/waiting и собралось достаточно игроков — автостарт.
+ * Если раздача уже идёт — ничего не трогает.
+ */
+function tableMaybeAutoStart() {
+    if (!engine.currentTable) return;
+    if (tableHasActiveRound()) return;
+    if (engine.phase === "gameover") return; /* ждём плановый engineStartNextHand */
+    if (tableCanStartRound()) tableStartRound();
+}
+
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
 
 function makeAvatarSvg() {
@@ -7876,7 +8099,21 @@ function makePlayerMarkup(p) {
     const waitingBadge = p.status === "waiting"
         ? ('<span class="seat-waiting-pill" data-seat-waiting>' + esc(UI_TEXT.seatWaiting.statusShort) + '</span>')
         : '';
-    /* Плейсхолдер в зоне руки для waiting-человека. */
+    /* Away-плашка: «Отошёл · 06:59». Таймер обновляется каждую секунду
+       через engineTickAwayTimers(); data-seat-away-timer связывает элемент
+       с конкретным игроком по id. */
+    let awayBadge = '';
+    if (p.status === "away") {
+        const remain = engineFormatAwayRemain(p.awayUntil);
+        awayBadge = (
+            '<span class="seat-away-pill" data-seat-away-timer="' + p.id + '">' +
+                esc(UI_TEXT.seatAway.statusShort) +
+                '<span class="seat-away-timer" data-seat-away-value>' + remain + '</span>' +
+            '</span>'
+        );
+    }
+    /* Плейсхолдер в зоне руки для waiting-человека. Away-игрок карты не видит,
+       но сам слот сохраняется (место не освобождается). */
     const handInner = (isYou && p.status === "waiting")
         ? ('<div class="seat-hand-waiting" data-seat-hand-waiting>' + esc(UI_TEXT.seatWaiting.handPlaceholder) + '</div>')
         : '<div class="cards" data-seat-hand></div>';
@@ -7891,6 +8128,7 @@ function makePlayerMarkup(p) {
                 '<span data-seat-balance>' + formatCompactMoney(p.bank) + '</span>' +
             '</span>' +
             waitingBadge +
+            awayBadge +
         '</header>' +
         '<div class="seat-hand ' + handModCls + '">' +
             handInner +
@@ -7923,20 +8161,59 @@ function engineGetSeatEl(slotName) {
     return document.querySelector('#gameRoot .game-arena [data-seat-slot="' + slotName + '"]');
 }
 
+/* ---------- PUBLIC QUERY HELPERS (архитектурные геттеры) ----------
+   seatedPlayers — все, чьё место закреплено за столом (active/seated/waiting/away);
+                   away удерживает место 7 минут, поэтому включён.
+   activePlayers — строго участники текущей раздачи (status === "active").
+   waitingPlayers — сидящие, но ожидающие следующую раздачу (joined mid-game).
+   awayPlayers    — временно отошедшие (таймер удержания активен).
+   Эти функции удобны для будущей серверной синхронизации состояний стола. */
+function engineGetSeatedPlayers() {
+    return engine.players.filter(
+        (p) => p.status !== "spectator" && p.status !== "removed"
+    );
+}
+function engineGetActivePlayers() {
+    return engine.players.filter((p) => p.status === "active");
+}
+function engineGetWaitingPlayers() {
+    return engine.players.filter((p) => p.status === "waiting");
+}
+function engineGetAwayPlayers() {
+    return engine.players.filter((p) => p.status === "away");
+}
+
 function engineBuildPlayers(playersCount, options) {
     options = options || {};
     const list = [];
     const humanProfile = appState.profile || {};
     const humanName = (appState.user && (appState.user.name || appState.user.email)) || (UI_TEXT.menu && UI_TEXT.menu.fallbackName) || "Вы";
 
-    /* player.status — отдельное от active поле:
-         "active"    — участник текущей раздачи (получает карты, торгуется)
-         "waiting"   — сидит за столом, но подключился в середине партии;
-                       автоматически становится active на старте следующей
-                       раздачи (engineStartNextHand)
-         "spectator" — встал из-за стола, в следующую раздачу не подсаживается
-       Поле `active` остаётся: true только для status === "active". */
+    /* Архитектура статусов игроков за столом (seatedPlayers):
+       - "active"    — участник ТЕКУЩЕЙ раздачи (получает карты, торгуется,
+                       играет взятки). engine.players.filter(p => p.active).
+       - "seated"    — сидит за столом, но игра ещё не начата или ждёт первой
+                       раздачи (лобби / waiting-room / перед началом партии).
+                       На старте новой раздачи автоматически становится active.
+       - "waiting"   — сидит за столом, но подключился В СЕРЕДИНЕ партии.
+                       Не получает карт, не участвует в торгах. На старте
+                       следующей раздачи автоматически становится active.
+       - "away"      — временно отошёл («Встать»): место удерживается 7 минут,
+                       awayUntil = timestamp истечения. В раздачах не участвует.
+                       По таймеру конвертируется в "removed" и делает полный выход.
+                       "Вернуться" возвращает игрока в seated/waiting.
+       - "spectator" — устаревший псевдоним "away" без таймера (оставлен для
+                       совместимости со старыми вызовами; новые вызовы должны
+                       использовать "away" или "removed").
+       - "removed"   — полностью покинул стол («Лобби» или таймаут away).
+                       Место свободно, игрок удалён из seatedPlayers.
+
+       activePlayers  = { p ∈ seatedPlayers | p.status === "active" }
+       seatedPlayers  = { p ∈ engine.players | p.status ∉ {"spectator","removed"} }
+       Поле p.active = true ⇔ p.status === "active". */
     const humanWaiting = !!options.humanWaiting;
+    const humanSeated  = !!options.humanSeated && !humanWaiting;
+    const humanStatus = humanWaiting ? "waiting" : (humanSeated ? "seated" : "active");
     list.push({
         id: 0,
         seatSlot: "bottom",
@@ -7949,8 +8226,9 @@ function engineBuildPlayers(playersCount, options) {
         bank: Number(humanProfile.balance) || 3000,
         bid: null,
         passedAuction: false,
-        status: humanWaiting ? "waiting" : "active",
-        active: !humanWaiting,
+        status: humanStatus,
+        active: humanStatus === "active",
+        awayUntil: null,   // ms-timestamp истечения удержания места (только для status === "away")
     });
 
     for (let i = 1; i < playersCount; i++) {
@@ -7969,6 +8247,7 @@ function engineBuildPlayers(playersCount, options) {
             passedAuction: false,
             status: "active",
             active: true,
+            awayUntil: null,
         });
     }
 
@@ -7999,7 +8278,7 @@ function engineRenderSeats() {
 
         const player = engine.players.find((p) => p.seatSlot === slotName);
 
-        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "is-waiting", "game-seat--empty");
+        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "is-waiting", "is-away", "game-seat--empty");
 
         if (!player) {
             slotEl.classList.add("game-seat--empty");
@@ -8008,11 +8287,15 @@ function engineRenderSeats() {
         }
 
         slotEl.innerHTML = makePlayerMarkup(player);
-        /* Два разных визуальных состояния неактивных игроков:
-           - "waiting": подключился в середине партии, следующую раздачу сыграет (is-waiting)
-           - "spectator": встал из-за стола, сам должен вернуться "Сесть снова" (is-spectator) */
+        /* Визуальные состояния:
+           - "active":    обычный вид (без доп. класса).
+           - "seated":    сидит, игра ещё не началась — без доп. класса.
+           - "waiting":   is-waiting (прозрачность, бейдж "Ожидает", плейсхолдер руки).
+           - "away":      is-away (место сохранено, плашка с таймером, карты скрыты).
+           - "spectator": is-spectator (legacy). */
         if (player.status === "waiting") slotEl.classList.add("is-waiting");
-        else if (!player.active) slotEl.classList.add("is-spectator");
+        else if (player.status === "away") slotEl.classList.add("is-away");
+        else if (player.status === "spectator") slotEl.classList.add("is-spectator");
     });
 
     engineRenderHands();
@@ -8688,8 +8971,18 @@ function engineFinishGame() {
     engine.nextHandTimer = setTimeout(() => {
         engine.nextHandTimer = null;
         engine.betweenHands = false;
-        const seatedCount = engine.players.filter((p) => p.status !== "spectator").length;
-        if (seatedCount < 2) {
+        /* seatedPlayers: все, кроме spectator/removed/away. Away-игроки держат
+           место, но в следующую раздачу не входят до явного «Вернуться». */
+        const seatedForRound = engine.players.filter(
+            (p) => p.status !== "spectator" && p.status !== "removed" && p.status !== "away"
+        ).length;
+        if (seatedForRound < 2) {
+            /* Явно переводим стол в waitingPlayers: карта козыря прячется,
+               торги скрыты, ждём, пока подойдут игроки (или вернутся из away). */
+            engine.phase = "waiting";
+            if (trumpSlotEl) trumpSlotEl.innerHTML = "";
+            if (auctionBarEl) auctionBarEl.classList.add("hidden");
+            renderGameTopbar();
             setMessage("Ждём, пока игроки займут места…");
             return;
         }
@@ -8698,14 +8991,16 @@ function engineFinishGame() {
 }
 
 /* Новая раздача за ТЕМ ЖЕ столом. Сохраняем список игроков, но:
-   - промоутим всех status==="waiting" в "active" (они заходят в партию);
-   - spectator остаются вне партии до явного "Сесть снова";
+   - промоутим seated/waiting → active (они заходят в партию);
+   - away остаются вне партии, место держится их таймером;
+   - spectator/removed не трогаем;
    - сбрасываем руку/взятки/торги/банк — как в engineStart, но без перестройки
      массива игроков. Это выполняет требование п.3 ТЗ. */
 function engineStartNextHand() {
-    /* Промоутим waiting → active, инициализируем состояние раздачи */
+    /* Сбор состава новой раздачи: seated + waiting → active.
+       away/spectator/removed остаются вне партии. */
     engine.players.forEach((p) => {
-        if (p.status === "waiting") {
+        if (p.status === "seated" || p.status === "waiting") {
             p.status = "active";
             p.active = true;
         }
@@ -8743,6 +9038,11 @@ function engineStartNextHand() {
     engineClearPlayed();
     engineSetPlayedAreaSize();
 
+    /* Если человек снова в активе — показываем кнопку "Встать". */
+    const humanActive = engine.players[engine.humanIdx] && engine.players[engine.humanIdx].active;
+    const leaveBtn = document.querySelector("[data-game-leave]");
+    if (leaveBtn) leaveBtn.hidden = !humanActive;
+
     renderGameTopbar();
     setMessage("Новая раздача. Начинаются торги.");
     setTimeout(() => engineStartAuction(), 600);
@@ -8766,19 +9066,31 @@ function engineUpdateSeatBalances() {
 function engineStart(playersCount, options) {
     options = options || {};
     engine.spectating = false;
+    /* Сбрасываем любые зависшие away-таймеры от предыдущего стола, чтобы
+       они не срабатывали на новом столе. */
+    if (typeof engineClearAwayTimers === "function") engineClearAwayTimers();
     const overlay = document.getElementById("spectatorOverlay");
-    if (overlay) overlay.classList.add("hidden");
+    if (overlay) {
+        overlay.classList.add("hidden");
+        delete overlay.dataset.mode;
+    }
 
     const n = Math.max(2, Math.min(6, playersCount || 2));
-    /* Два независимых «waiting»-режима:
-       1. options.waiting       — весь стол в ожидании: за столом только создатель,
-                                  других мест не занято, нет раздачи/торгов.
-       2. options.humanWaiting  — за столом идёт партия ботов, человек подключился
-                                  в середине, ждёт следующей раздачи (player.status
-                                  === "waiting"). */
+    /* Три сценария инициализации стола:
+       1. options.waiting      — lobby/waiting-room: за столом только владелец,
+                                 player.status = "seated", игры нет.
+                                 На старте раздачи будет промоут seated → active.
+       2. options.humanWaiting — игра ботов уже идёт, человек подключился
+                                 в середине, player.status = "waiting".
+                                 На старте следующей раздачи будет промоут
+                                 waiting → active.
+       3. без флагов           — обычный старт партии со всеми активными. */
     const waiting = !!options.waiting;
     const humanWaiting = !!options.humanWaiting && !waiting;
-    engine.players = engineBuildPlayers(waiting ? 1 : n, { humanWaiting });
+    engine.players = engineBuildPlayers(waiting ? 1 : n, {
+        humanSeated:  waiting,
+        humanWaiting: humanWaiting,
+    });
     engine.humanIdx = 0;
     engine.humanJoinedMidGame = humanWaiting;
     engine.capacity = n;
@@ -8831,67 +9143,201 @@ function engineStart(playersCount, options) {
     setTimeout(() => engineStartAuction(), 500);
 }
 
-function engineLeaveSeat() {
-    if (engine.spectating) return;
-    engine.spectating = true;
-    const human = engine.players[engine.humanIdx];
-    if (human) {
-        human.active = false;
-        /* Помечаем как spectator: engineStartNextHand не вернёт его
-           автоматически в следующую раздачу. Пользователь должен
-           явно нажать «Сесть снова». Требование п.7 ТЗ. */
-        human.status = "spectator";
-    }
+/* ================== AWAY / LOBBY / TABLE-EXIT LOGIC ==================
 
-    // Если был ход за человеком — переходим дальше
+   Два совершенно разных действия:
+
+   «Встать» (engineLeaveSeat):
+     - игрок НЕ покидает стол;
+     - place-holdening: место держится AWAY_KICK_MS (7 минут);
+     - player.status = "away", player.awayUntil = Date.now() + AWAY_KICK_MS;
+     - в этот момент в раздачах он не участвует;
+     - показывается spectator-overlay с таймером и кнопками
+       "Вернуться" / "Покинуть стол";
+     - если таймер истекает — автоматический engineExitTable()
+       (полный выход → FIND_TABLE).
+
+   «Лобби» / «Покинуть стол» (engineExitTable):
+     - полный выход: player.status = "removed", место освобождается,
+       любые away-таймеры сбрасываются, навигация в FIND_TABLE.
+
+   «Вернуться» (engineReturnFromAway):
+     - сброс таймеров;
+     - если стол в активной фазе → status возвращается в "waiting"
+       (включится в следующую раздачу);
+     - если стол ещё не начат / между партиями → status = "seated". */
+
+const AWAY_KICK_MS = 7 * 60 * 1000;  // 7 минут — константа для удобства тестов / будущего бэкенда
+
+function engineFormatAwayRemain(untilMs) {
+    if (!untilMs) return "07:00";
+    const diff = Math.max(0, untilMs - Date.now());
+    const totalSec = Math.ceil(diff / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return (m < 10 ? "0" + m : String(m)) + ":" + (s < 10 ? "0" + s : String(s));
+}
+
+function engineClearAwayTimers() {
+    if (engine.awayKickTimer) { clearTimeout(engine.awayKickTimer); engine.awayKickTimer = null; }
+    if (engine.awayTickTimer) { clearInterval(engine.awayTickTimer); engine.awayTickTimer = null; }
+}
+
+/* Каждую секунду обновляет отображение таймера в плашке на seat + в overlay.
+   Остановится сам, когда awayUntil исчерпан (engineExitTable очистит таймеры). */
+function engineStartAwayTickLoop() {
+    engineClearAwayTimers();
+    const tick = () => {
+        const human = engine.players[engine.humanIdx];
+        if (!human || human.status !== "away" || !human.awayUntil) {
+            engineClearAwayTimers();
+            return;
+        }
+        const remain = engineFormatAwayRemain(human.awayUntil);
+        /* Обновляем плашку на seat (если видима). */
+        const seatEl = engineGetSeatEl(human.seatSlot);
+        if (seatEl) {
+            const tv = seatEl.querySelector("[data-seat-away-value]");
+            if (tv) tv.textContent = remain;
+        }
+        /* Обновляем overlay-таймер. */
+        const overlayTv = document.querySelector("[data-spectator-timer-value]");
+        if (overlayTv) overlayTv.textContent = remain;
+    };
+    tick();
+    engine.awayTickTimer = setInterval(tick, 1000);
+}
+
+function engineLeaveSeat() {
+    const human = engine.players[engine.humanIdx];
+    if (!human) return;
+    if (human.status === "away" || human.status === "removed") return;
+
+    /* Место сохраняется: status → "away", таймер 7 минут до kick. */
+    engine.spectating = true;
+    human.active = false;
+    human.status = "away";
+    human.awayUntil = Date.now() + AWAY_KICK_MS;
+
+    /* Если ход был за человеком — пропускаем его и двигаем дальше. */
     if (engine.currentTurn === engine.humanIdx) {
         engineAdvanceTurn();
         if (engine.phase === "auction") setTimeout(engineRunAuctionTurn, 150);
         else if (engine.phase === "play") setTimeout(engineRunPlayTurn, 150);
     }
 
-    // Освобождаем место в UI: bottom seat → пустой слот
-    const seatEl = engineGetSeatEl(human.seatSlot);
-    if (seatEl) {
-        seatEl.innerHTML = makeEmptySeatMarkup();
-        seatEl.classList.add("game-seat--empty");
-    }
+    /* Перерисовываем seat (теперь с away-плашкой), не освобождая место. */
+    engineRenderSeats();
 
     if (auctionBarEl) auctionBarEl.classList.add("hidden");
+
     const overlay = document.getElementById("spectatorOverlay");
-    if (overlay) overlay.classList.remove("hidden");
+    if (overlay) {
+        overlay.classList.remove("hidden");
+        overlay.dataset.mode = "away";
+        const titleEl = overlay.querySelector("[data-spectator-title]");
+        const hintEl  = overlay.querySelector("[data-spectator-hint]");
+        const timerEl = overlay.querySelector("[data-spectator-timer]");
+        const sitBtn  = overlay.querySelector("[data-spectator-sit]");
+        const lobbyBtn= overlay.querySelector("[data-spectator-lobby]");
+        if (titleEl) titleEl.textContent = UI_TEXT.seatAway.overlayTitle;
+        if (hintEl)  hintEl.textContent  = UI_TEXT.seatAway.overlayHintTime;
+        if (timerEl) timerEl.classList.remove("hidden");
+        if (sitBtn)  sitBtn.textContent  = UI_TEXT.seatAway.btnReturn;
+        if (lobbyBtn) lobbyBtn.textContent = UI_TEXT.seatAway.btnLobby;
+    }
 
     const leaveBtn = document.querySelector("[data-game-leave]");
     if (leaveBtn) leaveBtn.hidden = true;
 
-    /* Скрываем waiting-баннер: пользователь встал, статус "ожидает" больше не актуален. */
+    /* UI-тик таймера + жёсткий kick через 7 минут. */
+    engineStartAwayTickLoop();
+    engine.awayKickTimer = setTimeout(() => {
+        engine.awayKickTimer = null;
+        setMessage(UI_TEXT.seatAway.overlayTimeout);
+        engineExitTable({ navigateToLobby: true });
+    }, AWAY_KICK_MS);
+
     renderGameTopbar();
 }
 
-function engineSitAgain() {
-    const table = engine.currentTable;
+/* Возврат из away — сохраняем участие в следующей раздаче. */
+function engineReturnFromAway() {
+    const human = engine.players[engine.humanIdx];
+    if (!human || human.status !== "away") return;
+
+    engineClearAwayTimers();
+    human.awayUntil = null;
+    engine.spectating = false;
+
+    /* Если партия ещё идёт — становимся waiting (в текущую не влезаем,
+       но следующую играем). Если между партиями / waiting-room — seated. */
+    const midHand = (engine.phase === "auction" || engine.phase === "play");
+    human.status = midHand ? "waiting" : "seated";
+    human.active = false;
+
     const overlay = document.getElementById("spectatorOverlay");
     if (overlay) overlay.classList.add("hidden");
 
-    /* Если пользователь — владелец только что созданного стола (waiting), то
-       никто кроме него за столом не сидит. Возвращаемся в waiting-комнату,
-       а не стартуем партию с ботами. */
-    if (table && table.status === "waiting" && table.ownerId === ((appState.user && appState.user.id) || "me")) {
-        engineStart(table.capacity || engine.capacity || 2, {
-            stake: engine.baseStake,
-            table: table,
-            waiting: true,
-        });
-        return;
+    const leaveBtn = document.querySelector("[data-game-leave]");
+    if (leaveBtn) leaveBtn.hidden = false;
+
+    engineRenderSeats();
+    renderGameTopbar();
+
+    if (midHand) {
+        setMessage(UI_TEXT.seatWaiting.statusMessage);
+    } else {
+        setMessage("Вы вернулись за стол. Ждём начала раздачи…");
+        /* Если стол давно ждёт и теперь игроков хватает — автостарт раздачи. */
+        tableMaybeAutoStart();
+    }
+}
+
+/* Полный выход со стола. Используется кнопкой «Лобби» и таймаутом away. */
+function engineExitTable(options) {
+    options = options || {};
+    const human = engine.players[engine.humanIdx];
+
+    engineClearAwayTimers();
+    if (engine.nextHandTimer) { clearTimeout(engine.nextHandTimer); engine.nextHandTimer = null; }
+
+    if (human) {
+        human.status = "removed";
+        human.active = false;
+        human.awayUntil = null;
+
+        /* UI: освобождаем seat (рендер пустым), чтобы даже при быстром возврате
+           на этот же стол не мелькала старая информация игрока. */
+        const seatEl = engineGetSeatEl(human.seatSlot);
+        if (seatEl) {
+            seatEl.innerHTML = makeEmptySeatMarkup();
+            seatEl.classList.add("game-seat--empty");
+            seatEl.classList.remove("is-away", "is-waiting", "is-spectator");
+        }
     }
 
-    // Обычный случай: новая раздача за текущим столом
-    const cap = (table && table.capacity) || engine.players.length || 2;
-    const occupied = Math.min(cap, Math.max(2, (table && table.players) || engine.players.filter((p) => p.active).length + 1));
-    /* Если игрок возвращается за стол, где ВСЁ ЕЩЁ идёт партия — он опять
-       садится как waiting и ждёт следующую раздачу. */
-    const midGame = !!(table && table.status === "playing");
-    engineStart(occupied, { stake: engine.baseStake, table: table, humanWaiting: midGame });
+    const overlay = document.getElementById("spectatorOverlay");
+    if (overlay) {
+        overlay.classList.add("hidden");
+        delete overlay.dataset.mode;
+    }
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+
+    /* Сбрасываем engine-привязку к текущему столу — в find-table пользователь
+       потом может сесть за другой стол, и engineStart корректно пересоздаст players. */
+    engine.spectating = false;
+    engine.currentTable = null;
+    engine.phase = "idle";
+
+    if (options.navigateToLobby !== false) {
+        setScreen(SCREENS.FIND_TABLE);
+    }
+}
+
+/* Legacy-совместимость: старые вызовы engineSitAgain теперь = engineReturnFromAway. */
+function engineSitAgain() {
+    engineReturnFromAway();
 }
 
 function bindGameLeaveHandlers() {
@@ -8902,37 +9348,68 @@ function bindGameLeaveHandlers() {
     if (overlay) {
         const sitBtn = overlay.querySelector("[data-spectator-sit]");
         const lobbyBtn = overlay.querySelector("[data-spectator-lobby]");
-        if (sitBtn) sitBtn.addEventListener("click", () => engineSitAgain());
-        if (lobbyBtn) lobbyBtn.addEventListener("click", () => {
-            overlay.classList.add("hidden");
-            setScreen(SCREENS.FIND_TABLE);
-        });
+        /* "Вернуться" = engineReturnFromAway (сохранить место). */
+        if (sitBtn) sitBtn.addEventListener("click", () => engineReturnFromAway());
+        /* "Покинуть стол" = полный выход в лобби. */
+        if (lobbyBtn) lobbyBtn.addEventListener("click", () => engineExitTable({ navigateToLobby: true }));
     }
 }
 
 /* ---------- OVERRIDES: cтарые функции теперь делегируют в движок ---------- */
 
 function resetGame() {
-    // playersCount приходит из find-table при "Сесть" (см. bindFindTableHandlers)
+    /* Точка входа в стол. Источники данных:
+       1. appState.findTable.currentTable — если зашли через «Найти стол»
+          (status/type/ownerId/capacity/players заполнены в bindFindTableHandlers).
+       2. selectedPlayersCount — fallback, когда заходим без выбора стола. */
     const table = (appState.findTable && appState.findTable.currentTable) || null;
     const requested = Number(selectedPlayersCount) || 2;
+
+    /* count = сколько игроков ФАКТИЧЕСКИ за столом после посадки.
+       Важно: currentTable.players уже включает только что севшего человека
+       (bindFindTableHandlers пишет туда tbl.players + 1). Поэтому НЕ добавляем +1,
+       иначе получим «лишнего» бота. */
     let count = requested;
     if (table && Number.isFinite(table.players) && Number.isFinite(table.capacity)) {
-        // Включая локального игрока (он только что сел). Берём фактическое занятое после посадки.
-        count = Math.max(2, Math.min(table.capacity, (table.players || 0) + 1));
+        count = Math.max(1, Math.min(table.capacity, table.players || 1));
     }
 
-    /* Если за столом УЖЕ идёт партия (table.status === "playing") — пользователь
-       подключается как waiting-игрок: сидит за столом, видит игру, но в текущую
-       раздачу не входит. На старте следующей раздачи engineStartNextHand
-       автоматически переведёт его в active. Требования пп.1–4 ТЗ.
-       Если table.status ∈ {"waiting", "finished", undefined} — обычный старт. */
-    const midGame = !!(table && table.status === "playing");
-    engineStart(count, {
-        stake: table ? table.stake / 10 : 100,
-        table,
-        humanWaiting: midGame,
-    });
+    const stake = table ? (table.stake / 10) || 100 : 100;
+
+    /* ── Выбор сценария старта стола ──────────────────────────────────
+       A) Стол уже играет (mid-game):
+          table.status ∈ {playing, bidding, trick, roundActive}
+          → humanWaiting: true, движок строит (human waiting + N-1 active bots),
+          боты доигрывают текущую раздачу, человек входит в следующую.
+
+       B) Стол в lobby, игроков хватает (>=2 включая человека):
+          → обычный старт раздачи, человек активен с первой раздачи.
+
+       C) Стол в lobby, но меньше 2 игроков (или приватный стол владельца):
+          → options.waiting=true, стол в waitingPlayers, ждём народ. */
+    const ACTIVE_STATUSES = new Set(["playing", "bidding", "trick", "roundActive"]);
+    const midGame = !!(table && ACTIVE_STATUSES.has(String(table.status)));
+
+    if (midGame) {
+        engineStart(count, { stake, table, humanWaiting: true });
+        return;
+    }
+
+    /* Приватный стол, который только что создал сам пользователь: он один,
+       бот-заглушек быть не должно, ждём реальных гостей по ссылке. */
+    const isOwnedPrivateLobby =
+        !!(table && table.type === "private" &&
+           table.ownerId && appState.profile && table.ownerId === appState.profile.id &&
+           count <= 1);
+
+    /* Lobby с недостаточным количеством игроков → waiting-room. */
+    if (isOwnedPrivateLobby || count < TABLE_MIN_PLAYERS) {
+        engineStart(count, { stake, table, waiting: true });
+        return;
+    }
+
+    /* Достаточно игроков в lobby → сразу стартуем раздачу. */
+    engineStart(count, { stake, table });
 }
 
 function onPlayerPass() {
