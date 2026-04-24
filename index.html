@@ -1276,9 +1276,1322 @@ h1 {
     gap: 10px;
 }
 
+/* =========================================================
+   GAME SCREEN v2 (luxury, no physical table)
+   Новый layout: grid 3x4, без овального стола, бордовый фон
+   с виньеткой, 6 мест вокруг центра, премиальный верхний
+   и нижний бары. Старые стили игры НЕ удалены — мы их
+   точечно переопределяем через `.game--v2 ...` селекторы.
+   ========================================================= */
+
+/* --- базовый контейнер игры и фон --- */
+.game.game--v2 {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #f4d68a;
+    background:
+        radial-gradient(ellipse at 50% 22%, rgba(255, 214, 130, 0.08) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 100%, rgba(140, 30, 60, 0.25) 0%, transparent 55%),
+        linear-gradient(180deg, #2e0a12 0%, #1c0610 55%, #0f0308 100%);
+    overflow-x: hidden;
+}
+
+/* Старый заголовок "Azi by Bobby" больше не используется */
+.game--v2 h1 { display: none; }
+
+/* Нейтрализация физического "стола" и старых абсолютных позиций */
+.game--v2 .game-arena { background: none; border: 0; box-shadow: none; min-height: 0; border-radius: 0; padding: 6px clamp(6px, 1.6vw, 14px) 12px; }
+.game--v2 .game-arena::before,
+.game--v2 .game-arena::after { display: none !important; content: none; }
+
+/* Played-area внутри центра: обычный flex, не absolute */
+.game--v2 .game-center .played-area {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin: 0;
+    width: auto;
+    min-height: calc(var(--card-h) + 18px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* Trick-pile больше не абсолютный — живёт внутри .seat-trick-pill */
+.game--v2 .trick-pile {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin: 0;
+    width: 28px;
+    height: 38px;
+}
+
+/* Элементы, которые нужны JS-логике (getBoundingClientRect),
+   но визуально отсутствуют: pointer-events off + opacity 0,
+   позиционируются absolute относительно логического "источника". */
+.game--v2 .logic-ghost {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ======================== TOP BAR ======================== */
+
+.game--v2 .game-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.4vw, 12px);
+    padding: 8px clamp(8px, 2vw, 14px);
+    background: linear-gradient(180deg, rgba(20, 6, 12, 0.95) 0%, rgba(46, 10, 18, 0.88) 100%);
+    border-bottom: 1px solid rgba(216, 178, 76, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.game-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(74, 22, 36, 0.85) 0%, rgba(46, 10, 18, 0.85) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f4d68a;
+    cursor: pointer;
+    font: inherit;
+    min-width: 0;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+.game-profile:hover {
+    border-color: rgba(247, 227, 165, 0.75);
+    background: linear-gradient(180deg, rgba(92, 28, 42, 0.9) 0%, rgba(58, 14, 24, 0.9) 100%);
+}
+.game-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7a2a3e, #4a1422);
+    box-shadow: inset 0 0 0 1px rgba(247, 227, 165, 0.55);
+    color: #f4d68a;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+}
+.game-avatar svg { width: 100%; height: 100%; }
+
+.game-user-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    min-width: 0;
+    text-align: left;
+    line-height: 1.15;
+}
+.game-user-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: #f7e3a5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+.game-user-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    color: rgba(216, 178, 76, 0.85);
+    letter-spacing: 0.02em;
+}
+.game-user-crown { width: 10px; height: 10px; color: #d8b24c; }
+
+.game-user-level-bar {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(10, 4, 8, 0.7);
+    overflow: hidden;
+    margin-top: 2px;
+    width: 80px;
+}
+.game-user-level-bar > span {
+    display: block;
+    height: 100%;
+    width: 60%;
+    background: linear-gradient(90deg, #8c5a18, #f7e3a5 50%, #8c5a18);
+}
+
+.game-level-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(20, 6, 12, 0.85) 0%, rgba(46, 10, 18, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.game-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 5px 5px 10px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(20, 6, 12, 0.85) 0%, rgba(46, 10, 18, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f7e3a5;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.game-balance-coin { width: 18px; height: 18px; display: grid; place-items: center; flex-shrink: 0; }
+.game-balance-coin svg { width: 100%; height: 100%; }
+.game-balance-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 14.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+.game-balance-plus {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f7e3a5, #d8b24c 55%, #9b7626);
+    color: #3a1a0a;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 6px rgba(216, 140, 60, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+}
+
+.game-bell {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(20, 6, 12, 0.85) 0%, rgba(46, 10, 18, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #d8b24c;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+}
+.game-bell svg { width: 18px; height: 18px; }
+.game-bell-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #d13048, #7c1626);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid #1a0610;
+}
+.game-bell-badge[hidden] { display: none !important; }
+
+.game-lobby-btn {
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    border: 1px solid rgba(247, 227, 165, 0.8);
+    color: #3a1a0a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(216, 140, 60, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: transform 0.15s ease, filter 0.18s ease;
+    flex-shrink: 0;
+}
+.game-lobby-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.game-lobby-btn:active { transform: translateY(0); }
+
+/* "Встать" — более сдержанная кнопка рядом с "Лобби": освободить место, но остаться в комнате */
+.game-leave-btn {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    color: #f4d68a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+    flex-shrink: 0;
+}
+.game-leave-btn:hover {
+    border-color: rgba(247, 227, 165, 0.9);
+    background: rgba(247, 227, 165, 0.06);
+    color: #f7e3a5;
+}
+.game-leave-btn[hidden] { display: none !important; }
+
+/* Слоты за пределами вместимости стола — скрываем (иначе 3-местный стол
+   показывал бы 3 «лишних» места-заглушки). */
+.game-seat.game-seat--hidden { display: none !important; }
+
+/* ------------------ Пригласить друзей (в топбаре) ------------------ */
+.game-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.18) 0%, rgba(155, 118, 38, 0.22) 100%);
+    border: 1px solid rgba(247, 227, 165, 0.85);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(216, 140, 60, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.game-invite-btn svg { width: 15px; height: 15px; color: currentColor; }
+.game-invite-btn:hover  { transform: translateY(-1px); filter: brightness(1.08); }
+.game-invite-btn:active { transform: translateY(0); }
+.game-invite-btn.hidden { display: none !important; }
+
+/* ------------------ Баннер ожидания ------------------ */
+.game-waiting-banner {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 18;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.92) 0%, rgba(20, 4, 10, 0.94) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.6);
+    color: #f4d68a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    letter-spacing: 0.04em;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.game-waiting-banner.hidden { display: none !important; }
+.game-waiting-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe8a6, #d8b24c 60%, #7b5a1a 100%);
+    box-shadow: 0 0 10px rgba(247, 200, 100, 0.65);
+    animation: gameWaitingPulse 1.6s ease-in-out infinite;
+}
+@keyframes gameWaitingPulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.9); }
+    50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* ------------------ Invite modal ------------------ */
+.invite-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    pointer-events: auto;
+}
+.invite-overlay.hidden { display: none !important; }
+.invite-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 2, 6, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: inviteFadeIn 0.22s ease-out;
+}
+@keyframes inviteFadeIn  { from { opacity: 0; }    to { opacity: 1; } }
+@keyframes inviteRiseIn  { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+.invite-card {
+    position: relative;
+    width: min(440px, 96vw);
+    max-height: min(86vh, 720px);
+    overflow-y: auto;
+    padding: 18px 18px 16px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.96) 0%, rgba(20, 4, 10, 0.98) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.65);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 214, 130, 0.08), inset 0 0 0 2px rgba(58, 26, 10, 0.55);
+    color: #f4d68a;
+    animation: inviteRiseIn 0.26s cubic-bezier(0.4, 0.1, 0.2, 1.1);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+.invite-card::-webkit-scrollbar { width: 6px; }
+.invite-card::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.5), rgba(139, 106, 42, 0.35));
+    border-radius: 3px;
+}
+
+.invite-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f4d68a;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+.invite-close:hover { border-color: rgba(247, 227, 165, 0.9); background: rgba(247, 227, 165, 0.08); color: #f7e3a5; }
+.invite-close svg { width: 14px; height: 14px; }
+
+.invite-title {
+    margin: 0 28px 4px 2px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.invite-subtitle {
+    margin: 0 0 14px 2px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: rgba(216, 178, 76, 0.7);
+    letter-spacing: 0.01em;
+}
+
+.invite-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    transition: border-color 0.18s ease;
+    margin-bottom: 12px;
+}
+.invite-search-wrap:focus-within { border-color: rgba(247, 227, 165, 0.8); }
+.invite-search-icon {
+    width: 18px;
+    height: 18px;
+    color: rgba(216, 178, 76, 0.7);
+    flex-shrink: 0;
+}
+.invite-search {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 10px 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    color: #f7e3a5;
+}
+.invite-search::placeholder { color: rgba(216, 178, 76, 0.45); }
+
+.invite-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+.invite-list::-webkit-scrollbar { width: 5px; }
+.invite-list::-webkit-scrollbar-thumb { background: rgba(216, 178, 76, 0.4); border-radius: 3px; }
+
+.invite-friend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(10, 4, 8, 0.45);
+    border: 1px solid rgba(216, 178, 76, 0.28);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.invite-friend-row:hover { border-color: rgba(247, 227, 165, 0.6); background: rgba(10, 4, 8, 0.6); }
+.invite-friend-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(247, 227, 165, 0.25), rgba(20, 4, 10, 0.7) 80%);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+}
+.invite-friend-info { flex: 1; min-width: 0; }
+.invite-friend-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: #f7e3a5;
+    line-height: 1.15;
+}
+.invite-friend-sub {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11.5px;
+    color: rgba(216, 178, 76, 0.6);
+}
+.invite-friend-sub.is-online::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6ecf6e;
+    margin-right: 5px;
+    box-shadow: 0 0 6px rgba(110, 207, 110, 0.7);
+    vertical-align: middle;
+}
+.invite-friend-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    border: 1px solid rgba(58, 26, 10, 0.4);
+    color: #3a1a0a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+.invite-friend-btn:hover  { filter: brightness(1.06); transform: translateY(-1px); }
+.invite-friend-btn.is-sent {
+    background: transparent;
+    color: rgba(216, 178, 76, 0.65);
+    border-color: rgba(216, 178, 76, 0.35);
+    cursor: default;
+    filter: none;
+    transform: none;
+}
+
+.invite-empty {
+    padding: 22px 10px;
+    text-align: center;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: rgba(216, 178, 76, 0.55);
+}
+.invite-empty.hidden { display: none; }
+
+.invite-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 12px;
+    color: rgba(216, 178, 76, 0.55);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+}
+.invite-divider span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(216, 178, 76, 0.35), transparent); }
+
+.invite-share-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.16) 0%, rgba(155, 118, 38, 0.2) 100%);
+    border: 1px solid rgba(247, 227, 165, 0.75);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+.invite-share-btn:hover  { filter: brightness(1.08); transform: translateY(-1px); }
+.invite-share-btn:active { transform: translateY(0); }
+.invite-share-btn svg { width: 18px; height: 18px; color: currentColor; }
+
+@media (max-width: 520px) {
+    .game-invite-btn { padding: 6px 12px; font-size: 12.5px; gap: 5px; }
+    .game-invite-btn span { display: none; } /* оставляем только иконку на мобиле */
+    .game-invite-btn svg { width: 16px; height: 16px; }
+    .game-waiting-banner { top: 56px; font-size: 12.5px; padding: 6px 13px; }
+    .invite-card { padding: 16px 14px 14px; }
+    .invite-title { font-size: 20px; }
+}
+
+/* ======================== SEAT TRICK DOTS ======================== */
+/* Компактный индикатор взяток: 3 точки, горят золотым когда взятка взята.
+   Никаких крупных надписей "Взято: N" — только деликатный ряд точек. */
+.seat-trick-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.3);
+    min-height: 16px;
+}
+.seat-trick-dots .trick-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(216, 178, 76, 0.22);
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.seat-trick-dots .trick-dot.is-on {
+    background: linear-gradient(180deg, #f7e3a5, #d8b24c 55%, #9b7626);
+    box-shadow: 0 0 6px rgba(247, 200, 100, 0.55);
+    transform: scale(1.15);
+}
+.seat-trick-dots[hidden] { display: none !important; }
+
+/* ------------------------------------------------------------------
+   Desktop-layout для индикатора взяток.
+   Проблема: в колоночном flex'е seat'а dots-капсула по дефолту оказывалась
+   ПОД рукой, а карты на десктопе большие и у них ровно тот же бордово-
+   золотой палитра-код — капсула с ними визуально сливалась. На top-seat,
+   наоборот, старое правило `seat-hand { order: 2 }` отправляло dots
+   (order:0) вверх, и они "висели" отдельно от профиля.
+   Решение: только на desktop задаём явный порядок
+     [seat-card] → [dots] → [seat-hand]
+   и усиливаем контур капсулы. На mobile раскладка остаётся прежней
+   (проблема там не проявляется — карты мелкие). */
+@media (min-width: 701px) {
+    .game--v2 .game-seat > .seat-card       { order: 1; }
+    .game--v2 .game-seat > .seat-trick-dots { order: 2; }
+    .game--v2 .game-seat > .seat-hand       { order: 3; margin-top: 4px; }
+    .game--v2 .game-seat > [data-seat-bank] { order: 4; }
+
+    /* Переопределяем унаследованные orders для top-seat и side seats,
+       где исторически были свои правила под старый .seat-trick-pill. */
+    .game--v2 .game-seat--top .seat-card       { order: 1; }
+    .game--v2 .game-seat--top .seat-trick-dots { order: 2; }
+    .game--v2 .game-seat--top .seat-hand       { order: 3; margin-top: 4px; }
+    .game--v2 .game-seat--top .seat-trick-pill { order: 4; }
+
+    /* Визуальный апгрейд: темнее фон, ярче золотой бордер + мягкая тень —
+       теперь капсула не растворяется на фоне карт/арены. */
+    .game--v2 .game-seat .seat-trick-dots {
+        margin-top: 3px;
+        padding: 3px 10px;
+        gap: 6px;
+        background: linear-gradient(180deg, rgba(20, 6, 12, 0.96) 0%, rgba(46, 10, 18, 0.92) 100%);
+        border-color: rgba(247, 227, 165, 0.55);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    }
+    .game--v2 .game-seat .seat-trick-dots .trick-dot { width: 7px; height: 7px; }
+
+    /* У нижнего "Вы" сиденья dots размещаем справа от профиля как бейдж,
+       чтобы не вклиниваться между профилем и крупной рукой. */
+    .game--v2 .game-seat--bottom {
+        position: relative;
+    }
+    .game--v2 .game-seat--bottom > .seat-trick-dots {
+        order: unset;
+        position: absolute;
+        top: 6px;
+        right: clamp(8px, 2vw, 22px);
+        margin-top: 0;
+        z-index: 4;
+    }
+}
+
+/* ======================== ACTIVE TURN / WINNER HIGHLIGHT ======================== */
+/* Подсветка места чей сейчас ход: тонкое золотое свечение вокруг seat-card */
+.game-seat.is-active-turn .seat-card {
+    border-color: rgba(247, 227, 165, 0.95);
+    box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.35), 0 6px 18px rgba(216, 140, 60, 0.4), inset 0 1px 0 rgba(255, 214, 130, 0.15);
+    animation: seatTurnPulse 1.8s ease-in-out infinite;
+}
+.game-seat.is-trick-winner .seat-card {
+    animation: seatWinFlash 700ms ease-out 1;
+}
+.game-seat.is-passed-auction .seat-card {
+    opacity: 0.55;
+    filter: saturate(0.7);
+}
+.game-seat.is-spectator .seat-card {
+    opacity: 0.5;
+    filter: grayscale(0.4);
+}
+@keyframes seatTurnPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.35), 0 6px 18px rgba(216, 140, 60, 0.4); }
+    50%      { box-shadow: 0 0 0 3px rgba(247, 227, 165, 0.6),  0 6px 22px rgba(216, 140, 60, 0.55); }
+}
+@keyframes seatWinFlash {
+    0%   { box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.9),  0 0 26px 6px rgba(247, 200, 100, 0.65); }
+    100% { box-shadow: 0 0 0 1px rgba(247, 227, 165, 0.4),  0 6px 18px rgba(216, 140, 60, 0.3); }
+}
+
+/* ======================== SPECTATOR OVERLAY ======================== */
+/* Когда игрок встал из-за стола — место освободилось, но он остался в комнате. */
+.spectator-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(ellipse at center, rgba(20, 6, 12, 0.65) 0%, rgba(10, 4, 8, 0.82) 100%);
+    backdrop-filter: blur(4px);
+    padding: 20px;
+    animation: spectatorFadeIn 0.35s ease-out;
+}
+.spectator-overlay.hidden { display: none !important; }
+@keyframes spectatorFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.spectator-card {
+    max-width: 360px;
+    padding: 22px 24px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.96) 0%, rgba(20, 4, 10, 0.98) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    text-align: center;
+    color: #f4d68a;
+}
+.spectator-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f7e3a5;
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+}
+.spectator-hint {
+    font-size: 13px;
+    color: rgba(216, 178, 76, 0.85);
+    margin-bottom: 18px;
+    line-height: 1.45;
+}
+.spectator-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.spectator-sit, .spectator-lobby {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(247, 227, 165, 0.8);
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    transition: transform 0.15s ease, filter 0.18s ease;
+}
+.spectator-sit {
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    color: #3a1a0a;
+    box-shadow: 0 4px 10px rgba(216, 140, 60, 0.3);
+}
+.spectator-lobby {
+    background: transparent;
+    color: #f4d68a;
+    border-color: rgba(216, 178, 76, 0.55);
+}
+.spectator-sit:hover, .spectator-lobby:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.spectator-sit:active, .spectator-lobby:active { transform: translateY(0); }
+
+/* ======================== ARENA (grid) ======================== */
+
+.game--v2 .game-arena {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(90px, 1fr) minmax(220px, 2.4fr) minmax(90px, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+        "top-l  top     top-r"
+        "mid-l  center  mid-r"
+        "bot-l  center  bot-r"
+        "you-l  you     you-r";
+    gap: clamp(4px, 1vw, 10px);
+    padding: clamp(6px, 1.4vw, 12px);
+}
+.game-seat--top        { grid-area: top;    grid-column: 1 / -1; justify-self: center; }
+.game-seat--mid-left   { grid-area: mid-l; }
+.game-seat--mid-right  { grid-area: mid-r; }
+.game-seat--bot-left   { grid-area: bot-l; }
+.game-seat--bot-right  { grid-area: bot-r; }
+.game-seat--bottom     { grid-area: you;    grid-column: 1 / -1; justify-self: center; }
+.game-center           { grid-area: center; }
+
+/* ======================== SEATS ======================== */
+
+.game-seat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+/* Декоративные места — чуть приглушены, чтобы акцент был на активных */
+.game-seat[data-seat-role="decor"] { opacity: 0.95; }
+
+.seat-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(30, 8, 14, 0.85) 0%, rgba(58, 14, 24, 0.8) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 214, 130, 0.08);
+    max-width: 100%;
+    color: #f4d68a;
+}
+.seat-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: visible;
+    display: grid;
+    place-items: center;
+    color: #f4d68a;
+    flex-shrink: 0;
+}
+.seat-avatar svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 214, 130, 0.18), transparent 60%), var(--seat-tint, #4a1822);
+    box-shadow: inset 0 0 0 1px rgba(247, 227, 165, 0.6);
+}
+.seat-badge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(20, 6, 12, 0.95) 0%, rgba(46, 10, 18, 0.95) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.7);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+}
+.seat-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f7e3a5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+    letter-spacing: 0.01em;
+}
+.seat-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: rgba(216, 178, 76, 0.9);
+    white-space: nowrap;
+}
+.seat-coin {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f7e3a5, #9b7626);
+    box-shadow: inset 0 0 0 1px rgba(58, 26, 10, 0.45);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Hand-раскладка карт для разных мест */
+.seat-hand { display: flex; justify-content: center; align-items: center; }
+.seat-hand .cards { gap: 3px; }
+
+/* Верхнее место (Марина — живой бот): горизонтальный веер из 3 карт, средний размер */
+.game-seat--top { --card-w: 52px; --card-h: 74px; --bot-card-w: 52px; --bot-card-h: 74px; }
+.game-seat--top .cards { gap: 4px; }
+
+/* Боковые декоративные места: более узкие горизонтальные карты */
+.game-seat--mid-left,
+.game-seat--mid-right,
+.game-seat--bot-left   { --card-w: 44px; --card-h: 62px; --bot-card-w: 44px; --bot-card-h: 62px; }
+.seat-hand--side .cards { gap: 2px; }
+
+/* Нижнее "Вы" — крупнее, карты лицом вверх и интерактивные */
+.game-seat--bottom { --card-w: min(22vw, 84px); --card-h: min(32vw, 120px); }
+.game-seat--bottom .seat-hand { margin-top: 2px; }
+
+/* Карты в верхнем/боковых местах меньше — отменяем глобальный min-width/height */
+.game-seat--top .card,
+.game-seat--mid-left .card,
+.game-seat--mid-right .card,
+.game-seat--bot-left .card {
+    min-width: 0;
+    min-height: 0;
+    width: var(--card-w);
+    height: var(--card-h);
+    border-radius: 8px;
+}
+
+/* Декоративная компоновка мест: верх-центр горизонтально, боковые в колонку с seat-card слева */
+.game-seat--top .seat-card { order: 1; }
+.game-seat--top .seat-hand { order: 2; }
+.game-seat--top .seat-trick-pill { order: 3; }
+
+.game-seat--mid-left,
+.game-seat--bot-left {
+    align-items: flex-start;
+    text-align: left;
+}
+.game-seat--mid-right,
+.game-seat--bot-right {
+    align-items: flex-end;
+    text-align: right;
+}
+
+/* Пустое место */
+.seat-empty-card {
+    width: 92px;
+    padding: 14px 10px 10px;
+    border-radius: 18px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(216, 178, 76, 0.1), transparent 70%), rgba(10, 4, 8, 0.55);
+    border: 1px dashed rgba(216, 178, 76, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: rgba(216, 178, 76, 0.75);
+    text-align: center;
+}
+.seat-empty-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    color: #d8b24c;
+}
+.seat-empty-icon svg { width: 26px; height: 26px; }
+.seat-empty-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(216, 178, 76, 0.85);
+    line-height: 1.15;
+}
+.seat-empty-dots {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: rgba(216, 178, 76, 0.5);
+}
+
+/* Компактная "плашка взятки": маленький pile + подпись «Взято: N» */
+.seat-trick-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(10, 4, 8, 0.7);
+    border: 1px solid rgba(216, 178, 76, 0.35);
+    color: #e7c97a;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+.seat-trick-pill--mini { padding: 2px 9px; font-size: 10.5px; }
+.seat-trick-pill .trick-pile {
+    width: 18px;
+    height: 24px;
+    min-width: 18px;
+}
+.seat-trick-pill .pile-count-label strong { color: #f7e3a5; font-weight: 600; }
+
+/* ======================== CENTER ======================== */
+
+.game--v2 .game-center {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.5vw, 14px);
+    padding: clamp(4px, 1.2vw, 10px);
+    min-height: calc(var(--card-h, 100px) + 160px);
+}
+
+.game--v2 .game-center .pot-area {
+    all: unset;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 22px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(58, 14, 24, 0.92) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    color: #f7e3a5;
+    min-width: 128px;
+    text-align: center;
+}
+.game--v2 .pot-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(216, 178, 76, 0.8);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.game--v2 .pot-value-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: #f7e3a5;
+    line-height: 1;
+}
+.game--v2 .pot-coin {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f7e3a5, #9b7626);
+    box-shadow: inset 0 0 0 1px rgba(58, 26, 10, 0.55), 0 0 6px rgba(216, 178, 76, 0.35);
+    display: inline-block;
+}
+
+/* Козырь: полноценная карта с подписью */
+.trump-area {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.trump-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(216, 178, 76, 0.8);
+}
+.trump-card-slot {
+    position: relative;
+    min-width: var(--card-w);
+    min-height: var(--card-h);
+    display: grid;
+    place-items: center;
+}
+.trump-card-slot .card,
+.trump-card-slot .trump-card-mini {
+    width: var(--card-w) !important;
+    height: var(--card-h) !important;
+    box-shadow: 0 0 0 1px rgba(247, 227, 165, 0.65), 0 6px 18px rgba(216, 140, 60, 0.35);
+    border-radius: 9px;
+}
+
+/* ======================== PLAYED AREA (центр розыгрыша) ======================== */
+/* Компактный стек: карты идут в одну "пачку" с небольшим смещением.
+   Чем больше игроков — тем плотнее. 2p — мягкий вертикальный нахлёст. */
+
+.game--v2 .played-area { position: relative; }
+.game--v2 .played-area .table-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+/* 2 игрока: первая карта чуть сверху, вторая чуть снизу — компактно */
+.game--v2 .played-area[data-players="2"] .table-card:nth-child(1) { transform: translate(-60%, -58%) rotate(-4deg); z-index: 1; }
+.game--v2 .played-area[data-players="2"] .table-card:nth-child(2) { transform: translate(-40%, -42%) rotate(4deg);  z-index: 2; }
+/* 3p */
+.game--v2 .played-area[data-players="3"] .table-card:nth-child(1) { transform: translate(-70%, -55%) rotate(-6deg); z-index: 1; }
+.game--v2 .played-area[data-players="3"] .table-card:nth-child(2) { transform: translate(-50%, -45%) rotate(0);     z-index: 2; }
+.game--v2 .played-area[data-players="3"] .table-card:nth-child(3) { transform: translate(-30%, -55%) rotate(6deg);  z-index: 3; }
+/* 4p */
+.game--v2 .played-area[data-players="4"] .table-card:nth-child(1) { transform: translate(-72%, -60%) rotate(-10deg); z-index: 1; }
+.game--v2 .played-area[data-players="4"] .table-card:nth-child(2) { transform: translate(-55%, -44%) rotate(-3deg);  z-index: 2; }
+.game--v2 .played-area[data-players="4"] .table-card:nth-child(3) { transform: translate(-45%, -56%) rotate(4deg);   z-index: 3; }
+.game--v2 .played-area[data-players="4"] .table-card:nth-child(4) { transform: translate(-28%, -40%) rotate(10deg);  z-index: 4; }
+/* 5p */
+.game--v2 .played-area[data-players="5"] .table-card:nth-child(1) { transform: translate(-76%, -58%) rotate(-12deg); z-index: 1; }
+.game--v2 .played-area[data-players="5"] .table-card:nth-child(2) { transform: translate(-60%, -44%) rotate(-5deg);  z-index: 2; }
+.game--v2 .played-area[data-players="5"] .table-card:nth-child(3) { transform: translate(-48%, -56%) rotate(0);      z-index: 3; }
+.game--v2 .played-area[data-players="5"] .table-card:nth-child(4) { transform: translate(-36%, -42%) rotate(5deg);   z-index: 4; }
+.game--v2 .played-area[data-players="5"] .table-card:nth-child(5) { transform: translate(-22%, -58%) rotate(12deg);  z-index: 5; }
+/* 6p */
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(1) { transform: translate(-80%, -58%) rotate(-14deg); z-index: 1; }
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(2) { transform: translate(-64%, -42%) rotate(-7deg);  z-index: 2; }
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(3) { transform: translate(-52%, -58%) rotate(-2deg);  z-index: 3; }
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(4) { transform: translate(-40%, -44%) rotate(3deg);   z-index: 4; }
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(5) { transform: translate(-28%, -58%) rotate(8deg);   z-index: 5; }
+.game--v2 .played-area[data-players="6"] .table-card:nth-child(6) { transform: translate(-18%, -42%) rotate(14deg);  z-index: 6; }
+
+/* Winner card: подъём, золотое свечение, выше z-index */
+.game--v2 .played-area .table-played-card.winner-card {
+    filter: none;
+    box-shadow:
+        0 0 0 2px rgba(247, 227, 165, 0.9),
+        0 0 22px 6px rgba(247, 200, 100, 0.55),
+        0 14px 34px rgba(216, 140, 60, 0.5) !important;
+    z-index: 20 !important;
+    animation: winnerCardPulse 900ms ease-in-out 1;
+}
+.game--v2 .played-area .table-card:has(.winner-card) { z-index: 20; transform: translate(-50%, -55%) scale(1.06) !important; }
+.game--v2 .played-area .table-played-card.loser-card {
+    filter: brightness(0.82) saturate(0.88);
+    opacity: 0.8;
+}
+@keyframes winnerCardPulse {
+    0%   { transform: scale(1);   }
+    30%  { transform: scale(1.07); }
+    60%  { transform: scale(1.04); }
+    100% { transform: scale(1.05); }
+}
+
+/* --- Не-скоупленные правила подсветки winner/loser ---
+   Оригинальная карта живёт внутри .game--v2 .played-area, но во время полёта
+   клонируется в document.body (см. animateTableCardsToPile). Чтобы подсветка
+   работала и на клонe, держим эти правила без скопа. */
+.fly-card .winner-card,
+.game--v2 .played-area .table-played-card.winner-card {
+    box-shadow:
+        0 0 0 2px rgba(247, 227, 165, 0.9),
+        0 0 22px 6px rgba(247, 200, 100, 0.55),
+        0 14px 34px rgba(216, 140, 60, 0.45) !important;
+    border-color: rgba(247, 227, 165, 0.7) !important;
+}
+.fly-card .loser-card,
+.game--v2 .played-area .table-played-card.loser-card {
+    filter: brightness(0.82) saturate(0.88);
+    opacity: 0.85;
+}
+.fly-card--winner {
+    filter: drop-shadow(0 6px 18px rgba(216, 140, 60, 0.45));
+}
+
+/* ======================== STATUS + AUCTION (actions) ======================== */
+
+.game--v2 #result {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: auto;
+    min-height: 0;
+    margin: 4px auto 0;
+    padding: 0 12px;
+    pointer-events: none;
+    z-index: 5;
+}
+.game--v2 .status-pill {
+    background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(58, 14, 24, 0.85) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    font-size: 14px;
+    padding: 7px 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
+}
+
+.game--v2 .auction-bar {
+    margin: 10px auto 6px;
+    width: min(480px, calc(100% - 20px));
+    padding: 10px 12px 12px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(30, 8, 14, 0.94) 0%, rgba(18, 4, 10, 0.96) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 214, 130, 0.06);
+    backdrop-filter: none;
+}
+.game--v2 .auction-summary {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13.5px;
+    color: rgba(247, 227, 165, 0.88);
+    letter-spacing: 0.02em;
+}
+.game--v2 .slider-label { color: rgba(216, 178, 76, 0.8); font-size: 12.5px; }
+.game--v2 .slider-label strong { color: #f7e3a5; }
+.game--v2 #bidSlider { accent-color: #d8b24c; }
+
+.game--v2 .game-actions-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+.game--v2 .game-act {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border: 1px solid rgba(247, 227, 165, 0.7);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(60, 14, 24, 0.85) 100%);
+    color: #f7e3a5;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.18s ease, border-color 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 214, 130, 0.08);
+}
+.game--v2 .game-act:hover { transform: translateY(-1px); filter: brightness(1.06); border-color: rgba(247, 227, 165, 0.9); }
+.game--v2 .game-act:active { transform: translateY(0); }
+.game--v2 .game-act:disabled { opacity: 0.42; cursor: default; filter: none; transform: none; box-shadow: none; }
+
+.game--v2 .game-act-icon {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: #d8b24c;
+    flex-shrink: 0;
+}
+.game--v2 .game-act-icon svg { width: 100%; height: 100%; }
+.game--v2 .game-act-label { line-height: 1; }
+
+/* Поджигаем акцент ключевой кнопке "Поднять" */
+.game--v2 .game-act--raise {
+    background: linear-gradient(180deg, rgba(92, 28, 42, 0.85) 0%, rgba(42, 10, 18, 0.9) 100%);
+    border-color: rgba(247, 227, 165, 0.85);
+    box-shadow: 0 4px 12px rgba(216, 140, 60, 0.28), inset 0 1px 0 rgba(255, 214, 130, 0.12);
+}
+.game--v2 .game-act--pass .game-act-icon { color: #c06060; }
+.game--v2 .game-act--raise .game-act-icon { color: #f7e3a5; }
+
+.game--v2 .new-game-btn {
+    display: inline-block;
+    margin: 10px auto 18px;
+    padding: 8px 20px;
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(216, 178, 76, 0.8);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+.game--v2 .new-game-btn:hover { color: #f7e3a5; border-color: rgba(247, 227, 165, 0.8); }
+
+/* ======================== RESPONSIVE ======================== */
+
+@media (max-width: 700px) {
+    .game--v2 .game-arena {
+        grid-template-columns: minmax(74px, 1fr) minmax(160px, 1.8fr) minmax(74px, 1fr);
+        gap: 4px;
+    }
+    .seat-name { max-width: 74px; font-size: 13px; }
+    .seat-balance { font-size: 10.5px; }
+    .game-seat--top { --card-w: 46px; --card-h: 66px; --bot-card-w: 46px; --bot-card-h: 66px; }
+    .game-seat--mid-left,
+    .game-seat--mid-right,
+    .game-seat--bot-left { --card-w: 38px; --card-h: 54px; --bot-card-w: 38px; --bot-card-h: 54px; }
+    .game-seat--bottom { --card-w: min(22vw, 76px); --card-h: min(32vw, 108px); }
+    .seat-empty-card { width: 82px; padding: 10px 8px; }
+    .seat-empty-icon { width: 34px; height: 34px; }
+    .seat-empty-icon svg { width: 22px; height: 22px; }
+}
+
+@media (max-width: 480px) {
+    .game--v2 .game-topbar { gap: 6px; padding: 6px 8px; }
+    .game-user-name { max-width: 80px; }
+    .game-balance { padding: 4px 4px 4px 8px; gap: 6px; }
+    .game-balance-value { font-size: 13px; }
+    .game-balance-plus { width: 22px; height: 22px; font-size: 14px; }
+    .game-level-badge { padding: 5px 10px; font-size: 13px; }
+    .game-bell { width: 32px; height: 32px; }
+    .game-bell svg { width: 16px; height: 16px; }
+    .game-lobby-btn { padding: 6px 12px; font-size: 13px; }
+    .game--v2 .game-act { font-size: 13.5px; padding: 10px 6px; gap: 6px; }
+    .game--v2 .game-act-icon { width: 18px; height: 18px; }
+}
+
+@media (max-width: 380px) {
+    .game--v2 .game-topbar { flex-wrap: wrap; }
+    .game-profile { order: 1; }
+    .game-level-badge { order: 2; }
+    .game-balance { order: 3; margin-left: 0; }
+    .game-bell { order: 4; margin-left: auto; }
+    .game-lobby-btn { order: 5; }
+}
+
 /* ===== Main Menu (premium private card club) ===== */
 #mainMenuScreen .splash-inner,
-#findTableScreen .splash-inner {
+#findTableScreen .splash-inner,
+#createTableScreen .splash-inner {
     padding: 0;
     justify-content: flex-start;
     align-items: center;
@@ -2199,7 +3512,487 @@ h1 {
     color: transparent;
 }
 
+/* ======================================================================
+   CREATE TABLE SCREEN
+   Визуальный код: тёмно-бордовые секции-карточки, золотые flourish-
+   заголовки (аналог «1. Ставка», «2. Количество игроков»), круглый
+   золотой слайдер, плитки 2–6, premium toggle, блок предпросмотра
+   с иконкой стола и золотая CTA-кнопка «Создать стол».
+   ====================================================================== */
+
+.menu-panel--create {
+    max-width: min(560px, 96vw);
+    padding: clamp(16px, 3.6vw, 22px) clamp(14px, 3.2vw, 20px) clamp(14px, 3vw, 18px);
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+.menu-panel--create::-webkit-scrollbar { width: 6px; }
+.menu-panel--create::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.5), rgba(139, 106, 42, 0.35));
+    border-radius: 3px;
+}
+
+.create-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    color: #f4d68a;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    flex-shrink: 0;
+}
+.create-back-btn svg { width: 18px; height: 18px; }
+.create-back-btn:hover {
+    border-color: rgba(247, 227, 165, 0.9);
+    background: rgba(247, 227, 165, 0.08);
+    color: #f7e3a5;
+}
+
+.create-title {
+    margin: 10px 0 14px;
+    text-align: center;
+}
+.create-title-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5.4vw, 38px);
+    letter-spacing: 0.01em;
+    margin: 0 0 8px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.create-title-flourish {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(216, 178, 76, 0.75);
+}
+.create-flourish-line {
+    flex: 1;
+    max-width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(216, 178, 76, 0.65), transparent);
+}
+.create-flourish-ornament svg { width: 60px; height: 10px; }
+
+/* --- Секция --- */
+.create-section {
+    position: relative;
+    margin: 14px 0;
+    padding: 16px 16px 18px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.78) 0%, rgba(20, 4, 10, 0.85) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 214, 130, 0.08),
+        inset 0 0 0 2px rgba(58, 26, 10, 0.55);
+}
+.create-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.create-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(15px, 3.6vw, 17px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #f7e3a5;
+    white-space: nowrap;
+}
+.create-section-flourish-left,
+.create-section-flourish-right {
+    flex: 1;
+    max-width: 90px;
+    height: 10px;
+    position: relative;
+}
+/* flourish = тонкая линия с ромбом у ближнего к заголовку края */
+.create-section-flourish-left::before,
+.create-section-flourish-right::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, rgba(216, 178, 76, 0.6));
+}
+.create-section-flourish-right::before {
+    background: linear-gradient(90deg, rgba(216, 178, 76, 0.6), transparent);
+}
+.create-section-flourish-left::after,
+.create-section-flourish-right::after {
+    content: "✦";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-55%);
+    font-size: 10px;
+    color: rgba(216, 178, 76, 0.8);
+}
+.create-section-flourish-left::after  { right: -2px; }
+.create-section-flourish-right::after { left:  -2px; }
+
+/* ===== 1. Ставка ===== */
+.create-stake-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.create-stake-coin svg { width: 44px; height: 44px; }
+.create-stake-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: clamp(38px, 9vw, 58px);
+    line-height: 1;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    letter-spacing: 0.01em;
+}
+
+.create-slider-wrap {
+    padding: 4px 10px 0;
+}
+.create-slider {
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
+    width: 100%;
+    height: 10px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.85), rgba(30, 8, 14, 0.85));
+    border-radius: 999px;
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+    outline: none;
+    cursor: pointer;
+}
+.create-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe8a6, #d8b24c 55%, #7b5a1a 100%);
+    border: 1px solid rgba(247, 227, 165, 0.9);
+    box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.55),
+        0 0 10px rgba(247, 200, 100, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    cursor: grab;
+    margin-top: -7px;
+    transition: transform 0.12s ease;
+}
+.create-slider::-webkit-slider-thumb:active { transform: scale(1.08); cursor: grabbing; }
+.create-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe8a6, #d8b24c 55%, #7b5a1a 100%);
+    border: 1px solid rgba(247, 227, 165, 0.9);
+    box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.55),
+        0 0 10px rgba(247, 200, 100, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    cursor: grab;
+}
+.create-slider-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 2px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11.5px;
+    color: rgba(216, 178, 76, 0.7);
+    letter-spacing: 0.02em;
+}
+.create-slider-scale span { flex: 0 0 auto; text-align: center; min-width: 24px; }
+
+/* ===== 2. Количество игроков ===== */
+.create-players {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+.create-player-tile {
+    position: relative;
+    aspect-ratio: 1 / 1.12;
+    border-radius: 14px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    color: rgba(216, 178, 76, 0.75);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+}
+.create-player-tile:hover {
+    border-color: rgba(247, 227, 165, 0.7);
+    color: #f4d68a;
+}
+.create-player-tile.is-active {
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.18) 0%, rgba(155, 118, 38, 0.2) 100%);
+    border-color: rgba(247, 227, 165, 0.95);
+    color: #f7e3a5;
+    box-shadow:
+        0 4px 14px rgba(216, 140, 60, 0.32),
+        inset 0 1px 0 rgba(255, 214, 130, 0.25),
+        0 0 0 2px rgba(247, 227, 165, 0.25);
+}
+.create-player-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: clamp(22px, 5vw, 30px);
+    line-height: 1;
+}
+.create-player-people svg {
+    width: 100%;
+    max-width: 42px;
+    height: 14px;
+    color: currentColor;
+}
+.create-player-caret {
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 7px;
+    background: inherit;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.create-player-tile.is-active .create-player-caret {
+    opacity: 1;
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.95) 0%, rgba(155, 118, 38, 0.95) 100%);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* ===== 3. Приватная игра ===== */
+.create-private-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.35);
+    cursor: pointer;
+    user-select: none;
+}
+.create-private-icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    color: #d8b24c;
+    flex-shrink: 0;
+}
+.create-private-icon svg { width: 22px; height: 22px; }
+.create-private-label {
+    flex: 1;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    color: #e7c97a;
+    letter-spacing: 0.01em;
+}
+.create-private-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.create-private-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.85), rgba(30, 8, 14, 0.85));
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+    transition: background 0.22s ease, border-color 0.22s ease;
+    flex-shrink: 0;
+}
+.create-private-switch::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe8a6, #d8b24c 55%, #7b5a1a 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: transform 0.25s cubic-bezier(0.4, 0.1, 0.2, 1.4);
+}
+.create-private-input:checked ~ .create-private-switch {
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.2) 0%, rgba(155, 118, 38, 0.25) 100%);
+    border-color: rgba(247, 227, 165, 0.85);
+}
+.create-private-input:checked ~ .create-private-switch::before {
+    transform: translateX(24px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.55), 0 0 10px rgba(247, 200, 100, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* ===== Предпросмотр ===== */
+.create-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    margin: 16px 0 14px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.78) 0%, rgba(20, 4, 10, 0.85) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 214, 130, 0.08);
+}
+.create-preview-icon {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 45%, rgba(216, 178, 76, 0.18), transparent 70%), rgba(10, 4, 8, 0.65);
+    border: 1px solid rgba(216, 178, 76, 0.4);
+}
+.create-preview-icon svg { width: 56px; height: 56px; }
+.create-preview-body { flex: 1; min-width: 0; }
+.create-preview-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: #f7e3a5;
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+}
+.create-preview-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.create-preview-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: rgba(216, 178, 76, 0.8);
+}
+.create-preview-list li strong { color: #f7e3a5; font-weight: 600; }
+.create-preview-k {
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    color: #d8b24c;
+    flex-shrink: 0;
+}
+.create-preview-k svg { width: 14px; height: 14px; }
+
+/* ===== CTA ===== */
+.create-submit {
+    position: relative;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(247, 227, 165, 0.9);
+    background:
+        radial-gradient(ellipse at 50% -20%, rgba(255, 250, 220, 0.5), transparent 60%),
+        linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    color: #3a1a0a;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(18px, 4.2vw, 22px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow:
+        0 6px 18px rgba(216, 140, 60, 0.45),
+        0 0 0 1px rgba(58, 26, 10, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.2s ease;
+    margin-top: 4px;
+}
+.create-submit:hover   { transform: translateY(-1px); filter: brightness(1.05); }
+.create-submit:active  { transform: translateY(0); }
+.create-submit:disabled {
+    filter: saturate(0.5) brightness(0.85);
+    cursor: not-allowed;
+    transform: none;
+}
+.create-submit-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+    transform: translateX(-120%);
+    pointer-events: none;
+}
+.create-submit:hover .create-submit-shine { animation: createShine 0.9s ease-out; }
+@keyframes createShine {
+    to { transform: translateX(120%); }
+}
+.create-submit-text { position: relative; }
+
 /* ---------- Адаптив ---------- */
+@media (max-width: 520px) {
+    .create-section { padding: 14px 12px 16px; }
+    .create-players { gap: 6px; }
+    .create-player-tile { padding: 6px 3px; }
+    .create-preview-icon { width: 64px; height: 64px; }
+    .create-preview-icon svg { width: 48px; height: 48px; }
+    .create-section-flourish-left,
+    .create-section-flourish-right { max-width: 50px; }
+    /* На узких экранах прячем кольцевой колокольчик, чтобы 4 элемента
+       (баланс, колокольчик, назад) помещались и оставалось удобно нажать. */
+    #createTableScreen .menu-topbar-right { gap: 6px; }
+    .create-back-btn { width: 32px; height: 32px; }
+    .create-back-btn svg { width: 16px; height: 16px; }
+}
+@media (max-width: 400px) {
+    .create-section-title { font-size: 14px; }
+    .create-stake-value  { font-size: clamp(32px, 10vw, 46px); }
+    .create-preview { gap: 10px; padding: 10px 12px; }
+    .create-preview-icon { width: 56px; height: 56px; }
+    .create-preview-icon svg { width: 42px; height: 42px; }
+    .create-preview-title { font-size: 14px; }
+    .create-preview-list li { font-size: 12.5px; }
+}
+@media (max-width: 360px) {
+    .create-players { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .create-player-num { font-size: 20px; }
+}
+
+/* ---------- Адаптив (find-table) ---------- */
 
 @media (max-width: 520px) {
     .find-tabs { gap: 6px; }
@@ -2705,6 +4498,259 @@ h1 {
     </div>
 </div>
 
+<!-- ============ CREATE TABLE ============ -->
+<!-- Экран «Создать стол». Живёт в общей системе ui-screen, рамку подтягивает
+     сам из splash-frame (data-frame="true"). Данные находятся в
+     appState.createTable (stake / playersCount / isPrivate), submit кладёт
+     новый стол в appState.tables — ту же коллекцию, что читает find-table. -->
+<div id="createTableScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="menu-panel menu-panel--create">
+            <!-- Top bar (аналог главного меню / Найти стол) -->
+            <div class="menu-topbar">
+                <div class="menu-profile" aria-label="Профиль">
+                    <span class="menu-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                            <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                            <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                        </svg>
+                    </span>
+                    <span class="menu-user-info">
+                        <span class="menu-user-name" data-create-name>Игрок</span>
+                        <span class="menu-user-level">
+                            <svg class="menu-level-crown" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                            </svg>
+                            <span>Уровень <strong data-create-level>12</strong></span>
+                        </span>
+                        <span class="menu-level-bar" aria-hidden="true"><span data-create-level-fill></span></span>
+                    </span>
+                </div>
+
+                <div class="menu-topbar-right">
+                    <div class="menu-balance">
+                        <span class="menu-balance-coin" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <defs>
+                                    <linearGradient id="createCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0" stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1" stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="10" cy="10" r="9" fill="url(#createCoinGrad)" />
+                                <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                                <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                                <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="menu-balance-value" data-create-balance>5 420</span>
+                        <button class="menu-balance-plus" type="button" data-create-topup aria-label="Пополнить баланс">+</button>
+                    </div>
+                    <button class="menu-bell" type="button" data-create-bell aria-label="Уведомления">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                            <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+                        </svg>
+                        <span class="menu-bell-badge" data-create-notifications>3</span>
+                    </button>
+                    <button class="create-back-btn" type="button" data-create-back aria-label="Назад">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page title -->
+            <div class="create-title">
+                <h2 class="create-title-text">Создать стол</h2>
+                <div class="create-title-flourish" aria-hidden="true">
+                    <span class="create-flourish-line"></span>
+                    <span class="create-flourish-ornament">
+                        <svg viewBox="0 0 60 10" preserveAspectRatio="none">
+                            <path d="M0 5 Q 15 0 30 5 Q 45 10 60 5" fill="none" stroke="currentColor" stroke-width="0.9" />
+                            <circle cx="30" cy="5" r="1.4" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <span class="create-flourish-line"></span>
+                </div>
+            </div>
+
+            <!-- ===== 1. СТАВКА ===== -->
+            <section class="create-section" aria-labelledby="create-stake-label">
+                <header class="create-section-head">
+                    <span class="create-section-flourish-left"  aria-hidden="true"></span>
+                    <span class="create-section-title" id="create-stake-label">1. Ставка</span>
+                    <span class="create-section-flourish-right" aria-hidden="true"></span>
+                </header>
+                <div class="create-section-body">
+                    <div class="create-stake-display">
+                        <span class="create-stake-coin" aria-hidden="true">
+                            <svg viewBox="0 0 32 32">
+                                <defs>
+                                    <linearGradient id="createStakeCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0"    stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1"    stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <ellipse cx="16" cy="24" rx="12.5" ry="3.5" fill="rgba(10,4,8,0.5)" />
+                                <circle cx="16" cy="21" r="12.5" fill="url(#createStakeCoinGrad)" />
+                                <circle cx="16" cy="14" r="12.5" fill="url(#createStakeCoinGrad)" />
+                                <circle cx="16" cy="14" r="12.5" fill="none" stroke="#5a3a0f" stroke-width="1" />
+                                <circle cx="16" cy="14" r="8.4"  fill="none" stroke="#8c6a2a" stroke-width="0.7" opacity="0.7" />
+                                <text x="16" y="18" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="12" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="create-stake-value" data-create-stake-value>100</span>
+                    </div>
+
+                    <div class="create-slider-wrap">
+                        <input class="create-slider" type="range" min="0" max="5" step="1" value="0" data-create-stake aria-label="Ставка" />
+                        <div class="create-slider-scale" aria-hidden="true">
+                            <span>100</span>
+                            <span>1K</span>
+                            <span>10K</span>
+                            <span>100K</span>
+                            <span>1M</span>
+                            <span>10M</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== 2. КОЛИЧЕСТВО ИГРОКОВ ===== -->
+            <section class="create-section" aria-labelledby="create-count-label">
+                <header class="create-section-head">
+                    <span class="create-section-flourish-left"  aria-hidden="true"></span>
+                    <span class="create-section-title" id="create-count-label">2. Количество игроков</span>
+                    <span class="create-section-flourish-right" aria-hidden="true"></span>
+                </header>
+                <div class="create-section-body">
+                    <div class="create-players" role="radiogroup" aria-label="Количество игроков">
+                        <button type="button" class="create-player-tile is-active" role="radio" aria-checked="true"  data-create-players="2">
+                            <span class="create-player-num">2</span>
+                            <span class="create-player-people" aria-hidden="true">
+                                <svg viewBox="0 0 40 16"><g fill="currentColor"><circle cx="14" cy="5" r="3"/><path d="M7 15 C8 11 20 11 21 15 Z"/><circle cx="26" cy="5" r="3"/><path d="M19 15 C20 11 32 11 33 15 Z"/></g></svg>
+                            </span>
+                            <span class="create-player-caret" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="create-player-tile" role="radio" aria-checked="false" data-create-players="3">
+                            <span class="create-player-num">3</span>
+                            <span class="create-player-people" aria-hidden="true">
+                                <svg viewBox="0 0 48 16"><g fill="currentColor"><circle cx="10" cy="5" r="2.6"/><path d="M4 15 C5 11.5 15 11.5 16 15 Z"/><circle cx="24" cy="5" r="2.6"/><path d="M18 15 C19 11.5 29 11.5 30 15 Z"/><circle cx="38" cy="5" r="2.6"/><path d="M32 15 C33 11.5 43 11.5 44 15 Z"/></g></svg>
+                            </span>
+                            <span class="create-player-caret" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="create-player-tile" role="radio" aria-checked="false" data-create-players="4">
+                            <span class="create-player-num">4</span>
+                            <span class="create-player-people" aria-hidden="true">
+                                <svg viewBox="0 0 56 16"><g fill="currentColor"><circle cx="8"  cy="5" r="2.4"/><path d="M3 15 C4 11.5 12 11.5 13 15 Z"/><circle cx="22" cy="5" r="2.4"/><path d="M17 15 C18 11.5 26 11.5 27 15 Z"/><circle cx="36" cy="5" r="2.4"/><path d="M31 15 C32 11.5 40 11.5 41 15 Z"/><circle cx="50" cy="5" r="2.4"/><path d="M45 15 C46 11.5 54 11.5 55 15 Z"/></g></svg>
+                            </span>
+                            <span class="create-player-caret" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="create-player-tile" role="radio" aria-checked="false" data-create-players="5">
+                            <span class="create-player-num">5</span>
+                            <span class="create-player-people" aria-hidden="true">
+                                <svg viewBox="0 0 64 16"><g fill="currentColor"><circle cx="7"  cy="5" r="2.2"/><path d="M3 15 C4 11.8 10 11.8 11 15 Z"/><circle cx="19" cy="5" r="2.2"/><path d="M15 15 C16 11.8 22 11.8 23 15 Z"/><circle cx="32" cy="5" r="2.2"/><path d="M28 15 C29 11.8 35 11.8 36 15 Z"/><circle cx="45" cy="5" r="2.2"/><path d="M41 15 C42 11.8 48 11.8 49 15 Z"/><circle cx="57" cy="5" r="2.2"/><path d="M53 15 C54 11.8 60 11.8 61 15 Z"/></g></svg>
+                            </span>
+                            <span class="create-player-caret" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="create-player-tile" role="radio" aria-checked="false" data-create-players="6">
+                            <span class="create-player-num">6</span>
+                            <span class="create-player-people" aria-hidden="true">
+                                <svg viewBox="0 0 72 16"><g fill="currentColor"><circle cx="6"  cy="5" r="2"/><path d="M2 15 C3 11.8 9 11.8 10 15 Z"/><circle cx="17" cy="5" r="2"/><path d="M13 15 C14 11.8 20 11.8 21 15 Z"/><circle cx="28" cy="5" r="2"/><path d="M24 15 C25 11.8 31 11.8 32 15 Z"/><circle cx="44" cy="5" r="2"/><path d="M40 15 C41 11.8 47 11.8 48 15 Z"/><circle cx="55" cy="5" r="2"/><path d="M51 15 C52 11.8 58 11.8 59 15 Z"/><circle cx="66" cy="5" r="2"/><path d="M62 15 C63 11.8 69 11.8 70 15 Z"/></g></svg>
+                            </span>
+                            <span class="create-player-caret" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== 3. ПРИВАТНАЯ ИГРА ===== -->
+            <section class="create-section" aria-labelledby="create-private-label">
+                <header class="create-section-head">
+                    <span class="create-section-flourish-left"  aria-hidden="true"></span>
+                    <span class="create-section-title" id="create-private-label">3. Приватная игра</span>
+                    <span class="create-section-flourish-right" aria-hidden="true"></span>
+                </header>
+                <div class="create-section-body">
+                    <label class="create-private-row">
+                        <span class="create-private-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 11 V 8 A 5 5 0 0 1 17 8 V 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                                <rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor" opacity="0.22" stroke="currentColor" stroke-width="1.4" />
+                                <circle cx="12" cy="15.5" r="1.4" fill="currentColor" />
+                            </svg>
+                        </span>
+                        <span class="create-private-label">Только по приглашению</span>
+                        <input type="checkbox" class="create-private-input" data-create-private />
+                        <span class="create-private-switch" aria-hidden="true"></span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- ===== ПРЕДПРОСМОТР ===== -->
+            <section class="create-preview" aria-label="Предварительный просмотр">
+                <span class="create-preview-icon" aria-hidden="true">
+                    <svg viewBox="0 0 64 64">
+                        <ellipse cx="32" cy="45" rx="24" ry="6"  fill="rgba(10,4,8,0.5)" />
+                        <ellipse cx="32" cy="32" rx="26" ry="18" fill="#3e1020" stroke="#d8b24c" stroke-width="1.4" />
+                        <ellipse cx="32" cy="32" rx="20" ry="13" fill="#5a1a2a" stroke="#8c6a2a" stroke-width="0.8" opacity="0.85" />
+                        <g fill="#d8b24c">
+                            <circle cx="8"  cy="32" r="2.4" />
+                            <circle cx="56" cy="32" r="2.4" />
+                            <circle cx="32" cy="14" r="2.4" />
+                            <circle cx="32" cy="50" r="2.4" />
+                            <circle cx="15" cy="18" r="2.2" />
+                            <circle cx="49" cy="18" r="2.2" />
+                            <circle cx="15" cy="46" r="2.2" />
+                            <circle cx="49" cy="46" r="2.2" />
+                        </g>
+                        <path d="M28 30 L 30 26 L 32 30 L 34 26 L 36 30 Z" fill="#f7e3a5" stroke="#8c6a2a" stroke-width="0.4" />
+                    </svg>
+                </span>
+                <div class="create-preview-body">
+                    <div class="create-preview-title">Предварительный просмотр</div>
+                    <ul class="create-preview-list">
+                        <li>
+                            <span class="create-preview-k" aria-hidden="true">
+                                <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2" /><circle cx="8" cy="8" r="2.4" fill="currentColor" /></svg>
+                            </span>
+                            <span>Ставка: <strong data-create-preview-stake>100</strong></span>
+                        </li>
+                        <li>
+                            <span class="create-preview-k" aria-hidden="true">
+                                <svg viewBox="0 0 16 16"><g fill="currentColor"><circle cx="5" cy="6" r="2.2"/><circle cx="11" cy="6" r="2"/><path d="M1.5 14 C 2.5 10.5 9.5 10.5 10.5 14 Z"/><path d="M7.5 14 C 8.5 10.8 15 10.8 16 14 Z"/></g></svg>
+                            </span>
+                            <span>Игроков: <strong data-create-preview-players>2</strong></span>
+                        </li>
+                        <li>
+                            <span class="create-preview-k" aria-hidden="true">
+                                <svg viewBox="0 0 16 16">
+                                    <path d="M4 7 V 5.2 A 4 4 0 0 1 12 5.2 V 7" fill="none" stroke="currentColor" stroke-width="1.2" />
+                                    <rect x="3" y="7" width="10" height="7" rx="1.4" fill="currentColor" opacity="0.22" stroke="currentColor" stroke-width="1.2" />
+                                </svg>
+                            </span>
+                            <span>Приватная игра: <strong data-create-preview-private>Нет</strong></span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ===== CTA ===== -->
+            <button type="button" class="create-submit" data-create-submit>
+                <span class="create-submit-shine" aria-hidden="true"></span>
+                <span class="create-submit-text">Создать стол</span>
+            </button>
+        </div>
+
+        <div class="menu-toast" data-create-toast aria-live="polite"></div>
+    </div>
+</div>
+
 <!-- ============ FIND TABLE ============ -->
 <div id="findTableScreen" class="ui-screen hidden" data-frame="true">
     <div class="splash-inner">
@@ -2878,58 +4924,94 @@ h1 {
     </div>
 </div>
 
-<div class="game" id="gameRoot">
-    <h1>Azi by Bobby</h1>
+<div class="game game--v2" id="gameRoot">
 
-    <div class="table-zone" id="tableZone">
+    <!-- ========== TOP BAR (как в Main Menu / Find Table) ========== -->
+    <div class="game-topbar">
+        <button class="game-profile" type="button" data-game-profile aria-label="Профиль">
+            <span class="game-avatar" aria-hidden="true">
+                <svg viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                    <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                    <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                </svg>
+            </span>
+            <span class="game-user-info">
+                <span class="game-user-name" data-game-name>Игрок</span>
+                <span class="game-user-status">
+                    <svg class="game-user-crown" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                    </svg>
+                    <span data-game-status>Профи</span>
+                </span>
+                <span class="game-user-level-bar" aria-hidden="true"><span data-game-level-fill></span></span>
+            </span>
+        </button>
+
+        <span class="game-level-badge" data-game-level>12</span>
+
+        <div class="game-balance">
+            <span class="game-balance-coin" aria-hidden="true">
+                <svg viewBox="0 0 20 20">
+                    <defs>
+                        <linearGradient id="gameCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0" stop-color="#f7e3a5" />
+                            <stop offset="0.55" stop-color="#d8b24c" />
+                            <stop offset="1" stop-color="#8c6a2a" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="10" cy="10" r="9" fill="url(#gameCoinGrad)" />
+                    <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                    <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                    <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                </svg>
+            </span>
+            <span class="game-balance-value" data-game-balance>5 420</span>
+            <button class="game-balance-plus" type="button" data-game-topup aria-label="Пополнить баланс">+</button>
+        </div>
+
+        <button class="game-bell" type="button" data-game-bell aria-label="Уведомления">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+            </svg>
+            <span class="game-bell-badge" data-game-notifications>3</span>
+        </button>
+
+        <button class="game-invite-btn hidden" type="button" data-game-invite title="Пригласить друзей">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9"  cy="9"  r="3.4" fill="currentColor" />
+                <path d="M3 19 C 4 15 14 15 15 19 Z" fill="currentColor" />
+                <path d="M18 6 L 18 14 M 14 10 L 22 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>Пригласить</span>
+        </button>
+        <button class="game-leave-btn" type="button" data-game-leave title="Освободить место">Встать</button>
+        <button class="game-lobby-btn" type="button" data-game-lobby>Лобби</button>
+    </div>
+
+    <!-- ========== ARENA ========== -->
+    <div class="game-arena" id="tableZone">
         <div class="impact-layer" id="impactLayer"></div>
 
-        <div class="table-content">
-            <div class="middle-left">
-                <div class="deck-area" id="deckArea">
-                    <div class="trump-under-deck" id="trumpSlot"></div>
+        <!-- 6 слотов-мест: движок (renderSeats) сам заселяет их, в т.ч. меняет
+             "пустое место" на активного игрока/бота и обратно. Фиксированные id
+             (botHand/botTrickPile/...) сохранены для обратной совместимости
+             старых функций — новый движок работает через data-seat-slot. -->
 
-                    <div class="deck-stack" id="deckStack">
-                        <div class="deck-layer layer-1 back"></div>
-                        <div class="deck-layer layer-2 back"></div>
-                        <div class="deck-layer layer-3 back"></div>
-                    </div>
+        <section class="game-seat game-seat--top" data-seat-slot="top"></section>
+        <section class="game-seat game-seat--mid-left"  data-seat-slot="mid-left"></section>
+        <section class="game-seat game-seat--mid-right" data-seat-slot="mid-right"></section>
+        <section class="game-seat game-seat--bot-left"  data-seat-slot="bot-left"></section>
+        <section class="game-seat game-seat--bot-right" data-seat-slot="bot-right"></section>
 
-                    <div class="deck-count" id="deckCount">0</div>
-                </div>
-            </div>
-
-            <div class="middle-right">
-                <div class="pot-area" id="potArea">
-                    <div class="pot-label">Кон</div>
-                    <div class="pot-stack">
-                        <div class="coin-stack">
-                            <div class="coin"></div>
-                            <div class="coin"></div>
-                            <div class="coin"></div>
-                        </div>
-                    </div>
-                    <div class="pot-value" id="potValue">0</div>
-                </div>
-            </div>
-
-            <div class="top-player-area">
-                <div class="bot-pile-wrap">
-                    <div class="trick-pile" id="botTrickPile"></div>
-                    <div class="pile-count" id="botTrickCount">0</div>
-                </div>
-
-                <div class="bot-hand-wrap">
-                    <div class="cards" id="botHand"></div>
-                </div>
-
-                <div class="bank-wrap bot-bank-wrap" id="botBankWrap">
-                    <div class="coin-stack">
-                        <div class="coin"></div>
-                        <div class="coin"></div>
-                        <div class="coin"></div>
-                    </div>
-                    <div class="bank-value" id="botBankValue">3К</div>
+        <!-- ======= CENTER: банк, розыгрыш, козырь ======= -->
+        <div class="game-center">
+            <div class="pot-area" id="potArea">
+                <div class="pot-label">Банк</div>
+                <div class="pot-value-row">
+                    <span class="pot-coin" aria-hidden="true"></span>
+                    <span id="potValue">0</span>
                 </div>
             </div>
 
@@ -2938,50 +5020,127 @@ h1 {
                 <div class="table-card" id="botCard"></div>
             </div>
 
-            <div id="result">
-                <div class="status-pill" id="statusPill">Начинаются торги. Выбери действие.</div>
+            <div class="trump-area">
+                <div class="trump-label">Козырь</div>
+                <div class="trump-card-slot" id="trumpSlot"></div>
             </div>
 
-            <div class="bottom-player-area">
-                <div class="player-pile-wrap">
-                    <div class="trick-pile" id="playerTrickPile"></div>
-                    <div class="pile-count" id="playerTrickCount">0</div>
+            <!-- Колода: в новом дизайне нет "кирпичика колоды" в углу стола.
+                 Но JS-логика (getDeckTopRect, deckCount) обращается к deckArea/deckStack.
+                 Прячем визуально, но сохраняем в DOM для совместимости. -->
+            <div class="deck-area logic-ghost" id="deckArea">
+                <div class="deck-stack" id="deckStack">
+                    <div class="deck-layer layer-1 back"></div>
+                    <div class="deck-layer layer-2 back"></div>
+                    <div class="deck-layer layer-3 back"></div>
                 </div>
+                <div class="deck-count" id="deckCount">0</div>
+            </div>
+        </div>
 
-                <div class="player-bank-wrap" id="playerBankWrap">
-                    <div class="bank-value" id="playerBankValue">3К</div>
-                    <div class="coin-stack">
-                        <div class="coin"></div>
-                        <div class="coin"></div>
-                        <div class="coin"></div>
-                    </div>
-                </div>
+        <!-- ======= BOTTOM: "Вы" — тоже слот, но всегда занят локальным игроком ======= -->
+        <section class="game-seat game-seat--bottom game-seat--you" data-seat-slot="bottom"></section>
+    </div>
 
-                <div class="player-hand-wrap">
-                    <div class="cards" id="playerHand"></div>
-                </div>
+    <!-- Баннер ожидания: показывается только в phase === "waiting" (только что
+         созданный приватный/открытый стол, игроки ещё не пришли). -->
+    <div class="game-waiting-banner hidden" id="gameWaitingBanner" role="status" aria-live="polite">
+        <span class="game-waiting-dot" aria-hidden="true"></span>
+        <span class="game-waiting-text" data-game-waiting-text>Ждём игроков…</span>
+    </div>
+
+    <!-- Пригласить друзей — модалка (mock). В проде — данные придут с сервера:
+         /friends, /invite POST. Пока данные лежат в appState.friends. -->
+    <div class="invite-overlay hidden" id="inviteOverlay" role="dialog" aria-modal="true" aria-labelledby="inviteTitle">
+        <div class="invite-backdrop" data-invite-close></div>
+        <div class="invite-card">
+            <button class="invite-close" type="button" data-invite-close aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6 L 18 18 M 18 6 L 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            </button>
+            <h3 class="invite-title" id="inviteTitle">Пригласить друзей</h3>
+            <p class="invite-subtitle" data-invite-subtitle>Выберите, кого позвать за стол</p>
+
+            <label class="invite-search-wrap">
+                <svg class="invite-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M15.5 15.5 L 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+                <input type="search" class="invite-search" data-invite-search placeholder="Поиск по нику" autocomplete="off" />
+            </label>
+
+            <div class="invite-list" data-invite-list role="list">
+                <!-- строки рендерятся в renderInviteList() -->
+            </div>
+
+            <div class="invite-empty hidden" data-invite-empty>Ничего не найдено</div>
+
+            <div class="invite-divider" aria-hidden="true">
+                <span></span><em>или</em><span></span>
+            </div>
+
+            <button class="invite-share-btn" type="button" data-invite-share>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 13 L 14 11 M 14 13 L 10 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <circle cx="7"  cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                    <circle cx="17" cy="6"  r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                    <circle cx="17" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                </svg>
+                <span>Поделиться ссылкой</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Наблюдатель: оверлей поверх арены, когда игрок встал из-за стола. -->
+    <div class="spectator-overlay hidden" id="spectatorOverlay" role="status">
+        <div class="spectator-card">
+            <div class="spectator-title">Вы наблюдаете за столом</div>
+            <div class="spectator-hint">Вы вышли из партии, но остались в комнате.</div>
+            <div class="spectator-actions">
+                <button type="button" class="spectator-sit" data-spectator-sit>Сесть снова</button>
+                <button type="button" class="spectator-lobby" data-spectator-lobby>В список столов</button>
             </div>
         </div>
     </div>
 
-    <div class="auction-bar" id="auctionBar">
-        <div class="auction-summary" id="auctionSummary">
-            Ставка: 0 · Твой ход в торгах
-        </div>
+    <!-- ========== STATUS PILL ========== -->
+    <div id="result">
+        <div class="status-pill" id="statusPill">Начинаются торги. Выбери действие.</div>
+    </div>
+
+    <!-- ========== ACTIONS (Сброс / Уровнять / Поднять) ========== -->
+    <div class="auction-bar game-actions" id="auctionBar">
+        <div class="auction-summary" id="auctionSummary">Ставка: 0 · Твой ход в торгах</div>
 
         <div class="slider-row">
             <div class="slider-label">Поднять до: <strong id="sliderValue">1</strong></div>
             <input type="range" id="bidSlider" min="1" max="3" value="1" />
         </div>
 
-        <div class="auction-buttons">
-            <button class="auction-btn btn-pass" id="passBtn">Сброс</button>
-            <button class="auction-btn btn-call" id="callBtn">Уровнять</button>
-            <button class="auction-btn btn-raise" id="raiseBtn">Поднять</button>
+        <div class="auction-buttons game-actions-row">
+            <button class="auction-btn game-act game-act--pass" id="passBtn" type="button">
+                <span class="game-act-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M6 4 L 6 15 L 3 15 L 12 22 L 21 15 L 18 15 L 18 4 Z" fill="currentColor"/></svg>
+                </span>
+                <span class="game-act-label">Сброс</span>
+            </button>
+            <button class="auction-btn game-act game-act--call" id="callBtn" type="button">
+                <span class="game-act-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 9 L 20 9 M 4 15 L 20 15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+                </span>
+                <span class="game-act-label">Уровнять</span>
+            </button>
+            <button class="auction-btn game-act game-act--raise" id="raiseBtn" type="button">
+                <span class="game-act-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M6 20 L 6 9 L 3 9 L 12 2 L 21 9 L 18 9 L 18 20 Z" fill="currentColor"/></svg>
+                </span>
+                <span class="game-act-label">Поднять</span>
+            </button>
         </div>
     </div>
 
-    <button class="button" onclick="resetGame()">Новая партия</button>
+    <button class="button new-game-btn" onclick="resetGame()" type="button">Новая партия</button>
 </div>
 
 <script>
@@ -3392,36 +5551,51 @@ function getPileTargetRect(winner) {
 }
 
 function animateTableCardsToPile(winner, callback) {
+    /* Собираем сыгранные карты вместе с их "стороной", чтобы потом:
+       1) выигрышную отсортировать в конец (выше в z-стеке document.body),
+       2) дать ей более высокий inline z-index,
+       3) сохранить на клоне классы winner-card / loser-card — подсветка применяется
+          через селектор `.fly-card .winner-card` (определён в CSS ниже, без скопа,
+          чтобы работать вне `.game--v2 .played-area`, где живёт оригинал). */
     const playedCards = [];
     const playerPlayed = playerCardEl.querySelector(".card");
     const botPlayed = botCardEl.querySelector(".card");
 
-    if (playerPlayed) playedCards.push(playerPlayed);
-    if (botPlayed) playedCards.push(botPlayed);
+    if (playerPlayed) playedCards.push({ el: playerPlayed, side: "player" });
+    if (botPlayed)    playedCards.push({ el: botPlayed,    side: "bot"    });
 
     if (!playedCards.length) {
         callback();
         return;
     }
 
+    // Проигравшая карта клонируется первой → оказывается ниже в document.body,
+    // победная — последней → выше, чтобы быть акцентной на протяжении всего полёта.
+    playedCards.sort((a, b) => (a.side === winner ? 1 : 0) - (b.side === winner ? 1 : 0));
+
     const pileRect = getPileTargetRect(winner);
     let finished = 0;
 
-    playedCards.forEach((card, index) => {
-        const rect = card.getBoundingClientRect();
-        const clone = card.cloneNode(true);
+    playedCards.forEach((item, index) => {
+        const card     = item.el;
+        const isWinner = item.side === winner;
+        const rect     = card.getBoundingClientRect();
+        const clone    = card.cloneNode(true);
 
         clone.classList.add("fly-card");
-        clone.style.left = rect.left + "px";
-        clone.style.top = rect.top + "px";
-        clone.style.width = rect.width + "px";
+        if (isWinner) clone.classList.add("fly-card--winner");
+
+        clone.style.left   = rect.left + "px";
+        clone.style.top    = rect.top + "px";
+        clone.style.width  = rect.width + "px";
         clone.style.height = rect.height + "px";
+        clone.style.zIndex = isWinner ? "10000" : "9998";
         document.body.appendChild(clone);
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 clone.style.left = (pileRect.left + 1 + index * 3) + "px";
-                clone.style.top = (pileRect.top + 2 + index * 2) + "px";
+                clone.style.top  = (pileRect.top + 2 + index * 2) + "px";
                 clone.style.transform = `scale(0.42) rotate(${winner === "player" ? -10 + index * 8 : 10 - index * 8}deg)`;
                 clone.style.opacity = "0.45";
             });
@@ -4091,6 +6265,7 @@ const SCREENS = Object.freeze({
     AUTH: "auth",
     MAIN_MENU: "mainMenu",
     FIND_TABLE: "findTable",
+    CREATE_TABLE: "createTable",
     GAME: "game",
 });
 
@@ -4184,6 +6359,38 @@ const UI_TEXT = Object.freeze({
         emptyList:        "Столы не найдены",
         brand:            "AZI",
     },
+    createTable: {
+        title:             "Создать стол",
+        sectionStake:      "1. Ставка",
+        sectionPlayers:    "2. Количество игроков",
+        sectionPrivate:    "3. Приватная игра",
+        labelPrivate:      "Только по приглашению",
+        previewTitle:      "Предварительный просмотр",
+        previewStake:      "Ставка",
+        previewPlayers:    "Игроков",
+        previewPrivate:    "Приватная игра",
+        yes:               "Да",
+        no:                "Нет",
+        submit:            "Создать стол",
+        toastCreatedOpen:    "Открытый стол создан. Ждём игроков…",
+        toastCreatedPrivate: "Приватный стол создан. Пригласите друзей",
+        toastLowBalance:     "Недостаточно средств для такой ставки",
+    },
+    invite: {
+        title:          "Пригласить друзей",
+        subtitlePrivate: "Выберите, кого позвать за приватный стол",
+        subtitlePublic:  "Позовите друзей — стол уже в списке «Найти стол»",
+        searchPlaceholder: "Поиск по нику",
+        btnInvite:      "Позвать",
+        btnInvited:     "Отправлено",
+        shareBtn:       "Поделиться ссылкой",
+        emptyNotFound:  "Ничего не найдено",
+        emptyNoFriends: "Список друзей пуст — добавьте друзей в разделе «Друзья»",
+        toastLinkCopied: "Ссылка-приглашение скопирована",
+        toastInvited:    "Приглашение отправлено",
+        waitingText:    "Ждём игроков…",
+        waitingPrivate: "Ждём приглашённых…",
+    },
 });
 
 const appState = {
@@ -4209,6 +6416,30 @@ const appState = {
         search: "",
         freeOnly: false,
     },
+    /* createTable — клиентское состояние экрана «Создать стол».
+       При появлении бэкенда submit будет идти в POST /tables с этими значениями. */
+    createTable: {
+        stakeStep:     0,       // 0..5 → [100, 1K, 10K, 100K, 1M, 10M]
+        playersCount:  2,       // 2..6
+        isPrivate:     false,
+    },
+    /* Текущая комната (конкретный стол, за которым сидит пользователь).
+       Ссылкой смотрит на запись из appState.tables (owner сохраняется даже
+       после «Встать»). При подключении бэка будет синхронизироваться с
+       /rooms/:id через WebSocket. */
+    currentRoom: null,
+    /* Друзья — mock-список для UI приглашений. При появлении бэка сюда
+       ляжет ответ GET /friends. Поле `online` клиентское, будет приходить
+       через presence-канал. */
+    friends: [
+        { id: "f1", name: "Михаил",    level: 14, online: true  },
+        { id: "f2", name: "Анна",      level: 9,  online: true  },
+        { id: "f3", name: "Дмитрий",   level: 22, online: false },
+        { id: "f4", name: "Екатерина", level: 7,  online: true  },
+        { id: "f5", name: "Игорь",     level: 18, online: false },
+        { id: "f6", name: "Софья",     level: 11, online: true  },
+        { id: "f7", name: "Павел",     level: 5,  online: false },
+    ],
     tables: [
         { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low"  },
         { id: 18, stake: 100,   players: 4, capacity: 6, tier: "low"  },
@@ -4326,12 +6557,14 @@ const authService = {
 const authScreenEl = document.getElementById("authScreen");
 const mainMenuScreenEl = document.getElementById("mainMenuScreen");
 const findTableScreenEl = document.getElementById("findTableScreen");
+const createTableScreenEl = document.getElementById("createTableScreen");
 
 const screenEls = {
     [SCREENS.SPLASH]: splashScreenEl,
     [SCREENS.AUTH]: authScreenEl,
     [SCREENS.MAIN_MENU]: mainMenuScreenEl,
     [SCREENS.FIND_TABLE]: findTableScreenEl,
+    [SCREENS.CREATE_TABLE]: createTableScreenEl,
 };
 
 /* ---------- Screen manager ---------- */
@@ -4347,6 +6580,8 @@ function setScreen(screen) {
     if (screen === SCREENS.AUTH) renderAuthScreen();
     if (screen === SCREENS.MAIN_MENU) renderMainMenu();
     if (screen === SCREENS.FIND_TABLE) renderFindTable();
+    if (screen === SCREENS.CREATE_TABLE) renderCreateTable();
+    if (screen === SCREENS.GAME) renderGameTopbar();
 }
 
 function setAuthMode(mode) {
@@ -4531,6 +6766,8 @@ function showMenuToast(text) {
     let toastEl = null;
     if (appState.currentScreen === SCREENS.FIND_TABLE && findTableScreenEl) {
         toastEl = findTableScreenEl.querySelector("[data-find-toast]");
+    } else if (appState.currentScreen === SCREENS.CREATE_TABLE && createTableScreenEl) {
+        toastEl = createTableScreenEl.querySelector("[data-create-toast]");
     } else if (mainMenuScreenEl) {
         toastEl = mainMenuScreenEl.querySelector("[data-menu-toast]");
     }
@@ -4581,7 +6818,7 @@ const MENU_ACTION_HANDLERS = {
         // при нажатии «Сесть» на конкретном столе (см. bindFindTableHandlers).
         setScreen(SCREENS.FIND_TABLE);
     },
-    create:   () => showMenuToast(UI_TEXT.menu.toastSoon),
+    create:   () => { setScreen(SCREENS.CREATE_TABLE); },
     friends:  () => showMenuToast(UI_TEXT.menu.toastSoon),
     share:    () => { handleMenuShare(); },
     rules:    () => showMenuToast(UI_TEXT.menu.toastSoon),
@@ -4703,6 +6940,112 @@ function renderMainMenu() {
 }
 
 /* ==============================================================
+   GAME SCREEN v2 — топбар (профиль/баланс/Лобби)
+   Игровая механика уже реализована ниже и трогать её нельзя.
+   Здесь — только UI-обвязка нового премиального топбара и кнопки
+   "Лобби" для возврата в главное меню.
+   ============================================================== */
+function renderGameTopbar() {
+    const rootEl = document.getElementById("gameRoot");
+    if (!rootEl) return;
+
+    const profile = appState.profile || {};
+
+    const nameEl = rootEl.querySelector("[data-game-name]");
+    if (nameEl) {
+        const name = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
+        nameEl.textContent = name;
+    }
+
+    const levelEl = rootEl.querySelector("[data-game-level]");
+    if (levelEl) levelEl.textContent = String(profile.level != null ? profile.level : 1);
+
+    const fillEl = rootEl.querySelector("[data-game-level-fill]");
+    if (fillEl) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        fillEl.style.width = (xp * 100).toFixed(1) + "%";
+    }
+
+    const balanceEl = rootEl.querySelector("[data-game-balance]");
+    if (balanceEl && typeof formatBalance === "function") {
+        balanceEl.textContent = formatBalance(profile.balance);
+    }
+
+    const notifEl = rootEl.querySelector("[data-game-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+
+    /* Waiting-режим: показываем кнопку «Пригласить» только владельцу стола
+       и только пока не идёт партия. Баннер «Ждём игроков» висит поверх арены. */
+    const room = (engine && engine.currentTable) || appState.currentRoom || null;
+    const isWaiting = engine && engine.phase === "waiting";
+    const isOwner = !!(room && (room.isOwner || room.ownerId === ((appState.user && appState.user.id) || "me")));
+
+    const inviteBtn = rootEl.querySelector("[data-game-invite]");
+    if (inviteBtn) inviteBtn.classList.toggle("hidden", !(isWaiting && isOwner));
+
+    const banner = document.getElementById("gameWaitingBanner");
+    if (banner) {
+        banner.classList.toggle("hidden", !isWaiting);
+        const textEl = banner.querySelector("[data-game-waiting-text]");
+        if (textEl) {
+            textEl.textContent = (room && room.type === "private")
+                ? UI_TEXT.invite.waitingPrivate
+                : UI_TEXT.invite.waitingText;
+        }
+    }
+}
+
+function bindGameTopbarHandlers() {
+    const rootEl = document.getElementById("gameRoot");
+    if (!rootEl) return;
+
+    /* "Лобби" = вернуться в список столов ("Найти стол"), а не в главный хаб.
+       Это именно лобби комнат, поэтому логично возвращать именно сюда. */
+    const lobbyBtn = rootEl.querySelector("[data-game-lobby]");
+    if (lobbyBtn) lobbyBtn.addEventListener("click", () => {
+        setScreen(SCREENS.FIND_TABLE);
+    });
+
+    /* "Пригласить" — открыть модалку приглашений (видна только в waiting-режиме
+       и только владельцу комнаты — см. renderGameTopbar). */
+    const inviteBtn = rootEl.querySelector("[data-game-invite]");
+    if (inviteBtn) inviteBtn.addEventListener("click", () => {
+        openInviteModal();
+    });
+
+    /* Профиль (клик по аватару): тоже возвращает в меню — там есть sheet с настройками/выходом.
+       При появлении отдельного profile-экрана — менять здесь одну строку. */
+    const profileBtn = rootEl.querySelector("[data-game-profile]");
+    if (profileBtn) profileBtn.addEventListener("click", () => {
+        setScreen(SCREENS.MAIN_MENU);
+    });
+
+    /* Топап и колокольчик — заглушки (тост "Скоро"), как в остальных экранах. */
+    const topupBtn = rootEl.querySelector("[data-game-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (typeof showMenuToast === "function") showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+
+    const bellBtn = rootEl.querySelector("[data-game-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", () => {
+        const n = (appState.profile && appState.profile.notifications) || 0;
+        if (typeof showMenuToast === "function") {
+            showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+        }
+    });
+}
+
+/* ==============================================================
    FIND TABLE SCREEN — поиск/фильтрация столов + логика "Сесть"
    Клиентский слой. Когда появится сервер лобби, filterTables()
    нужно будет заменить на запрос к API + подписку на изменения,
@@ -4765,6 +7108,11 @@ function filterTables() {
     const f = appState.findTable || {};
     const term = (f.search || "").trim().toLowerCase();
     return (appState.tables || []).filter((t) => {
+        /* Скрываем неопубликованные столы: приватные (type==="private") и
+           явно скрытые (isListed===false). Старые моки без этих полей —
+           считаем публичными. */
+        if (t.type === "private") return false;
+        if (t.isListed === false) return false;
         if (t.tier !== f.category) return false;
         if (f.freeOnly && t.players >= t.capacity) return false;
         if (term) {
@@ -4923,7 +7271,18 @@ function bindFindTableHandlers() {
         const tableId = Number(btn.dataset.findSit);
         const tbl = (appState.tables || []).find((x) => x.id === tableId);
         if (!tbl || tbl.players >= tbl.capacity) return;
-        // Запуск игры. При подключении бэка сюда добавится join-запрос к лобби.
+        /* Запоминаем стол, за который сели, чтобы движок знал сколько реально
+           игроков за столом после посадки. При подключении бэка — здесь будет
+           POST /tables/:id/sit. */
+        if (!appState.findTable) appState.findTable = {};
+        appState.findTable.currentTable = {
+            id:       tbl.id,
+            stake:    tbl.stake,
+            tier:     tbl.tier,
+            capacity: tbl.capacity,
+            players:  tbl.players + 1, // +1 = локальный игрок только что сел
+        };
+        selectedPlayersCount = appState.findTable.currentTable.players;
         setScreen(SCREENS.GAME);
         resetGame();
     });
@@ -4942,6 +7301,393 @@ function bindFindTableHandlers() {
         }
         e.preventDefault();
         setScreen(SCREENS.MAIN_MENU);
+    });
+}
+
+/* ======================================================================
+   CREATE TABLE — рендер + хендлеры.
+   Формат state: appState.createTable = {stakeStep, playersCount, isPrivate}.
+   Submit создаёт новый стол (mock) и кладёт его в appState.tables. Для
+   приватного — сразу открываем игровую комнату. Для открытого — возвращаемся
+   к списку столов с выбранной категорией. При подключении бэкенда submit
+   будет идти в POST /tables с телом { stake, playersCount, isPrivate }.
+   ====================================================================== */
+
+const CREATE_STAKE_STEPS  = [100, 1000, 10000, 100000, 1000000, 10000000];
+const CREATE_STAKE_LABELS = ["100", "1K", "10K", "100K", "1M", "10M"];
+
+function getCreateStake() {
+    const step = Math.max(0, Math.min(CREATE_STAKE_STEPS.length - 1, Number(appState.createTable.stakeStep) || 0));
+    return CREATE_STAKE_STEPS[step];
+}
+function formatStakeShort(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(n % 1000000 ? 1 : 0).replace(".0", "") + "M";
+    if (n >= 1000)    return (n / 1000).toFixed(n % 1000 ? 1 : 0).replace(".0", "") + "K";
+    return String(n);
+}
+
+/* Определить tier по ставке — чтобы созданный стол правильно попал во вкладку
+   find-table (low/mid/high/vip). Границы выбраны под сетку существующих столов. */
+function tierForStake(stake) {
+    if (stake >= 100000) return "vip";
+    if (stake >= 2000)   return "high";
+    if (stake >= 500)    return "mid";
+    return "low";
+}
+
+function renderCreateTable() {
+    if (!createTableScreenEl) return;
+
+    const profile = appState.profile || {};
+    const ct = appState.createTable;
+
+    /* Топбар — как в main menu / find table */
+    const nameEl = createTableScreenEl.querySelector("[data-create-name]");
+    if (nameEl) {
+        const name = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
+        nameEl.textContent = name;
+    }
+    const levelEl = createTableScreenEl.querySelector("[data-create-level]");
+    if (levelEl) levelEl.textContent = String(profile.level != null ? profile.level : 1);
+    const levelFillEl = createTableScreenEl.querySelector("[data-create-level-fill]");
+    if (levelFillEl) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        levelFillEl.style.width = (xp * 100).toFixed(1) + "%";
+    }
+    const balanceEl = createTableScreenEl.querySelector("[data-create-balance]");
+    if (balanceEl) balanceEl.textContent = formatBalance(profile.balance);
+    const notifEl = createTableScreenEl.querySelector("[data-create-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+
+    /* Ставка — синхронизируем слайдер + крупное число */
+    const slider = createTableScreenEl.querySelector("[data-create-stake]");
+    if (slider && Number(slider.value) !== ct.stakeStep) slider.value = String(ct.stakeStep);
+    const stakeValueEl = createTableScreenEl.querySelector("[data-create-stake-value]");
+    if (stakeValueEl) stakeValueEl.textContent = formatBalance(getCreateStake());
+
+    /* Плитки количества игроков */
+    createTableScreenEl.querySelectorAll("[data-create-players]").forEach((btn) => {
+        const n = Number(btn.dataset.createPlayers);
+        const active = n === ct.playersCount;
+        btn.classList.toggle("is-active", active);
+        btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
+
+    /* Приватная игра */
+    const privateInput = createTableScreenEl.querySelector("[data-create-private]");
+    if (privateInput) privateInput.checked = !!ct.isPrivate;
+
+    /* Предпросмотр */
+    const prevStake   = createTableScreenEl.querySelector("[data-create-preview-stake]");
+    const prevPlayers = createTableScreenEl.querySelector("[data-create-preview-players]");
+    const prevPrivate = createTableScreenEl.querySelector("[data-create-preview-private]");
+    if (prevStake)   prevStake.textContent   = formatBalance(getCreateStake());
+    if (prevPlayers) prevPlayers.textContent = String(ct.playersCount);
+    if (prevPrivate) prevPrivate.textContent = ct.isPrivate
+        ? UI_TEXT.createTable.yes
+        : UI_TEXT.createTable.no;
+}
+
+function bindCreateTableHandlers() {
+    if (!createTableScreenEl) return;
+
+    /* Назад — в главное меню (кнопка со стрелкой в топбаре). */
+    const backBtn = createTableScreenEl.querySelector("[data-create-back]");
+    if (backBtn) backBtn.addEventListener("click", () => setScreen(SCREENS.MAIN_MENU));
+
+    /* Ставка (слайдер) */
+    const slider = createTableScreenEl.querySelector("[data-create-stake]");
+    if (slider) slider.addEventListener("input", (e) => {
+        appState.createTable.stakeStep = Number(e.target.value) || 0;
+        renderCreateTable();
+    });
+
+    /* Количество игроков — radiogroup */
+    createTableScreenEl.querySelectorAll("[data-create-players]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const n = Number(btn.dataset.createPlayers);
+            if (!n || n === appState.createTable.playersCount) return;
+            appState.createTable.playersCount = n;
+            renderCreateTable();
+        });
+    });
+
+    /* Приватная игра */
+    const privateInput = createTableScreenEl.querySelector("[data-create-private]");
+    if (privateInput) privateInput.addEventListener("change", (e) => {
+        appState.createTable.isPrivate = !!e.target.checked;
+        renderCreateTable();
+    });
+
+    /* Топбар-кнопки — как на main menu */
+    const topupBtn = createTableScreenEl.querySelector("[data-create-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+    const bellBtn = createTableScreenEl.querySelector("[data-create-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", () => {
+        const n = (appState.profile && appState.profile.notifications) || 0;
+        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    });
+
+    /* Submit — создание стола */
+    const submitBtn = createTableScreenEl.querySelector("[data-create-submit]");
+    if (submitBtn) submitBtn.addEventListener("click", () => handleCreateTableSubmit());
+
+    /* Esc — назад в главное меню */
+    document.addEventListener("keydown", (e) => {
+        if (appState.currentScreen !== SCREENS.CREATE_TABLE) return;
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        setScreen(SCREENS.MAIN_MENU);
+    });
+}
+
+/* Генерация id нового стола — берём максимум из текущих +1.
+   Когда появится backend — id будет приходить в ответе сервера. */
+function nextTableId() {
+    const ids = (appState.tables || []).map((t) => Number(t.id) || 0);
+    return (ids.length ? Math.max.apply(null, ids) : 10) + 1;
+}
+
+function handleCreateTableSubmit() {
+    const ct     = appState.createTable;
+    const stake  = getCreateStake();
+    const count  = Math.max(2, Math.min(6, Number(ct.playersCount) || 2));
+    const isPriv = !!ct.isPrivate;
+
+    /* Минимальная проверка баланса — чтобы не создавать стол «выше своих средств».
+       Это заглушка под будущую серверную валидацию. */
+    const balance = (appState.profile && Number(appState.profile.balance)) || 0;
+    if (stake > balance) {
+        showMenuToast(UI_TEXT.createTable.toastLowBalance);
+        return;
+    }
+
+    /* Новая модель стола.
+       type       — "private" | "public"
+       status     — "waiting" | "playing" | "finished"
+       isListed   — виден ли в «Найти стол» (только для публичных waiting/playing)
+       ownerId    — id владельца комнаты
+       players    — сколько мест реально занято (сейчас только создатель)
+       maxPlayers — вместимость (= capacity, дубль для будущего API)
+       invitedPlayers — список id приглашённых (для приватных)
+       seats      — карта «seatSlot → playerId|null», будущий серверный контракт. */
+    const ownerId  = (appState.user && appState.user.id) || "me";
+    const newTable = {
+        id:         nextTableId(),
+        stake:      stake,
+        capacity:   count,
+        maxPlayers: count,
+        players:    1,
+        tier:       tierForStake(stake),
+        type:       isPriv ? "private" : "public",
+        isPrivate:  isPriv,          // legacy-совместимость
+        isListed:   !isPriv,         // приватные не публикуются
+        ownerId:    ownerId,
+        invitedPlayers: [],
+        status:     "waiting",
+        seats:      { bottom: ownerId, top: null, "mid-left": null, "mid-right": null, "bot-left": null, "bot-right": null },
+        isOwner:    true,            // клиентский флаг для текущего пользователя
+    };
+
+    /* Кладём стол в общий список столов. Для приватных он тоже хранится,
+       но find-table его отфильтрует по type==="private". */
+    if (!Array.isArray(appState.tables)) appState.tables = [];
+    appState.tables.push(newTable);
+
+    /* Запоминаем активную комнату — это источник правды о текущем столе. */
+    appState.currentRoom = newTable;
+    if (!appState.findTable) appState.findTable = {};
+    appState.findTable.currentTable = newTable;
+
+    /* И для приватного, и для открытого стола пользователь попадает ВНУТРЬ
+       комнаты: остальные места пусты, ни один бот не подсаживается.
+       engineStart(..., {waiting:true}) не раздаёт карты и не запускает торги. */
+    selectedPlayersCount = count;
+    setScreen(SCREENS.GAME);
+    engineStart(count, { stake: stake, table: newTable, waiting: true });
+
+    showMenuToast(isPriv
+        ? UI_TEXT.createTable.toastCreatedPrivate
+        : UI_TEXT.createTable.toastCreatedOpen);
+
+    /* Для приватного стола сразу предлагаем пригласить друзей. */
+    if (isPriv) setTimeout(() => openInviteModal(), 400);
+}
+
+/* ======================================================================
+   INVITE MODAL — пригласить друзей за приватный/открытый стол.
+   Mock-логика: берём appState.friends, показываем со статусом online,
+   отмечаем приглашённых в appState.currentRoom.invitedPlayers. Кнопка
+   «Поделиться ссылкой» копирует mock-URL в буфер обмена (navigator.share
+   если есть, иначе clipboard, иначе просто toast).
+   При появлении бэкенда:
+   - GET /friends → appState.friends
+   - POST /rooms/:id/invite {friendId}  → push в invitedPlayers
+   - GET /rooms/:id/invite-link        → возвращает реальный url
+   ====================================================================== */
+
+let inviteSearchState = "";
+
+function getCurrentRoom() {
+    return appState.currentRoom
+        || (engine && engine.currentTable)
+        || (appState.findTable && appState.findTable.currentTable)
+        || null;
+}
+
+function buildInviteUrl(room) {
+    const base = (typeof window !== "undefined" && window.location && window.location.origin) || "";
+    const id = room && room.id ? room.id : "";
+    // Mock query string — в будущем здесь будет токен приглашения
+    return `${base}/?room=${id}${room && room.type === "private" ? "&invite=mock" : ""}`;
+}
+
+function openInviteModal() {
+    const overlay = document.getElementById("inviteOverlay");
+    if (!overlay) return;
+    const room = getCurrentRoom();
+    inviteSearchState = "";
+    const searchEl = overlay.querySelector("[data-invite-search]");
+    if (searchEl) searchEl.value = "";
+    const subtitleEl = overlay.querySelector("[data-invite-subtitle]");
+    if (subtitleEl) {
+        subtitleEl.textContent = room && room.type === "private"
+            ? UI_TEXT.invite.subtitlePrivate
+            : UI_TEXT.invite.subtitlePublic;
+    }
+    renderInviteList();
+    overlay.classList.remove("hidden");
+}
+
+function closeInviteModal() {
+    const overlay = document.getElementById("inviteOverlay");
+    if (overlay) overlay.classList.add("hidden");
+}
+
+function renderInviteList() {
+    const overlay = document.getElementById("inviteOverlay");
+    if (!overlay) return;
+    const listEl  = overlay.querySelector("[data-invite-list]");
+    const emptyEl = overlay.querySelector("[data-invite-empty]");
+    if (!listEl) return;
+
+    const friends = Array.isArray(appState.friends) ? appState.friends : [];
+    const term = (inviteSearchState || "").trim().toLowerCase();
+    const filtered = term
+        ? friends.filter((f) => (f.name || "").toLowerCase().includes(term))
+        : friends.slice();
+
+    const room = getCurrentRoom();
+    const invited = (room && Array.isArray(room.invitedPlayers)) ? room.invitedPlayers : [];
+
+    if (!filtered.length) {
+        listEl.innerHTML = "";
+        if (emptyEl) {
+            emptyEl.textContent = friends.length
+                ? UI_TEXT.invite.emptyNotFound
+                : UI_TEXT.invite.emptyNoFriends;
+            emptyEl.classList.remove("hidden");
+        }
+        return;
+    }
+    if (emptyEl) emptyEl.classList.add("hidden");
+
+    listEl.innerHTML = filtered.map((f) => {
+        const isInvited = invited.indexOf(f.id) !== -1;
+        const initials = (f.name || "?").trim().charAt(0).toUpperCase();
+        const statusText = f.online ? "в сети" : "не в сети";
+        return `
+            <div class="invite-friend-row" role="listitem" data-friend-id="${f.id}">
+                <span class="invite-friend-avatar" aria-hidden="true">${initials}</span>
+                <div class="invite-friend-info">
+                    <div class="invite-friend-name">${f.name}</div>
+                    <div class="invite-friend-sub${f.online ? ' is-online' : ''}">${statusText} · Ур.&nbsp;${f.level || 1}</div>
+                </div>
+                <button class="invite-friend-btn${isInvited ? ' is-sent' : ''}" type="button"
+                        data-invite-friend="${f.id}" ${isInvited ? 'disabled' : ''}>
+                    ${isInvited ? UI_TEXT.invite.btnInvited : UI_TEXT.invite.btnInvite}
+                </button>
+            </div>
+        `;
+    }).join("");
+}
+
+function inviteFriend(friendId) {
+    const room = getCurrentRoom();
+    if (!room) return;
+    if (!Array.isArray(room.invitedPlayers)) room.invitedPlayers = [];
+    if (room.invitedPlayers.indexOf(friendId) !== -1) return;
+    room.invitedPlayers.push(friendId);
+    renderInviteList();
+    showMenuToast(UI_TEXT.invite.toastInvited);
+    /* В будущем: POST /rooms/:id/invite {friendId} */
+}
+
+async function handleInviteShare() {
+    const room = getCurrentRoom();
+    const url  = buildInviteUrl(room);
+    const shareData = {
+        title: UI_TEXT.menu.shareTitle,
+        text:  UI_TEXT.menu.shareText,
+        url:   url,
+    };
+    if (navigator.share) {
+        try { await navigator.share(shareData); return; }
+        catch (e) { if (e && e.name === "AbortError") return; /* fallthrough */ }
+    }
+    if (navigator.clipboard) {
+        try {
+            await navigator.clipboard.writeText(url);
+            showMenuToast(UI_TEXT.invite.toastLinkCopied);
+            return;
+        } catch (e) { /* fallthrough */ }
+    }
+    showMenuToast(UI_TEXT.invite.toastLinkCopied);
+}
+
+function bindInviteHandlers() {
+    const overlay = document.getElementById("inviteOverlay");
+    if (!overlay) return;
+
+    overlay.querySelectorAll("[data-invite-close]").forEach((el) => {
+        el.addEventListener("click", () => closeInviteModal());
+    });
+
+    const searchEl = overlay.querySelector("[data-invite-search]");
+    if (searchEl) searchEl.addEventListener("input", (e) => {
+        inviteSearchState = e.target.value || "";
+        renderInviteList();
+    });
+
+    const listEl = overlay.querySelector("[data-invite-list]");
+    if (listEl) listEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-invite-friend]");
+        if (!btn || btn.disabled) return;
+        inviteFriend(btn.dataset.inviteFriend);
+    });
+
+    const shareBtn = overlay.querySelector("[data-invite-share]");
+    if (shareBtn) shareBtn.addEventListener("click", () => handleInviteShare());
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        const overlayEl = document.getElementById("inviteOverlay");
+        if (overlayEl && !overlayEl.classList.contains("hidden")) {
+            e.preventDefault();
+            closeInviteModal();
+        }
     });
 }
 
@@ -4999,8 +7745,1019 @@ function goAfterSplash() {
 }
 
 /* ---------- Bootstrap ---------- */
+/* ==============================================================
+   GAME ENGINE v2 — полноценный движок для 2–6 игроков.
+
+   Почему это новый модуль, а не правка старого:
+     старая игровая логика была жёстко написана под "player vs bot":
+     playerCards/botCards, playerScore/botScore, auctionTurn === "player",
+     compareCards(lead, response) — всё бинарное. Растянуть её до N
+     игроков = аккуратно переписать петлю. Утилиты (getRank, getSuit,
+     buildDeck, shuffleDeck, isValidMove, renderCardFace, formatCompactMoney,
+     animateMoneyToPot, triggerTableShake) остаются — на них движок опирается.
+
+   Ниже:
+     1) state движка (engine.*)
+     2) renderSeats — заселяет data-seat-slot шаблонами
+     3) deal — раздача N×3 карт + козырь
+     4) аукцион round-robin (1 круг: пас / уровнять / поднять)
+     5) розыгрыш 3 взяток между всеми активными игроками
+     6) определение взятки по старшему козырю или старшей карте захода
+     7) spectator-режим для "Встать"
+   ============================================================== */
+
+const SEAT_ORDER = ["bottom", "top", "mid-left", "mid-right", "bot-left", "bot-right"];
+const BOT_PROFILES = [
+    { name: "Марина",  level: 2, tint: "#7a2a3e", bank: 8940  },
+    { name: "Игорь",   level: 3, tint: "#5a3a2a", bank: 12300 },
+    { name: "Дмитрий", level: 4, tint: "#3a2a5a", bank: 6750  },
+    { name: "Анна",    level: 5, tint: "#7a2a55", bank: 9120  },
+    { name: "Виктор",  level: 6, tint: "#2a4a5a", bank: 15420 },
+];
+
+const engine = {
+    players: [],
+    humanIdx: 0,
+    phase: "idle",          // "idle" | "dealing" | "auction" | "play" | "gameover"
+    trumpCard: null,
+    trickNumber: 1,
+    totalTricks: 3,
+    currentTurn: 0,
+    leaderIdx: 0,
+    trickCards: [],         // [{ playerIdx, card }]
+    currentBid: 0,
+    lastBidderIdx: null,
+    auctionWinnerIdx: null,
+    pot: 0,
+    baseStake: 100,
+    spectating: false,
+    currentTable: null,
+    actionLock: false,
+    pendingAuctionResolve: false,
+};
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+function makeAvatarSvg() {
+    return '<svg viewBox="0 0 40 40">' +
+        '<circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.75)" />' +
+        '<circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />' +
+        '<path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />' +
+        '</svg>';
+}
+
+function makePlayerMarkup(p) {
+    const isYou = p.isHuman;
+    const handModCls = isYou ? "seat-hand--you" : (p.seatSlot === "top" ? "seat-hand--top" : "seat-hand--side");
+    return (
+        '<header class="seat-card' + (isYou ? ' seat-card--you' : '') + '" style="--seat-tint:' + p.tint + '">' +
+            '<span class="seat-avatar' + (isYou ? ' seat-avatar--you' : '') + '">' +
+                makeAvatarSvg() +
+                '<span class="seat-badge">' + p.level + '</span>' +
+            '</span>' +
+            '<span class="seat-name">' + esc(p.name) + '</span>' +
+            '<span class="seat-balance"><span class="seat-coin"></span>' +
+                '<span data-seat-balance>' + formatCompactMoney(p.bank) + '</span>' +
+            '</span>' +
+        '</header>' +
+        '<div class="seat-hand ' + handModCls + '">' +
+            '<div class="cards" data-seat-hand></div>' +
+        '</div>' +
+        '<div class="seat-trick-dots" data-seat-tricks aria-label="Взятки">' +
+            '<span class="trick-dot"></span><span class="trick-dot"></span><span class="trick-dot"></span>' +
+        '</div>' +
+        '<div class="logic-ghost" data-seat-bank></div>'
+    );
+}
+
+function makeEmptySeatMarkup() {
+    return (
+        '<div class="seat-empty-card">' +
+            '<span class="seat-empty-icon" aria-hidden="true">' +
+                '<svg viewBox="0 0 40 40">' +
+                    '<path d="M10 14 L 10 24 L 30 24 L 30 14 C 30 11, 28 9, 25 9 L 15 9 C 12 9, 10 11, 10 14 Z" fill="none" stroke="currentColor" stroke-width="1.4" />' +
+                    '<path d="M8 24 L 32 24" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />' +
+                    '<path d="M11 24 L 11 32" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />' +
+                    '<path d="M29 24 L 29 32" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />' +
+                '</svg>' +
+            '</span>' +
+            '<span class="seat-empty-label">Свободное<br>место</span>' +
+            '<span class="seat-empty-dots" aria-hidden="true">• • •</span>' +
+        '</div>'
+    );
+}
+
+function engineGetSeatEl(slotName) {
+    return document.querySelector('#gameRoot .game-arena [data-seat-slot="' + slotName + '"]');
+}
+
+function engineBuildPlayers(playersCount) {
+    const list = [];
+    const humanProfile = appState.profile || {};
+    const humanName = (appState.user && (appState.user.name || appState.user.email)) || (UI_TEXT.menu && UI_TEXT.menu.fallbackName) || "Вы";
+
+    list.push({
+        id: 0,
+        seatSlot: "bottom",
+        name: humanName,
+        level: humanProfile.level || 12,
+        tint: "#4a2418",
+        isHuman: true,
+        hand: [],
+        scoreTricks: 0,
+        bank: Number(humanProfile.balance) || 3000,
+        bid: null,
+        passedAuction: false,
+        active: true,
+    });
+
+    for (let i = 1; i < playersCount; i++) {
+        const profile = BOT_PROFILES[(i - 1) % BOT_PROFILES.length];
+        list.push({
+            id: i,
+            seatSlot: SEAT_ORDER[i],
+            name: profile.name,
+            level: profile.level,
+            tint: profile.tint,
+            isHuman: false,
+            hand: [],
+            scoreTricks: 0,
+            bank: profile.bank,
+            bid: null,
+            passedAuction: false,
+            active: true,
+        });
+    }
+
+    return list;
+}
+
+function engineRenderSeats() {
+    const arena = document.querySelector("#gameRoot .game-arena");
+    if (!arena) return;
+
+    /* Список «видимых» слотов ограничен вместимостью стола: первые capacity
+       элементов SEAT_ORDER активны, остальные — полностью скрыты (display:none),
+       чтобы 3-местный стол не показывал 3 лишних пустых слота. */
+    const capacity = Math.max(2, Math.min(6, Number(engine.capacity) || engine.players.length || 2));
+    const visibleSlots = new Set(SEAT_ORDER.slice(0, capacity));
+
+    const slots = arena.querySelectorAll("[data-seat-slot]");
+    slots.forEach((slotEl) => {
+        const slotName = slotEl.dataset.seatSlot;
+
+        // Слоты за пределами вместимости — прячем полностью.
+        if (!visibleSlots.has(slotName)) {
+            slotEl.classList.add("game-seat--hidden");
+            slotEl.innerHTML = "";
+            return;
+        }
+        slotEl.classList.remove("game-seat--hidden");
+
+        const player = engine.players.find((p) => p.seatSlot === slotName);
+
+        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "game-seat--empty");
+
+        if (!player) {
+            slotEl.classList.add("game-seat--empty");
+            slotEl.innerHTML = makeEmptySeatMarkup();
+            return;
+        }
+
+        slotEl.innerHTML = makePlayerMarkup(player);
+        if (!player.active) slotEl.classList.add("is-spectator");
+    });
+
+    engineRenderHands();
+    engineRenderTrickDots();
+    engineUpdateActiveTurnClass();
+}
+
+function engineGetHandEl(playerIdx) {
+    const p = engine.players[playerIdx];
+    if (!p) return null;
+    const seatEl = engineGetSeatEl(p.seatSlot);
+    return seatEl ? seatEl.querySelector("[data-seat-hand]") : null;
+}
+
+function engineGetBankGhostEl(playerIdx) {
+    const p = engine.players[playerIdx];
+    if (!p) return null;
+    const seatEl = engineGetSeatEl(p.seatSlot);
+    return seatEl ? seatEl.querySelector("[data-seat-bank]") : null;
+}
+
+function engineRenderHands() {
+    engine.players.forEach((p, idx) => {
+        const handEl = engineGetHandEl(idx);
+        if (!handEl) return;
+        handEl.innerHTML = "";
+        if (!p.active) return;
+
+        if (p.isHuman) {
+            p.hand.forEach((card) => {
+                const el = document.createElement("div");
+                el.className = "card";
+                el.dataset.cardValue = card;
+                if (isRedSuit(getSuit(card))) el.classList.add("red-card");
+                el.innerHTML = renderCardFace(card);
+                el.addEventListener("click", () => engineOnHumanCardClick(card));
+                handEl.appendChild(el);
+            });
+        } else {
+            for (let i = 0; i < p.hand.length; i++) {
+                const el = document.createElement("div");
+                el.className = "card back";
+                handEl.appendChild(el);
+            }
+        }
+    });
+}
+
+function engineRenderTrickDots() {
+    engine.players.forEach((p) => {
+        const seatEl = engineGetSeatEl(p.seatSlot);
+        if (!seatEl) return;
+        const dotsWrap = seatEl.querySelector("[data-seat-tricks]");
+        if (!dotsWrap) return;
+        const dots = dotsWrap.querySelectorAll(".trick-dot");
+        dots.forEach((dot, i) => {
+            dot.classList.toggle("is-on", i < p.scoreTricks);
+        });
+    });
+}
+
+function engineUpdateActiveTurnClass() {
+    engine.players.forEach((p, idx) => {
+        const seatEl = engineGetSeatEl(p.seatSlot);
+        if (!seatEl) return;
+        seatEl.classList.toggle("is-active-turn",
+            (engine.phase === "auction" || engine.phase === "play") &&
+            engine.currentTurn === idx &&
+            p.active &&
+            !p.passedAuction
+        );
+        seatEl.classList.toggle("is-passed-auction", p.passedAuction && engine.phase === "auction");
+    });
+}
+
+function engineRenderTrump() {
+    if (!trumpSlotEl) return;
+    trumpSlotEl.innerHTML = '<div class="card trump-card-mini" style="cursor:default;">' +
+        renderCardFace(engine.trumpCard) +
+    '</div>';
+}
+
+function engineAdvanceTurn() {
+    const n = engine.players.length;
+    for (let step = 1; step <= n; step++) {
+        const nextIdx = (engine.currentTurn + step) % n;
+        const np = engine.players[nextIdx];
+        if (np.active && (engine.phase !== "auction" || !np.passedAuction)) {
+            engine.currentTurn = nextIdx;
+            engineUpdateActiveTurnClass();
+            return nextIdx;
+        }
+    }
+    return engine.currentTurn;
+}
+
+function engineActivePlayersInAuction() {
+    return engine.players.filter((p) => p.active && !p.passedAuction);
+}
+
+function engineActivePlayersInPlay() {
+    return engine.players.filter((p) => p.active);
+}
+
+/* ---------- DEAL ---------- */
+
+function engineDeal() {
+    const deck = shuffleDeck(buildDeck());
+    let i = 0;
+    engine.players.forEach((p) => {
+        if (!p.active) return;
+        p.hand = deck.slice(i, i + 3);
+        i += 3;
+    });
+    engine.trumpCard = deck[i];
+}
+
+/* ---------- AUCTION ---------- */
+
+function engineStartAuction() {
+    engine.phase = "auction";
+    engine.currentBid = 0;
+    engine.lastBidderIdx = null;
+    engine.auctionWinnerIdx = null;
+    engine.currentTurn = engine.humanIdx;
+    engine.players.forEach((p) => { p.bid = null; p.passedAuction = false; });
+    if (auctionBarEl) auctionBarEl.classList.remove("hidden");
+    engineUpdateAuctionUI();
+    engineRunAuctionTurn();
+}
+
+function engineUpdateAuctionUI() {
+    if (!auctionBarEl) return;
+    const human = engine.players[engine.humanIdx];
+    const isHumansTurn = engine.phase === "auction" && engine.currentTurn === engine.humanIdx && !engine.actionLock && human && human.active && !human.passedAuction;
+    const minRaise = Math.min(engine.currentBid + 1, 3);
+
+    if (bidSliderEl) {
+        bidSliderEl.min = String(minRaise);
+        bidSliderEl.max = "3";
+        if (Number(bidSliderEl.value) < minRaise) bidSliderEl.value = String(minRaise);
+    }
+    if (sliderValueEl && bidSliderEl) sliderValueEl.innerText = bidSliderEl.value;
+
+    if (passBtn)  passBtn.disabled  = !isHumansTurn;
+    if (callBtn)  callBtn.disabled  = !isHumansTurn || engine.currentBid === 0;
+    if (raiseBtn) raiseBtn.disabled = !isHumansTurn || engine.currentBid >= 3;
+
+    if (auctionSummaryEl) {
+        const turnOwner = engine.players[engine.currentTurn];
+        const turnText  = engine.phase === "auction"
+            ? (turnOwner && turnOwner.isHuman ? "Твой ход" : ("Ход: " + (turnOwner ? turnOwner.name : "—")))
+            : "Торги завершены";
+        auctionSummaryEl.innerText = "Ставка: " + engine.currentBid + " · " + turnText;
+    }
+}
+
+function engineRunAuctionTurn() {
+    if (engine.phase !== "auction") return;
+    engineUpdateActiveTurnClass();
+    engineUpdateAuctionUI();
+
+    const remaining = engineActivePlayersInAuction();
+    if (remaining.length <= 1 && engine.lastBidderIdx !== null) {
+        engineResolveAuction();
+        return;
+    }
+    if (remaining.length === 0) {
+        // все спасовали на 0 — победителем считается локальный игрок
+        engine.lastBidderIdx = engine.humanIdx;
+        engine.currentBid = 1;
+        engineResolveAuction();
+        return;
+    }
+
+    const p = engine.players[engine.currentTurn];
+    if (!p.active || p.passedAuction) {
+        engineAdvanceTurn();
+        engineRunAuctionTurn();
+        return;
+    }
+
+    if (p.isHuman) {
+        setMessage(engine.currentBid === 0 ? "Открой торги или спасуй" : "Уровняй, подними или спасуй");
+    } else {
+        setMessage(p.name + " думает...");
+        setTimeout(() => engineBotAuctionDecision(p), 650);
+    }
+}
+
+function engineBotAuctionDecision(p) {
+    if (engine.phase !== "auction" || engine.players[engine.currentTurn] !== p) return;
+
+    // Сила руки бота
+    const trumpSuit = getSuit(engine.trumpCard);
+    let score = 0;
+    for (const c of p.hand) {
+        score += power[getRank(c)];
+        if (getSuit(c) === trumpSuit) score += 2;
+    }
+    const maxBid = score >= 24 ? 3 : score >= 17 ? 2 : score >= 11 ? 1 : 0;
+
+    if (engine.currentBid === 0) {
+        if (maxBid === 0) { engineDoAuctionPass(p.id); return; }
+        engineDoAuctionRaise(p.id, Math.min(maxBid, 2));
+        return;
+    }
+    if (engine.currentBid >= maxBid) {
+        if (engine.currentBid === maxBid && Math.random() < 0.45) {
+            engineDoAuctionCall(p.id);
+            return;
+        }
+        engineDoAuctionPass(p.id);
+        return;
+    }
+    engineDoAuctionRaise(p.id, Math.min(engine.currentBid + 1, 3));
+}
+
+function engineDoAuctionPass(playerIdx) {
+    const p = engine.players[playerIdx];
+    p.passedAuction = true;
+    setMessage(p.isHuman ? "Ты спасовал" : (p.name + " спасовал"));
+    engineAfterAuctionAction();
+}
+
+function engineDoAuctionCall(playerIdx) {
+    const p = engine.players[playerIdx];
+    p.bid = engine.currentBid;
+    setMessage((p.isHuman ? "Ты" : p.name) + " уравнял " + engine.currentBid);
+    p.passedAuction = true; // принял текущую и выходит из дальнейшего торга
+    engineAfterAuctionAction();
+}
+
+function engineDoAuctionRaise(playerIdx, raiseTo) {
+    const p = engine.players[playerIdx];
+    if (raiseTo <= engine.currentBid) raiseTo = engine.currentBid + 1;
+    raiseTo = Math.min(raiseTo, 3);
+
+    engine.currentBid = raiseTo;
+    engine.lastBidderIdx = playerIdx;
+    p.bid = raiseTo;
+
+    const addAmount = Math.max(0, engine.currentBid * engine.baseStake - engine.pot);
+    if (addAmount > 0 && p.bank >= addAmount) {
+        p.bank -= addAmount;
+        engine.pot += addAmount;
+    } else if (addAmount > 0) {
+        engine.pot += Math.max(0, p.bank);
+        p.bank = 0;
+    }
+    engineUpdatePotUI();
+    engineUpdateSeatBalances();
+
+    setMessage((p.isHuman ? "Ты" : p.name) + " поднял до " + raiseTo);
+    engineAfterAuctionAction();
+}
+
+function engineAfterAuctionAction() {
+    engineAdvanceTurn();
+    setTimeout(engineRunAuctionTurn, 250);
+}
+
+function engineResolveAuction() {
+    engine.phase = "play";
+    engine.auctionWinnerIdx = engine.lastBidderIdx != null ? engine.lastBidderIdx : engine.humanIdx;
+    engine.leaderIdx = engine.auctionWinnerIdx;
+    engine.currentTurn = engine.leaderIdx;
+    engine.players.forEach((p) => { p.passedAuction = false; });
+
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+    const winner = engine.players[engine.auctionWinnerIdx];
+    setMessage("Торги завершены. Первый ход: " + (winner.isHuman ? "ты" : winner.name));
+
+    engineUpdateActiveTurnClass();
+
+    setTimeout(() => {
+        engine.trickNumber = 1;
+        engineStartTrick();
+    }, 700);
+}
+
+/* ---------- PLAY ---------- */
+
+function enginePlayedAreaEl() { return document.getElementById("playedArea"); }
+
+function engineClearPlayed() {
+    const el = enginePlayedAreaEl();
+    if (!el) return;
+    el.innerHTML = "";
+    engine.trickCards = [];
+}
+
+function engineSetPlayedAreaSize() {
+    const el = enginePlayedAreaEl();
+    if (!el) return;
+    const n = Math.max(2, Math.min(6, engineActivePlayersInPlay().length));
+    el.dataset.players = String(n);
+}
+
+function engineRenderTrickCard(trickEntry) {
+    const el = enginePlayedAreaEl();
+    if (!el) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "table-card";
+    wrap.dataset.playerIdx = String(trickEntry.playerIdx);
+    const inner = document.createElement("div");
+    inner.className = "card table-played-card";
+    inner.style.cursor = "default";
+    inner.style.margin = "0 auto";
+    inner.innerHTML = renderCardFace(trickEntry.card);
+    wrap.appendChild(inner);
+    el.appendChild(wrap);
+    return wrap;
+}
+
+function engineStartTrick() {
+    if (engine.phase !== "play") return;
+    engineClearPlayed();
+    engineSetPlayedAreaSize();
+    engine.currentTurn = engine.leaderIdx;
+    engineUpdateActiveTurnClass();
+    engineRunPlayTurn();
+}
+
+function engineRunPlayTurn() {
+    if (engine.phase !== "play") return;
+    const p = engine.players[engine.currentTurn];
+    if (!p.active) {
+        engineAdvanceTurn();
+        engineRunPlayTurn();
+        return;
+    }
+    if (p.isHuman) {
+        setMessage(engine.trickCards.length === 0 ? "Твой ход" : "Ответь картой");
+    } else {
+        setMessage(p.name + " ходит...");
+        setTimeout(() => engineBotPlay(p.id), 600);
+    }
+}
+
+function engineBotPlay(playerIdx) {
+    if (engine.phase !== "play" || engine.currentTurn !== playerIdx) return;
+    const p = engine.players[playerIdx];
+    const trumpSuit = getSuit(engine.trumpCard);
+
+    let card;
+    if (engine.trickCards.length === 0) {
+        // Ведение: отдаём самую слабую не-козырную, иначе самую слабую козырную
+        card = pickBotLeadCard(p.hand, trumpSuit);
+    } else {
+        card = pickBotResponseCard(p, engine.trickCards, trumpSuit);
+    }
+    enginePlayCard(playerIdx, card);
+}
+
+function pickBotLeadCard(hand, trumpSuit) {
+    const nonTrump = hand.filter((c) => getSuit(c) !== trumpSuit);
+    const pool = nonTrump.length ? nonTrump : hand;
+    return pool.slice().sort((a, b) => power[getRank(a)] - power[getRank(b)])[0];
+}
+
+function pickBotResponseCard(p, trickCards, trumpSuit) {
+    const lead = trickCards[0].card;
+    const leadSuit = getSuit(lead);
+    const currentWinner = engineComputeTrickWinner(trickCards, engine.trumpCard);
+    const winningCard = trickCards[currentWinner].card;
+
+    const sameSuit = p.hand.filter((c) => getSuit(c) === leadSuit);
+    const trumps   = p.hand.filter((c) => getSuit(c) === trumpSuit);
+
+    // Пул "обязательных" ходов по правилу следования масти
+    let pool = [];
+    if (sameSuit.length) pool = sameSuit;
+    else if (trumps.length && leadSuit !== trumpSuit) pool = trumps;
+    else pool = p.hand;
+
+    // Пытаемся побить текущего лидера минимально достаточной картой
+    const beaters = pool.filter((c) => cardBeats(c, winningCard, trumpSuit, leadSuit));
+    if (beaters.length) {
+        return beaters.slice().sort((a, b) => power[getRank(a)] - power[getRank(b)])[0];
+    }
+    // Не можем побить — сбрасываем самую слабую
+    return pool.slice().sort((a, b) => power[getRank(a)] - power[getRank(b)])[0];
+}
+
+function cardBeats(attack, defend, trumpSuit, leadSuit) {
+    const aSuit = getSuit(attack);
+    const dSuit = getSuit(defend);
+    const aTrump = aSuit === trumpSuit;
+    const dTrump = dSuit === trumpSuit;
+    if (aTrump && !dTrump) return true;
+    if (!aTrump && dTrump) return false;
+    if (aTrump && dTrump)  return power[getRank(attack)] > power[getRank(defend)];
+    if (aSuit !== leadSuit) return false;
+    if (dSuit !== leadSuit) return true;
+    return power[getRank(attack)] > power[getRank(defend)];
+}
+
+function engineComputeTrickWinner(trickCards, trumpCard) {
+    if (!trickCards.length) return -1;
+    const trumpSuit = getSuit(trumpCard);
+    const leadSuit  = getSuit(trickCards[0].card);
+    let winnerLocal = 0;
+    for (let i = 1; i < trickCards.length; i++) {
+        if (cardBeats(trickCards[i].card, trickCards[winnerLocal].card, trumpSuit, leadSuit)) {
+            winnerLocal = i;
+        }
+    }
+    return winnerLocal;
+}
+
+function engineOnHumanCardClick(card) {
+    if (engine.phase !== "play" || engine.actionLock) return;
+    const p = engine.players[engine.humanIdx];
+    if (!p.active || engine.currentTurn !== engine.humanIdx) return;
+    if (engine.trickCards.length > 0) {
+        const leadCard = engine.trickCards[0].card;
+        if (!isValidMoveWithTrump(leadCard, p.hand, card, engine.trumpCard)) {
+            setMessage("Нужно ходить в масть или козырем");
+            return;
+        }
+    }
+    enginePlayCard(engine.humanIdx, card);
+}
+
+function isValidMoveWithTrump(leadCard, hand, chosen, trumpCard) {
+    const leadSuit  = getSuit(leadCard);
+    const trumpSuit = getSuit(trumpCard);
+    const hasSuit   = hand.some((c) => getSuit(c) === leadSuit);
+    if (hasSuit) return getSuit(chosen) === leadSuit;
+    const hasTrump = hand.some((c) => getSuit(c) === trumpSuit);
+    if (hasTrump && leadSuit !== trumpSuit) return getSuit(chosen) === trumpSuit;
+    return true;
+}
+
+function enginePlayCard(playerIdx, card) {
+    if (engine.actionLock) return;
+    const p = engine.players[playerIdx];
+    const idx = p.hand.indexOf(card);
+    if (idx === -1) return;
+
+    engine.actionLock = true;
+    const handEl = engineGetHandEl(playerIdx);
+    const sourceEl = handEl ? (p.isHuman
+        ? handEl.querySelector('[data-card-value="' + CSS.escape(card) + '"]')
+        : handEl.children[idx]) : null;
+
+    const to = enginePlayedAreaEl();
+    const toRect = to ? to.getBoundingClientRect() : null;
+
+    // Анимация полёта карты из руки в центр
+    if (sourceEl && toRect) {
+        const fromRect = sourceEl.getBoundingClientRect();
+        const clone = document.createElement("div");
+        clone.className = "card fly-card";
+        if (p.isHuman) {
+            clone.innerHTML = renderCardFace(card);
+        } else {
+            clone.classList.add("back");
+        }
+        clone.style.left = fromRect.left + "px";
+        clone.style.top = fromRect.top + "px";
+        clone.style.width = fromRect.width + "px";
+        clone.style.height = fromRect.height + "px";
+        document.body.appendChild(clone);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.left = (toRect.left + toRect.width / 2 - fromRect.width / 2) + "px";
+                clone.style.top  = (toRect.top  + toRect.height / 2 - fromRect.height / 2) + "px";
+            });
+        });
+        clone.addEventListener("transitionend", () => {
+            clone.remove();
+            enginePlayCardCommit(playerIdx, card, idx);
+        }, { once: true });
+        // страховка
+        setTimeout(() => { if (clone.isConnected) { clone.remove(); enginePlayCardCommit(playerIdx, card, idx); } }, 600);
+    } else {
+        enginePlayCardCommit(playerIdx, card, idx);
+    }
+}
+
+let _playCommitGuard = new WeakSet();
+function enginePlayCardCommit(playerIdx, card, idxInHand) {
+    const p = engine.players[playerIdx];
+    if (!p.hand.includes(card)) return; // уже применено (страховка сработала раньше)
+    const realIdx = p.hand.indexOf(card);
+    p.hand.splice(realIdx, 1);
+    engine.trickCards.push({ playerIdx, card });
+
+    engineRenderHands();
+    engineSetPlayedAreaSize();
+    engineRenderTrickCard({ playerIdx, card });
+
+    // Живая подсветка текущего лидера взятки во время сбора карт
+    engineMarkLiveLeader();
+
+    engine.actionLock = false;
+
+    const activeCount = engineActivePlayersInPlay().length;
+    if (engine.trickCards.length >= activeCount) {
+        setTimeout(engineEndTrick, 420);
+    } else {
+        engineAdvanceTurn();
+        setTimeout(engineRunPlayTurn, 280);
+    }
+}
+
+function engineMarkLiveLeader() {
+    if (!engine.trickCards.length) return;
+    const leaderLocal = engineComputeTrickWinner(engine.trickCards, engine.trumpCard);
+    const playedArea = enginePlayedAreaEl();
+    if (!playedArea) return;
+    const cardEls = playedArea.querySelectorAll(".table-card");
+    cardEls.forEach((el, i) => {
+        const inner = el.querySelector(".table-played-card");
+        if (!inner) return;
+        inner.classList.remove("winner-card", "loser-card");
+        if (i === leaderLocal) inner.classList.add("winner-card");
+    });
+}
+
+function engineEndTrick() {
+    if (engine.phase !== "play") return;
+    const winnerLocal = engineComputeTrickWinner(engine.trickCards, engine.trumpCard);
+    const winnerEntry = engine.trickCards[winnerLocal];
+    const winnerIdx = winnerEntry.playerIdx;
+    const winner = engine.players[winnerIdx];
+
+    // Подсветка: победная карта — winner-card, остальные — loser-card
+    const playedArea = enginePlayedAreaEl();
+    if (playedArea) {
+        const cardEls = playedArea.querySelectorAll(".table-card");
+        cardEls.forEach((el, i) => {
+            const inner = el.querySelector(".table-played-card");
+            if (!inner) return;
+            inner.classList.remove("winner-card", "loser-card");
+            inner.classList.add(i === winnerLocal ? "winner-card" : "loser-card");
+        });
+    }
+
+    const winnerSeatEl = engineGetSeatEl(winner.seatSlot);
+    if (winnerSeatEl) {
+        winnerSeatEl.classList.add("is-trick-winner");
+        setTimeout(() => winnerSeatEl.classList.remove("is-trick-winner"), 700);
+    }
+
+    winner.scoreTricks++;
+    engineRenderTrickDots();
+    setMessage((winner.isHuman ? "Ты" : winner.name) + " забрал взятку");
+
+    setTimeout(() => {
+        engineFlyTrickToWinner(winnerIdx, () => {
+            engineClearPlayed();
+            engine.trickNumber++;
+            engine.leaderIdx = winnerIdx;
+            engine.currentTurn = winnerIdx;
+
+            if (engine.trickNumber > engine.totalTricks) {
+                engineFinishGame();
+                return;
+            }
+            if (engine.players.some((p) => p.active && p.hand.length > 0)) {
+                engineStartTrick();
+            } else {
+                engineFinishGame();
+            }
+        });
+    }, 520);
+}
+
+function engineFlyTrickToWinner(winnerIdx, callback) {
+    const playedArea = enginePlayedAreaEl();
+    if (!playedArea) { callback(); return; }
+    const targetEl = engineGetSeatEl(engine.players[winnerIdx].seatSlot);
+    if (!targetEl) { callback(); return; }
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const entries = Array.from(playedArea.querySelectorAll(".table-card")).map((wrap, i) => ({ wrap, i }));
+    if (!entries.length) { callback(); return; }
+
+    // Победная карта — клон последним, с z-index 10000
+    entries.sort((a, b) => {
+        const aInner = a.wrap.querySelector(".winner-card") ? 1 : 0;
+        const bInner = b.wrap.querySelector(".winner-card") ? 1 : 0;
+        return aInner - bInner;
+    });
+
+    let finished = 0;
+    entries.forEach((entry, k) => {
+        const inner = entry.wrap.querySelector(".card");
+        if (!inner) { finished++; if (finished === entries.length) callback(); return; }
+        const rect = inner.getBoundingClientRect();
+        const isWinner = !!entry.wrap.querySelector(".winner-card");
+        const clone = inner.cloneNode(true);
+        clone.classList.add("fly-card");
+        if (isWinner) clone.classList.add("fly-card--winner");
+        clone.style.left = rect.left + "px";
+        clone.style.top = rect.top + "px";
+        clone.style.width = rect.width + "px";
+        clone.style.height = rect.height + "px";
+        clone.style.zIndex = isWinner ? "10000" : String(9990 + k);
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.left = (targetRect.left + targetRect.width / 2 - rect.width * 0.21) + "px";
+                clone.style.top = (targetRect.top + targetRect.height / 2 - rect.height * 0.21) + "px";
+                clone.style.transform = "scale(0.42) rotate(" + ((k - entries.length / 2) * 6) + "deg)";
+                clone.style.opacity = "0.45";
+            });
+        });
+        clone.addEventListener("transitionend", () => {
+            clone.remove();
+            finished++;
+            if (finished === entries.length) callback();
+        }, { once: true });
+        setTimeout(() => {
+            if (clone.isConnected) {
+                clone.remove();
+                finished++;
+                if (finished === entries.length) callback();
+            }
+        }, 700);
+    });
+}
+
+function engineFinishGame() {
+    engine.phase = "gameover";
+    engineClearPlayed();
+    engineUpdateActiveTurnClass();
+
+    const sorted = engine.players.slice().sort((a, b) => b.scoreTricks - a.scoreTricks);
+    const winner = sorted[0];
+    const tie = sorted[1] && sorted[1].scoreTricks === winner.scoreTricks;
+
+    if (tie) {
+        setMessage("Партия завершена");
+    } else if (winner.isHuman) {
+        setMessage("ПОБЕДА — ты взял " + winner.scoreTricks + " взяток");
+    } else {
+        setMessage(winner.name + " взял " + winner.scoreTricks + " взяток");
+    }
+
+    // Банк победителю
+    if (winner && engine.pot > 0) {
+        winner.bank += engine.pot;
+        engine.pot = 0;
+        engineUpdatePotUI();
+        engineUpdateSeatBalances();
+    }
+}
+
+function engineUpdatePotUI() {
+    if (potValueEl) potValueEl.innerText = formatCompactMoney(engine.pot);
+}
+
+function engineUpdateSeatBalances() {
+    engine.players.forEach((p) => {
+        const seatEl = engineGetSeatEl(p.seatSlot);
+        if (!seatEl) return;
+        const balEl = seatEl.querySelector("[data-seat-balance]");
+        if (balEl) balEl.innerText = formatCompactMoney(p.bank);
+    });
+}
+
+/* ---------- PUBLIC ENTRY / RESET ---------- */
+
+function engineStart(playersCount, options) {
+    options = options || {};
+    engine.spectating = false;
+    const overlay = document.getElementById("spectatorOverlay");
+    if (overlay) overlay.classList.add("hidden");
+
+    const n = Math.max(2, Math.min(6, playersCount || 2));
+    /* В waiting-режиме (только что созданный стол): только создатель за столом,
+       остальные места — пустые. Без раздачи, без ботов, без торгов. */
+    const waiting = !!options.waiting;
+    engine.players = engineBuildPlayers(waiting ? 1 : n);
+    engine.humanIdx = 0;
+    engine.capacity = n;
+    engine.pot = 0;
+    engine.currentBid = 0;
+    engine.lastBidderIdx = null;
+    engine.auctionWinnerIdx = null;
+    engine.trickCards = [];
+    engine.trickNumber = 1;
+    engine.leaderIdx = 0;
+    engine.currentTurn = 0;
+    engine.phase = waiting ? "waiting" : "dealing";
+    engine.actionLock = false;
+    engine.baseStake = options.stake || 100;
+    engine.currentTable = options.table || null;
+
+    engineRenderSeats();
+    engineUpdatePotUI();
+    engineClearPlayed();
+    engineSetPlayedAreaSize();
+
+    const leaveBtn = document.querySelector("[data-game-leave]");
+    if (leaveBtn) leaveBtn.hidden = false;
+
+    if (waiting) {
+        /* Не раздаём карты, не стартуем торги — ждём, пока гости присоединятся.
+           В mock-режиме гости «не приходят», но UI-состояние корректное. */
+        if (trumpSlotEl) trumpSlotEl.innerHTML = "";
+        if (auctionBarEl) auctionBarEl.classList.add("hidden");
+        renderGameTopbar();
+        const table = engine.currentTable;
+        setMessage(table && table.type === "private"
+            ? "Приглашайте друзей — они сядут по ссылке."
+            : "Ожидаем, пока игроки займут места.");
+        return;
+    }
+
+    engineDeal();
+    engineRenderTrump();
+
+    renderGameTopbar();
+    setMessage("Карты розданы. Начинаются торги.");
+    setTimeout(() => engineStartAuction(), 500);
+}
+
+function engineLeaveSeat() {
+    if (engine.spectating) return;
+    engine.spectating = true;
+    const human = engine.players[engine.humanIdx];
+    if (human) human.active = false;
+
+    // Если был ход за человеком — переходим дальше
+    if (engine.currentTurn === engine.humanIdx) {
+        engineAdvanceTurn();
+        if (engine.phase === "auction") setTimeout(engineRunAuctionTurn, 150);
+        else if (engine.phase === "play") setTimeout(engineRunPlayTurn, 150);
+    }
+
+    // Освобождаем место в UI: bottom seat → пустой слот
+    const seatEl = engineGetSeatEl(human.seatSlot);
+    if (seatEl) {
+        seatEl.innerHTML = makeEmptySeatMarkup();
+        seatEl.classList.add("game-seat--empty");
+    }
+
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+    const overlay = document.getElementById("spectatorOverlay");
+    if (overlay) overlay.classList.remove("hidden");
+
+    const leaveBtn = document.querySelector("[data-game-leave]");
+    if (leaveBtn) leaveBtn.hidden = true;
+}
+
+function engineSitAgain() {
+    const table = engine.currentTable;
+    const overlay = document.getElementById("spectatorOverlay");
+    if (overlay) overlay.classList.add("hidden");
+
+    /* Если пользователь — владелец только что созданного стола (waiting), то
+       никто кроме него за столом не сидит. Возвращаемся в waiting-комнату,
+       а не стартуем партию с ботами. */
+    if (table && table.status === "waiting" && table.ownerId === ((appState.user && appState.user.id) || "me")) {
+        engineStart(table.capacity || engine.capacity || 2, {
+            stake: engine.baseStake,
+            table: table,
+            waiting: true,
+        });
+        return;
+    }
+
+    // Обычный случай: новая раздача за текущим столом
+    const cap = (table && table.capacity) || engine.players.length || 2;
+    const occupied = Math.min(cap, Math.max(2, (table && table.players) || engine.players.filter((p) => p.active).length + 1));
+    engineStart(occupied, { stake: engine.baseStake, table: table });
+}
+
+function bindGameLeaveHandlers() {
+    const leaveBtn = document.querySelector("[data-game-leave]");
+    if (leaveBtn) leaveBtn.addEventListener("click", () => engineLeaveSeat());
+
+    const overlay = document.getElementById("spectatorOverlay");
+    if (overlay) {
+        const sitBtn = overlay.querySelector("[data-spectator-sit]");
+        const lobbyBtn = overlay.querySelector("[data-spectator-lobby]");
+        if (sitBtn) sitBtn.addEventListener("click", () => engineSitAgain());
+        if (lobbyBtn) lobbyBtn.addEventListener("click", () => {
+            overlay.classList.add("hidden");
+            setScreen(SCREENS.FIND_TABLE);
+        });
+    }
+}
+
+/* ---------- OVERRIDES: cтарые функции теперь делегируют в движок ---------- */
+
+function resetGame() {
+    // playersCount приходит из find-table при "Сесть" (см. bindFindTableHandlers)
+    const table = (appState.findTable && appState.findTable.currentTable) || null;
+    const requested = Number(selectedPlayersCount) || 2;
+    let count = requested;
+    if (table && Number.isFinite(table.players) && Number.isFinite(table.capacity)) {
+        // Включая локального игрока (он только что сел). Берём фактическое занятое после посадки.
+        count = Math.max(2, Math.min(table.capacity, (table.players || 0) + 1));
+    }
+    engineStart(count, { stake: table ? table.stake / 10 : 100, table });
+}
+
+function onPlayerPass() {
+    if (engine.phase !== "auction") return;
+    if (engine.currentTurn !== engine.humanIdx) return;
+    if (engine.actionLock) return;
+    engineDoAuctionPass(engine.humanIdx);
+}
+
+function onPlayerCall() {
+    if (engine.phase !== "auction") return;
+    if (engine.currentTurn !== engine.humanIdx) return;
+    if (engine.currentBid === 0) return;
+    if (engine.actionLock) return;
+    engineDoAuctionCall(engine.humanIdx);
+}
+
+function onPlayerRaise() {
+    if (engine.phase !== "auction") return;
+    if (engine.currentTurn !== engine.humanIdx) return;
+    if (engine.actionLock) return;
+    const raiseTo = bidSliderEl ? Number(bidSliderEl.value) : Math.min(engine.currentBid + 1, 3);
+    engineDoAuctionRaise(engine.humanIdx, raiseTo);
+}
+
+function handlePlayerClick(card) {
+    engineOnHumanCardClick(card);
+}
+
 async function bootstrap() {
-    renderTrumpOnTable();
     applyPlayersCountSelection();
     gameRootEl.classList.remove("lobby-active");
 
@@ -5008,6 +8765,10 @@ async function bootstrap() {
     bindAuthHandlers();
     bindMainMenuHandlers();
     bindFindTableHandlers();
+    bindCreateTableHandlers();
+    bindGameTopbarHandlers();
+    bindGameLeaveHandlers();
+    bindInviteHandlers();
 
     try {
         const res = await authService.loadSession();
