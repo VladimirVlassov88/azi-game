@@ -1969,6 +1969,46 @@ h1 {
     opacity: 0.5;
     filter: grayscale(0.4);
 }
+/* ===== WAITING-STATE (игрок подключился в середине партии) ===== */
+.game-seat.is-waiting .seat-card {
+    opacity: 0.85;
+}
+.seat-waiting-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #f3dba0;
+    background: linear-gradient(135deg, rgba(58, 20, 28, 0.9), rgba(40, 12, 20, 0.95));
+    border: 1px solid rgba(218, 174, 98, 0.55);
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(247, 227, 165, 0.15);
+    animation: waitingPillPulse 2.2s ease-in-out infinite;
+}
+@keyframes waitingPillPulse {
+    0%, 100% { opacity: 0.75; }
+    50%      { opacity: 1; }
+}
+.seat-hand-waiting {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 14px;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    color: rgba(243, 219, 160, 0.78);
+    text-align: center;
+    background: linear-gradient(180deg, rgba(40, 14, 22, 0.6), rgba(28, 10, 16, 0.7));
+    border: 1px dashed rgba(218, 174, 98, 0.35);
+    border-radius: 10px;
+}
 @keyframes seatTurnPulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.35), 0 6px 18px rgba(216, 140, 60, 0.4); }
     50%      { box-shadow: 0 0 0 3px rgba(247, 227, 165, 0.6),  0 6px 22px rgba(216, 140, 60, 0.55); }
@@ -6391,6 +6431,14 @@ const UI_TEXT = Object.freeze({
         waitingText:    "Ждём игроков…",
         waitingPrivate: "Ждём приглашённых…",
     },
+    /* Тексты для игроков, подключившихся к столу в середине партии
+       (player.status === "waiting" — ждут следующей раздачи). */
+    seatWaiting: {
+        statusShort:    "Ожидает",
+        handPlaceholder: "Ожидание следующей раздачи",
+        statusMessage:   "Идёт текущая партия. Вы подключены к столу и ожидаете следующую раздачу.",
+        nextHandSoon:    "Раздача завершена. Начинаем следующую…",
+    },
 });
 
 const appState = {
@@ -6440,23 +6488,27 @@ const appState = {
         { id: "f6", name: "Софья",     level: 11, online: true  },
         { id: "f7", name: "Павел",     level: 5,  online: false },
     ],
+    /* Существующие моки-столы — как будто партии за ними уже идут. Это важно
+       для поведения «Сесть» в find-table: при status==="playing" пользователь
+       садится как waiting (не участвует в текущей раздаче). Только созданные
+       пользователем пустые столы идут со status==="waiting". */
     tables: [
-        { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low"  },
-        { id: 18, stake: 100,   players: 4, capacity: 6, tier: "low"  },
-        { id: 22, stake: 150,   players: 1, capacity: 4, tier: "low"  },
-        { id: 27, stake: 200,   players: 3, capacity: 6, tier: "low"  },
-        { id: 34, stake: 200,   players: 4, capacity: 6, tier: "low"  },
-        { id: 41, stake: 300,   players: 5, capacity: 6, tier: "low"  },
-        { id: 45, stake: 500,   players: 5, capacity: 6, tier: "low"  },
-        { id: 52, stake: 750,   players: 2, capacity: 4, tier: "mid"  },
-        { id: 58, stake: 1000,  players: 2, capacity: 6, tier: "mid"  },
-        { id: 63, stake: 1000,  players: 6, capacity: 6, tier: "mid"  },
-        { id: 71, stake: 1500,  players: 3, capacity: 6, tier: "mid"  },
-        { id: 78, stake: 2000,  players: 4, capacity: 6, tier: "high" },
-        { id: 82, stake: 3000,  players: 1, capacity: 4, tier: "high" },
-        { id: 88, stake: 5000,  players: 2, capacity: 4, tier: "high" },
-        { id: 91, stake: 10000, players: 3, capacity: 4, tier: "vip"  },
-        { id: 99, stake: 25000, players: 1, capacity: 4, tier: "vip"  },
+        { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low",  status: "playing", isListed: true },
+        { id: 18, stake: 100,   players: 4, capacity: 6, tier: "low",  status: "playing", isListed: true },
+        { id: 22, stake: 150,   players: 1, capacity: 4, tier: "low",  status: "playing", isListed: true },
+        { id: 27, stake: 200,   players: 3, capacity: 6, tier: "low",  status: "playing", isListed: true },
+        { id: 34, stake: 200,   players: 4, capacity: 6, tier: "low",  status: "playing", isListed: true },
+        { id: 41, stake: 300,   players: 5, capacity: 6, tier: "low",  status: "playing", isListed: true },
+        { id: 45, stake: 500,   players: 5, capacity: 6, tier: "low",  status: "playing", isListed: true },
+        { id: 52, stake: 750,   players: 2, capacity: 4, tier: "mid",  status: "playing", isListed: true },
+        { id: 58, stake: 1000,  players: 2, capacity: 6, tier: "mid",  status: "playing", isListed: true },
+        { id: 63, stake: 1000,  players: 6, capacity: 6, tier: "mid",  status: "playing", isListed: true },
+        { id: 71, stake: 1500,  players: 3, capacity: 6, tier: "mid",  status: "playing", isListed: true },
+        { id: 78, stake: 2000,  players: 4, capacity: 6, tier: "high", status: "playing", isListed: true },
+        { id: 82, stake: 3000,  players: 1, capacity: 4, tier: "high", status: "playing", isListed: true },
+        { id: 88, stake: 5000,  players: 2, capacity: 4, tier: "high", status: "playing", isListed: true },
+        { id: 91, stake: 10000, players: 3, capacity: 4, tier: "vip",  status: "playing", isListed: true },
+        { id: 99, stake: 25000, players: 1, capacity: 4, tier: "vip",  status: "playing", isListed: true },
     ],
 };
 
@@ -6983,23 +7035,33 @@ function renderGameTopbar() {
         }
     }
 
-    /* Waiting-режим: показываем кнопку «Пригласить» только владельцу стола
-       и только пока не идёт партия. Баннер «Ждём игроков» висит поверх арены. */
+    /* Баннер поверх арены имеет два сценария:
+       1. Table-waiting (engine.phase === "waiting") — стол ещё не начат,
+          создатель ждёт игроков / приглашённых.
+       2. Player-waiting (human.status === "waiting") — партия идёт без
+          человека, он подсел в середине и ждёт следующую раздачу. */
     const room = (engine && engine.currentTable) || appState.currentRoom || null;
-    const isWaiting = engine && engine.phase === "waiting";
+    const isTableWaiting = engine && engine.phase === "waiting";
+    const human = engine && engine.players && engine.players[engine.humanIdx];
+    const isPlayerWaiting = !!(human && human.status === "waiting");
     const isOwner = !!(room && (room.isOwner || room.ownerId === ((appState.user && appState.user.id) || "me")));
 
     const inviteBtn = rootEl.querySelector("[data-game-invite]");
-    if (inviteBtn) inviteBtn.classList.toggle("hidden", !(isWaiting && isOwner));
+    if (inviteBtn) inviteBtn.classList.toggle("hidden", !(isTableWaiting && isOwner));
 
     const banner = document.getElementById("gameWaitingBanner");
     if (banner) {
-        banner.classList.toggle("hidden", !isWaiting);
+        const showBanner = isTableWaiting || isPlayerWaiting;
+        banner.classList.toggle("hidden", !showBanner);
         const textEl = banner.querySelector("[data-game-waiting-text]");
         if (textEl) {
-            textEl.textContent = (room && room.type === "private")
-                ? UI_TEXT.invite.waitingPrivate
-                : UI_TEXT.invite.waitingText;
+            if (isPlayerWaiting) {
+                textEl.textContent = UI_TEXT.seatWaiting.statusMessage;
+            } else if (room && room.type === "private") {
+                textEl.textContent = UI_TEXT.invite.waitingPrivate;
+            } else {
+                textEl.textContent = UI_TEXT.invite.waitingText;
+            }
         }
     }
 }
@@ -7809,6 +7871,15 @@ function makeAvatarSvg() {
 function makePlayerMarkup(p) {
     const isYou = p.isHuman;
     const handModCls = isYou ? "seat-hand--you" : (p.seatSlot === "top" ? "seat-hand--top" : "seat-hand--side");
+    /* Бейдж "Ожидает" показывается игроку, подключившемуся к столу
+       в середине партии (player.status === "waiting"). */
+    const waitingBadge = p.status === "waiting"
+        ? ('<span class="seat-waiting-pill" data-seat-waiting>' + esc(UI_TEXT.seatWaiting.statusShort) + '</span>')
+        : '';
+    /* Плейсхолдер в зоне руки для waiting-человека. */
+    const handInner = (isYou && p.status === "waiting")
+        ? ('<div class="seat-hand-waiting" data-seat-hand-waiting>' + esc(UI_TEXT.seatWaiting.handPlaceholder) + '</div>')
+        : '<div class="cards" data-seat-hand></div>';
     return (
         '<header class="seat-card' + (isYou ? ' seat-card--you' : '') + '" style="--seat-tint:' + p.tint + '">' +
             '<span class="seat-avatar' + (isYou ? ' seat-avatar--you' : '') + '">' +
@@ -7819,9 +7890,10 @@ function makePlayerMarkup(p) {
             '<span class="seat-balance"><span class="seat-coin"></span>' +
                 '<span data-seat-balance>' + formatCompactMoney(p.bank) + '</span>' +
             '</span>' +
+            waitingBadge +
         '</header>' +
         '<div class="seat-hand ' + handModCls + '">' +
-            '<div class="cards" data-seat-hand></div>' +
+            handInner +
         '</div>' +
         '<div class="seat-trick-dots" data-seat-tricks aria-label="Взятки">' +
             '<span class="trick-dot"></span><span class="trick-dot"></span><span class="trick-dot"></span>' +
@@ -7851,11 +7923,20 @@ function engineGetSeatEl(slotName) {
     return document.querySelector('#gameRoot .game-arena [data-seat-slot="' + slotName + '"]');
 }
 
-function engineBuildPlayers(playersCount) {
+function engineBuildPlayers(playersCount, options) {
+    options = options || {};
     const list = [];
     const humanProfile = appState.profile || {};
     const humanName = (appState.user && (appState.user.name || appState.user.email)) || (UI_TEXT.menu && UI_TEXT.menu.fallbackName) || "Вы";
 
+    /* player.status — отдельное от active поле:
+         "active"    — участник текущей раздачи (получает карты, торгуется)
+         "waiting"   — сидит за столом, но подключился в середине партии;
+                       автоматически становится active на старте следующей
+                       раздачи (engineStartNextHand)
+         "spectator" — встал из-за стола, в следующую раздачу не подсаживается
+       Поле `active` остаётся: true только для status === "active". */
+    const humanWaiting = !!options.humanWaiting;
     list.push({
         id: 0,
         seatSlot: "bottom",
@@ -7868,7 +7949,8 @@ function engineBuildPlayers(playersCount) {
         bank: Number(humanProfile.balance) || 3000,
         bid: null,
         passedAuction: false,
-        active: true,
+        status: humanWaiting ? "waiting" : "active",
+        active: !humanWaiting,
     });
 
     for (let i = 1; i < playersCount; i++) {
@@ -7885,6 +7967,7 @@ function engineBuildPlayers(playersCount) {
             bank: profile.bank,
             bid: null,
             passedAuction: false,
+            status: "active",
             active: true,
         });
     }
@@ -7916,7 +7999,7 @@ function engineRenderSeats() {
 
         const player = engine.players.find((p) => p.seatSlot === slotName);
 
-        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "game-seat--empty");
+        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "is-waiting", "game-seat--empty");
 
         if (!player) {
             slotEl.classList.add("game-seat--empty");
@@ -7925,7 +8008,11 @@ function engineRenderSeats() {
         }
 
         slotEl.innerHTML = makePlayerMarkup(player);
-        if (!player.active) slotEl.classList.add("is-spectator");
+        /* Два разных визуальных состояния неактивных игроков:
+           - "waiting": подключился в середине партии, следующую раздачу сыграет (is-waiting)
+           - "spectator": встал из-за стола, сам должен вернуться "Сесть снова" (is-spectator) */
+        if (player.status === "waiting") slotEl.classList.add("is-waiting");
+        else if (!player.active) slotEl.classList.add("is-spectator");
     });
 
     engineRenderHands();
@@ -8052,7 +8139,16 @@ function engineStartAuction() {
     engine.auctionWinnerIdx = null;
     engine.currentTurn = engine.humanIdx;
     engine.players.forEach((p) => { p.bid = null; p.passedAuction = false; });
-    if (auctionBarEl) auctionBarEl.classList.remove("hidden");
+    if (auctionBarEl) {
+        /* Для waiting-игрока скрываем панель торгов — он не участвует в текущей
+           раздаче и не должен иметь доступ к кнопкам. Требование п.1 ТЗ. */
+        const human = engine.players[engine.humanIdx];
+        if (human && human.status === "waiting") {
+            auctionBarEl.classList.add("hidden");
+        } else {
+            auctionBarEl.classList.remove("hidden");
+        }
+    }
     engineUpdateAuctionUI();
     engineRunAuctionTurn();
 }
@@ -8577,6 +8673,79 @@ function engineFinishGame() {
         engineUpdatePotUI();
         engineUpdateSeatBalances();
     }
+
+    /* Между раздачами даём паузу на показ итогов, затем автоматически
+       запускаем следующую раздачу — с промоутом всех waiting → active.
+       Для waiting-игрока на время паузы меняем текст баннера. */
+    engine.betweenHands = true;
+    const waitingBanner = document.getElementById("gameWaitingBanner");
+    const human = engine.players[engine.humanIdx];
+    if (waitingBanner && human && human.status === "waiting") {
+        const textEl = waitingBanner.querySelector("[data-game-waiting-text]");
+        if (textEl) textEl.textContent = UI_TEXT.seatWaiting.nextHandSoon;
+    }
+
+    engine.nextHandTimer = setTimeout(() => {
+        engine.nextHandTimer = null;
+        engine.betweenHands = false;
+        const seatedCount = engine.players.filter((p) => p.status !== "spectator").length;
+        if (seatedCount < 2) {
+            setMessage("Ждём, пока игроки займут места…");
+            return;
+        }
+        engineStartNextHand();
+    }, 3500);
+}
+
+/* Новая раздача за ТЕМ ЖЕ столом. Сохраняем список игроков, но:
+   - промоутим всех status==="waiting" в "active" (они заходят в партию);
+   - spectator остаются вне партии до явного "Сесть снова";
+   - сбрасываем руку/взятки/торги/банк — как в engineStart, но без перестройки
+     массива игроков. Это выполняет требование п.3 ТЗ. */
+function engineStartNextHand() {
+    /* Промоутим waiting → active, инициализируем состояние раздачи */
+    engine.players.forEach((p) => {
+        if (p.status === "waiting") {
+            p.status = "active";
+            p.active = true;
+        }
+        p.hand = [];
+        p.scoreTricks = 0;
+        p.bid = null;
+        p.passedAuction = false;
+    });
+    engine.humanJoinedMidGame = false;
+    engine.pot = 0;
+    engine.currentBid = 0;
+    engine.lastBidderIdx = null;
+    engine.auctionWinnerIdx = null;
+    engine.trickCards = [];
+    engine.trickNumber = 1;
+    /* Передаём ход по часовой — сдвигаем лидера на одного активного вперёд. */
+    const activeIdxList = engine.players
+        .map((p, idx) => (p.active ? idx : -1))
+        .filter((idx) => idx !== -1);
+    if (activeIdxList.length) {
+        const prevLeader = typeof engine.leaderIdx === "number" ? engine.leaderIdx : engine.humanIdx;
+        const pos = activeIdxList.indexOf(prevLeader);
+        engine.leaderIdx = pos === -1 ? activeIdxList[0] : activeIdxList[(pos + 1) % activeIdxList.length];
+    } else {
+        engine.leaderIdx = engine.humanIdx;
+    }
+    engine.currentTurn = engine.leaderIdx;
+    engine.phase = "dealing";
+    engine.actionLock = false;
+
+    engineDeal();
+    engineRenderSeats();
+    engineRenderTrump();
+    engineUpdatePotUI();
+    engineClearPlayed();
+    engineSetPlayedAreaSize();
+
+    renderGameTopbar();
+    setMessage("Новая раздача. Начинаются торги.");
+    setTimeout(() => engineStartAuction(), 600);
 }
 
 function engineUpdatePotUI() {
@@ -8601,11 +8770,17 @@ function engineStart(playersCount, options) {
     if (overlay) overlay.classList.add("hidden");
 
     const n = Math.max(2, Math.min(6, playersCount || 2));
-    /* В waiting-режиме (только что созданный стол): только создатель за столом,
-       остальные места — пустые. Без раздачи, без ботов, без торгов. */
+    /* Два независимых «waiting»-режима:
+       1. options.waiting       — весь стол в ожидании: за столом только создатель,
+                                  других мест не занято, нет раздачи/торгов.
+       2. options.humanWaiting  — за столом идёт партия ботов, человек подключился
+                                  в середине, ждёт следующей раздачи (player.status
+                                  === "waiting"). */
     const waiting = !!options.waiting;
-    engine.players = engineBuildPlayers(waiting ? 1 : n);
+    const humanWaiting = !!options.humanWaiting && !waiting;
+    engine.players = engineBuildPlayers(waiting ? 1 : n, { humanWaiting });
     engine.humanIdx = 0;
+    engine.humanJoinedMidGame = humanWaiting;
     engine.capacity = n;
     engine.pot = 0;
     engine.currentBid = 0;
@@ -8641,11 +8816,18 @@ function engineStart(playersCount, options) {
         return;
     }
 
-    engineDeal();
+    engineDeal();  /* skip dealing to inactive players — см. engineDeal */
     engineRenderTrump();
 
     renderGameTopbar();
-    setMessage("Карты розданы. Начинаются торги.");
+    if (humanWaiting) {
+        /* Человек подключился в середине партии: ждёт следующую раздачу,
+           интерфейс торгов для него скрыт; auctionStart запустит торги
+           между ботами (advanceTurn пропускает waiting-игроков). */
+        setMessage(UI_TEXT.seatWaiting.statusMessage);
+    } else {
+        setMessage("Карты розданы. Начинаются торги.");
+    }
     setTimeout(() => engineStartAuction(), 500);
 }
 
@@ -8653,7 +8835,13 @@ function engineLeaveSeat() {
     if (engine.spectating) return;
     engine.spectating = true;
     const human = engine.players[engine.humanIdx];
-    if (human) human.active = false;
+    if (human) {
+        human.active = false;
+        /* Помечаем как spectator: engineStartNextHand не вернёт его
+           автоматически в следующую раздачу. Пользователь должен
+           явно нажать «Сесть снова». Требование п.7 ТЗ. */
+        human.status = "spectator";
+    }
 
     // Если был ход за человеком — переходим дальше
     if (engine.currentTurn === engine.humanIdx) {
@@ -8675,6 +8863,9 @@ function engineLeaveSeat() {
 
     const leaveBtn = document.querySelector("[data-game-leave]");
     if (leaveBtn) leaveBtn.hidden = true;
+
+    /* Скрываем waiting-баннер: пользователь встал, статус "ожидает" больше не актуален. */
+    renderGameTopbar();
 }
 
 function engineSitAgain() {
@@ -8697,7 +8888,10 @@ function engineSitAgain() {
     // Обычный случай: новая раздача за текущим столом
     const cap = (table && table.capacity) || engine.players.length || 2;
     const occupied = Math.min(cap, Math.max(2, (table && table.players) || engine.players.filter((p) => p.active).length + 1));
-    engineStart(occupied, { stake: engine.baseStake, table: table });
+    /* Если игрок возвращается за стол, где ВСЁ ЕЩЁ идёт партия — он опять
+       садится как waiting и ждёт следующую раздачу. */
+    const midGame = !!(table && table.status === "playing");
+    engineStart(occupied, { stake: engine.baseStake, table: table, humanWaiting: midGame });
 }
 
 function bindGameLeaveHandlers() {
@@ -8727,7 +8921,18 @@ function resetGame() {
         // Включая локального игрока (он только что сел). Берём фактическое занятое после посадки.
         count = Math.max(2, Math.min(table.capacity, (table.players || 0) + 1));
     }
-    engineStart(count, { stake: table ? table.stake / 10 : 100, table });
+
+    /* Если за столом УЖЕ идёт партия (table.status === "playing") — пользователь
+       подключается как waiting-игрок: сидит за столом, видит игру, но в текущую
+       раздачу не входит. На старте следующей раздачи engineStartNextHand
+       автоматически переведёт его в active. Требования пп.1–4 ТЗ.
+       Если table.status ∈ {"waiting", "finished", undefined} — обычный старт. */
+    const midGame = !!(table && table.status === "playing");
+    engineStart(count, {
+        stake: table ? table.stake / 10 : 100,
+        table,
+        humanWaiting: midGame,
+    });
 }
 
 function onPlayerPass() {
