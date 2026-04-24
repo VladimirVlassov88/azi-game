@@ -1277,7 +1277,8 @@ h1 {
 }
 
 /* ===== Main Menu (premium private card club) ===== */
-#mainMenuScreen .splash-inner {
+#mainMenuScreen .splash-inner,
+#findTableScreen .splash-inner {
     padding: 0;
     justify-content: flex-start;
     align-items: center;
@@ -1714,6 +1715,529 @@ h1 {
 }
 
 .menu-sheet-panel .auth-btn { margin: 6px 0 0; }
+
+/* =========================================================
+   FIND TABLE SCREEN
+   Премиальная верстка экрана "Найти стол": бордово-золото,
+   тонкие градиентные границы, минимум плоских поверхностей.
+   ========================================================= */
+
+.menu-panel--find {
+    /* Та же стеклянная панель, что и в main menu, но под более длинный контент. */
+    max-width: min(620px, 96vw);
+    padding: clamp(18px, 4vw, 26px) clamp(16px, 3.6vw, 22px) clamp(14px, 3vw, 18px);
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+.menu-panel--find::-webkit-scrollbar { width: 6px; }
+.menu-panel--find::-webkit-scrollbar-thumb {
+    background: rgba(216, 178, 76, 0.28);
+    border-radius: 4px;
+}
+
+/* ---------- Заголовок «Найти стол» ---------- */
+
+.find-title {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: clamp(6px, 2vw, 14px) 0 clamp(12px, 2.6vw, 18px);
+    padding: 0 42px;
+}
+
+.find-title-text {
+    margin: 0;
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: clamp(30px, 7.2vw, 42px);
+    line-height: 1;
+    text-align: center;
+    background: linear-gradient(180deg, #f9e7b0 0%, #e2bf66 48%, #9b7626 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    letter-spacing: 0.01em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.find-title-flourish {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(260px, 60%);
+    opacity: 0.85;
+}
+.find-flourish-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(216, 178, 76, 0.55), transparent);
+}
+.find-flourish-diamond {
+    width: 6px;
+    height: 6px;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #f7e3a5, #a6802e);
+    box-shadow: 0 0 6px rgba(216, 178, 76, 0.55);
+}
+
+.find-back {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 10px;
+    background: rgba(10, 4, 8, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    color: #e7c97a;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.find-back:hover {
+    transform: translateX(-2px);
+    background: rgba(30, 10, 16, 0.7);
+    border-color: rgba(216, 178, 76, 0.55);
+}
+.find-back svg { width: 16px; height: 16px; }
+
+/* ---------- Поиск + иконка фильтров ---------- */
+
+.find-searchbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.find-search {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 0 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.85) 0%, rgba(18, 6, 12, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 214, 130, 0.06), 0 4px 12px rgba(0, 0, 0, 0.28);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.find-search:focus-within {
+    border-color: rgba(216, 178, 76, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 214, 130, 0.08), 0 0 0 2px rgba(216, 178, 76, 0.14);
+}
+
+.find-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: rgba(216, 178, 76, 0.75);
+    pointer-events: none;
+}
+
+.find-search-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: #f4d68a;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    height: 100%;
+    outline: none;
+}
+.find-search-input::placeholder {
+    color: rgba(216, 178, 76, 0.5);
+    font-style: italic;
+}
+/* Убираем крестик у search-инпута в WebKit */
+.find-search-input::-webkit-search-cancel-button,
+.find-search-input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+
+.find-filter-btn {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.85) 0%, rgba(18, 6, 12, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    color: #e7c97a;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+.find-filter-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(216, 178, 76, 0.6);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
+}
+.find-filter-btn svg { width: 20px; height: 20px; }
+
+/* ---------- Chip-фильтры + тоггл ---------- */
+
+.find-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.find-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px 7px 10px;
+    border-radius: 999px;
+    background: rgba(10, 4, 8, 0.7);
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    color: #e7c97a;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.find-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(216, 178, 76, 0.55);
+    background: rgba(30, 10, 16, 0.85);
+}
+.find-chip svg { width: 16px; height: 16px; color: rgba(216, 178, 76, 0.85); }
+.find-chip-caret { font-size: 10px; color: rgba(216, 178, 76, 0.7); margin-left: 2px; }
+
+.find-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    color: #e7c97a;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+}
+.find-toggle-label { white-space: nowrap; }
+
+.find-toggle-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.find-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(10, 4, 8, 0.8);
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+.find-toggle-switch::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f7e3a5, #9b7626);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    transition: left 0.25s ease;
+}
+.find-toggle-input:checked + .find-toggle-switch {
+    background: linear-gradient(180deg, #7a4e12 0%, #c48a2a 100%);
+    border-color: rgba(247, 227, 165, 0.6);
+}
+.find-toggle-input:checked + .find-toggle-switch::before {
+    left: 18px;
+    background: linear-gradient(180deg, #fff2c7, #d8b24c);
+}
+.find-toggle-input:focus-visible + .find-toggle-switch {
+    box-shadow: 0 0 0 3px rgba(216, 178, 76, 0.22);
+}
+
+/* ---------- Вкладки категорий ---------- */
+
+.find-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.find-tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 12px 6px 10px;
+    min-height: 108px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.75) 0%, rgba(32, 10, 18, 0.85) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.28);
+    color: rgba(216, 178, 76, 0.78);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.15;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+}
+.find-tab:hover {
+    transform: translateY(-2px);
+    border-color: rgba(216, 178, 76, 0.5);
+    color: #e7c97a;
+}
+
+.find-tab.is-active {
+    background: linear-gradient(180deg, rgba(92, 28, 42, 0.85) 0%, rgba(46, 10, 18, 0.95) 100%);
+    border-color: rgba(247, 227, 165, 0.75);
+    color: #f7e3a5;
+    box-shadow:
+        0 0 0 1px rgba(247, 227, 165, 0.25),
+        0 6px 18px rgba(216, 140, 60, 0.22),
+        inset 0 1px 0 rgba(255, 214, 130, 0.18);
+}
+.find-tab.is-active .find-tab-icon {
+    background: radial-gradient(circle at 50% 35%, rgba(247, 227, 165, 0.35) 0%, rgba(140, 85, 32, 0.15) 60%, transparent 100%);
+    border-color: rgba(247, 227, 165, 0.75);
+    color: #fff2c7;
+    box-shadow: 0 0 16px rgba(216, 178, 76, 0.35);
+}
+
+.find-tab-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    background: rgba(10, 4, 8, 0.6);
+    color: rgba(216, 178, 76, 0.9);
+    transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+}
+.find-tab-icon svg { width: 22px; height: 22px; }
+
+.find-tab-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: inherit;
+}
+
+/* ---------- Список столов ---------- */
+
+.find-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 16px;
+}
+
+.find-row {
+    display: grid;
+    grid-template-columns: 44px minmax(68px, auto) minmax(70px, auto) minmax(54px, auto) auto;
+    align-items: center;
+    gap: clamp(8px, 2vw, 14px);
+    padding: 9px clamp(10px, 2.4vw, 14px) 9px 10px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.78) 0%, rgba(28, 8, 14, 0.9) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.22);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 214, 130, 0.05);
+    transition: transform 0.18s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+.find-row:hover {
+    transform: translateY(-1px);
+    border-color: rgba(216, 178, 76, 0.42);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 214, 130, 0.08);
+}
+
+.find-row.is-full {
+    opacity: 0.66;
+}
+.find-row.is-full:hover { transform: none; }
+
+.find-row-chip {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.find-row-chip svg { width: 42px; height: 42px; display: block; }
+
+.find-row-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: #f4d68a;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.find-row-stake,
+.find-row-players {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #e7c97a;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.find-row-stake svg,
+.find-row-players svg {
+    width: 16px;
+    height: 16px;
+    color: rgba(216, 178, 76, 0.92);
+    flex-shrink: 0;
+}
+
+.find-sit-btn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(247, 227, 165, 0.75);
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 52%, #9b7626 100%);
+    color: #3a1a0a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(216, 140, 60, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 0.18s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+.find-sit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(216, 140, 60, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    filter: brightness(1.05);
+}
+.find-sit-btn:active { transform: translateY(0); }
+
+.find-sit-btn:disabled,
+.find-sit-btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.32) 0%, rgba(92, 64, 20, 0.35) 100%);
+    border-color: rgba(216, 178, 76, 0.35);
+    color: rgba(58, 26, 10, 0.75);
+    box-shadow: none;
+    filter: none;
+    transform: none;
+}
+
+.find-empty {
+    margin: 8px 0 14px;
+    padding: 18px;
+    text-align: center;
+    color: rgba(216, 178, 76, 0.65);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    border: 1px dashed rgba(216, 178, 76, 0.22);
+    border-radius: 12px;
+    background: rgba(10, 4, 8, 0.4);
+}
+
+/* ---------- Нижний бренд-акцент AZI ---------- */
+
+.find-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: clamp(6px, 1.6vw, 10px);
+    padding-top: 10px;
+    opacity: 0.85;
+}
+.find-brand-line {
+    flex: 1;
+    max-width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(216, 178, 76, 0.45), transparent);
+}
+.find-brand-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.4em;
+    padding-left: 0.4em;
+    background: linear-gradient(180deg, #f7e3a5 0%, #c48a2a 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* ---------- Адаптив ---------- */
+
+@media (max-width: 520px) {
+    .find-tabs { gap: 6px; }
+    .find-tab { min-height: 96px; padding: 10px 4px 8px; }
+    .find-tab-icon { width: 34px; height: 34px; }
+    .find-tab-icon svg { width: 20px; height: 20px; }
+    .find-tab-label { font-size: 11.5px; }
+
+    .find-row {
+        grid-template-columns: 40px 1fr auto auto auto;
+        gap: 10px;
+        padding: 8px 10px;
+    }
+    .find-row-chip,
+    .find-row-chip svg { width: 38px; height: 38px; }
+    .find-row-name { font-size: 15.5px; }
+    .find-row-stake, .find-row-players { font-size: 12.5px; }
+    .find-sit-btn { padding: 7px 14px; font-size: 14px; }
+
+    .find-filters { gap: 8px; }
+    .find-toggle { font-size: 12px; gap: 8px; }
+    .find-chip { padding: 6px 10px 6px 9px; font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+    .find-row {
+        grid-template-columns: 36px 1fr auto auto;
+        grid-template-areas:
+            "chip name  stake  sit"
+            "chip plrs  plrs   sit";
+        row-gap: 2px;
+    }
+    .find-row-chip { grid-area: chip; }
+    .find-row-name { grid-area: name; }
+    .find-row-stake { grid-area: stake; justify-self: end; }
+    .find-row-players { grid-area: plrs; }
+    .find-sit-btn { grid-area: sit; }
+}
 
 @media (max-width: 360px) {
     .menu-balance-value { font-size: 13px; }
@@ -2178,6 +2702,179 @@ h1 {
                 <button type="button" class="auth-btn auth-btn--ghost" data-menu-sheet-close>Закрыть</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- ============ FIND TABLE ============ -->
+<div id="findTableScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="menu-panel menu-panel--find">
+            <!-- Top bar (аналог главного меню) -->
+            <div class="menu-topbar">
+                <div class="menu-profile" aria-label="Профиль">
+                    <span class="menu-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                            <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                            <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                        </svg>
+                    </span>
+                    <span class="menu-user-info">
+                        <span class="menu-user-name" data-find-name>Игрок</span>
+                        <span class="menu-user-level">
+                            <svg class="menu-level-crown" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                            </svg>
+                            <span>Уровень <strong data-find-level>12</strong></span>
+                        </span>
+                        <span class="menu-level-bar" aria-hidden="true"><span data-find-level-fill></span></span>
+                    </span>
+                </div>
+
+                <div class="menu-topbar-right">
+                    <div class="menu-balance">
+                        <span class="menu-balance-coin" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <defs>
+                                    <linearGradient id="findCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0" stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1" stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="10" cy="10" r="9" fill="url(#findCoinGrad)" />
+                                <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                                <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                                <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="menu-balance-value" data-find-balance>5 420</span>
+                        <button class="menu-balance-plus" type="button" data-find-topup aria-label="Пополнить баланс">+</button>
+                    </div>
+                    <button class="menu-bell" type="button" data-find-bell aria-label="Уведомления">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                            <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+                        </svg>
+                        <span class="menu-bell-badge" data-find-notifications>3</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page title -->
+            <div class="find-title">
+                <button class="find-back" type="button" data-find-back aria-label="Назад">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <h2 class="find-title-text">Найти стол</h2>
+                <div class="find-title-flourish" aria-hidden="true">
+                    <span class="find-flourish-line"></span>
+                    <span class="find-flourish-diamond"></span>
+                    <span class="find-flourish-line"></span>
+                </div>
+            </div>
+
+            <!-- Search + filter icon -->
+            <div class="find-searchbar">
+                <label class="find-search">
+                    <svg class="find-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M15.5 15.5 L 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                    <input type="search" class="find-search-input" data-find-search placeholder="Поиск стола" autocomplete="off" inputmode="search" />
+                </label>
+                <button class="find-filter-btn" type="button" data-find-filter aria-label="Фильтры">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                            <path d="M4 7 L 20 7" />
+                            <path d="M4 12 L 20 12" />
+                            <path d="M4 17 L 20 17" />
+                        </g>
+                        <g fill="currentColor">
+                            <circle cx="9"  cy="7"  r="2.1" />
+                            <circle cx="15" cy="12" r="2.1" />
+                            <circle cx="8"  cy="17" r="2.1" />
+                        </g>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Filter chips + toggle -->
+            <div class="find-filters">
+                <button class="find-chip" type="button" data-find-action="bets">
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="1.3" />
+                        <circle cx="10" cy="10" r="3" fill="currentColor" opacity="0.65" />
+                        <circle cx="16" cy="7"  r="2.4" fill="none" stroke="currentColor" stroke-width="1.1" />
+                    </svg>
+                    <span>Ставки</span>
+                    <span class="find-chip-caret" aria-hidden="true">▾</span>
+                </button>
+                <button class="find-chip" type="button" data-find-action="players">
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <circle cx="7.5" cy="8" r="2.8" fill="currentColor" />
+                        <circle cx="13.5" cy="8.5" r="2.4" fill="currentColor" opacity="0.82" />
+                        <path d="M2.5 16 C 3 13, 12 13, 12.5 16 Z" fill="currentColor" />
+                        <path d="M10 16 C 10.5 13.5, 17.5 13.5, 18 16 Z" fill="currentColor" opacity="0.82" />
+                    </svg>
+                    <span>Игроки</span>
+                    <span class="find-chip-caret" aria-hidden="true">▾</span>
+                </button>
+                <label class="find-toggle">
+                    <span class="find-toggle-label">Только свободные</span>
+                    <input type="checkbox" class="find-toggle-input" data-find-free-only />
+                    <span class="find-toggle-switch" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <!-- Category tabs -->
+            <div class="find-tabs" data-find-tabs role="tablist">
+                <button class="find-tab is-active" type="button" role="tab" data-find-tab="low" aria-selected="true">
+                    <span class="find-tab-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3 C 6 9, 3 13, 3 16 C 3 18.5, 5 20, 7 20 C 9 20, 10.5 18.5, 11 17 L 10 21 L 14 21 L 13 17 C 13.5 18.5, 15 20, 17 20 C 19 20, 21 18.5, 21 16 C 21 13, 18 9, 12 3 Z" fill="currentColor" /></svg>
+                    </span>
+                    <span class="find-tab-label">Низкие<br>ставки</span>
+                </button>
+                <button class="find-tab" type="button" role="tab" data-find-tab="mid" aria-selected="false">
+                    <span class="find-tab-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3 L 20 12 L 12 21 L 4 12 Z" fill="currentColor" /></svg>
+                    </span>
+                    <span class="find-tab-label">Средние<br>ставки</span>
+                </button>
+                <button class="find-tab" type="button" role="tab" data-find-tab="high" aria-selected="false">
+                    <span class="find-tab-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3 C 10 3, 8.5 4.5, 8.5 6.5 C 8.5 7.5, 9 8.3, 9.6 8.8 C 7.8 9.2, 6.5 10.8, 6.5 12.8 C 6.5 15, 8.3 16.8, 10.5 16.8 C 11 16.8, 11.5 16.7, 12 16.5 L 11 21 L 13 21 L 12 16.5 C 12.5 16.7, 13 16.8, 13.5 16.8 C 15.7 16.8, 17.5 15, 17.5 12.8 C 17.5 10.8, 16.2 9.2, 14.4 8.8 C 15 8.3, 15.5 7.5, 15.5 6.5 C 15.5 4.5, 14 3, 12 3 Z" fill="currentColor" /></svg>
+                    </span>
+                    <span class="find-tab-label">Высокие<br>ставки</span>
+                </button>
+                <button class="find-tab" type="button" role="tab" data-find-tab="vip" aria-selected="false">
+                    <span class="find-tab-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3 8 L 7 13 L 12 5 L 17 13 L 21 8 L 19 19 L 5 19 Z" fill="currentColor" /><circle cx="3" cy="8" r="1.4" fill="currentColor" /><circle cx="12" cy="5" r="1.4" fill="currentColor" /><circle cx="21" cy="8" r="1.4" fill="currentColor" /></svg>
+                    </span>
+                    <span class="find-tab-label">VIP</span>
+                </button>
+            </div>
+
+            <!-- Tables list -->
+            <div class="find-list" data-find-list role="list">
+                <!-- строки добавляются в renderFindTable() -->
+            </div>
+
+            <!-- Empty state -->
+            <p class="find-empty hidden" data-find-empty>Столы не найдены</p>
+
+            <!-- Bottom brand -->
+            <div class="find-brand" aria-hidden="true">
+                <span class="find-brand-line"></span>
+                <span class="find-brand-text">AZI</span>
+                <span class="find-brand-line"></span>
+            </div>
+        </div>
+
+        <!-- Toast живёт на уровне .splash-inner, чтобы не зависеть от transform анимации панели -->
+        <div class="menu-toast" data-find-toast aria-live="polite"></div>
     </div>
 </div>
 
@@ -3393,6 +4090,7 @@ const SCREENS = Object.freeze({
     SPLASH: "splash",
     AUTH: "auth",
     MAIN_MENU: "mainMenu",
+    FIND_TABLE: "findTable",
     GAME: "game",
 });
 
@@ -3467,6 +4165,25 @@ const UI_TEXT = Object.freeze({
         tableTypePublic:     "Публичный",
         tableTypePrivate:    "Приватный",
     },
+    findTable: {
+        title:            "Найти стол",
+        searchPlaceholder: "Поиск стола",
+        filterBets:       "Ставки",
+        filterPlayers:    "Игроки",
+        toggleFreeOnly:   "Только свободные",
+        tabLow:           "Низкие ставки",
+        tabMid:           "Средние ставки",
+        tabHigh:          "Высокие ставки",
+        tabVip:           "VIP",
+        tabLowShort:      "Низкие\u00A0ставки",
+        tabMidShort:      "Средние\u00A0ставки",
+        tabHighShort:     "Высокие\u00A0ставки",
+        rowNamePrefix:    "Стол",
+        btnSit:           "Сесть",
+        btnBack:          "Назад",
+        emptyList:        "Столы не найдены",
+        brand:            "AZI",
+    },
 });
 
 const appState = {
@@ -3484,6 +4201,32 @@ const appState = {
         notifications: 3,
         avatarUrl: null,
     },
+    /* findTable — UI-состояние экрана «Найти стол» (клиентское).
+       Когда появится бэкенд для лобби, `tables` придёт с сервера,
+       а это состояние останется локальным — только фильтры и выбор вкладки. */
+    findTable: {
+        category: "low",   // low | mid | high | vip
+        search: "",
+        freeOnly: false,
+    },
+    tables: [
+        { id: 12, stake: 100,   players: 2, capacity: 2, tier: "low"  },
+        { id: 18, stake: 100,   players: 4, capacity: 6, tier: "low"  },
+        { id: 22, stake: 150,   players: 1, capacity: 4, tier: "low"  },
+        { id: 27, stake: 200,   players: 3, capacity: 6, tier: "low"  },
+        { id: 34, stake: 200,   players: 4, capacity: 6, tier: "low"  },
+        { id: 41, stake: 300,   players: 5, capacity: 6, tier: "low"  },
+        { id: 45, stake: 500,   players: 5, capacity: 6, tier: "low"  },
+        { id: 52, stake: 750,   players: 2, capacity: 4, tier: "mid"  },
+        { id: 58, stake: 1000,  players: 2, capacity: 6, tier: "mid"  },
+        { id: 63, stake: 1000,  players: 6, capacity: 6, tier: "mid"  },
+        { id: 71, stake: 1500,  players: 3, capacity: 6, tier: "mid"  },
+        { id: 78, stake: 2000,  players: 4, capacity: 6, tier: "high" },
+        { id: 82, stake: 3000,  players: 1, capacity: 4, tier: "high" },
+        { id: 88, stake: 5000,  players: 2, capacity: 4, tier: "high" },
+        { id: 91, stake: 10000, players: 3, capacity: 4, tier: "vip"  },
+        { id: 99, stake: 25000, players: 1, capacity: 4, tier: "vip"  },
+    ],
 };
 
 /* ---------- sessionStore ---------- */
@@ -3582,11 +4325,13 @@ const authService = {
 /* ---------- DOM refs для экранов ---------- */
 const authScreenEl = document.getElementById("authScreen");
 const mainMenuScreenEl = document.getElementById("mainMenuScreen");
+const findTableScreenEl = document.getElementById("findTableScreen");
 
 const screenEls = {
     [SCREENS.SPLASH]: splashScreenEl,
     [SCREENS.AUTH]: authScreenEl,
     [SCREENS.MAIN_MENU]: mainMenuScreenEl,
+    [SCREENS.FIND_TABLE]: findTableScreenEl,
 };
 
 /* ---------- Screen manager ---------- */
@@ -3601,6 +4346,7 @@ function setScreen(screen) {
 
     if (screen === SCREENS.AUTH) renderAuthScreen();
     if (screen === SCREENS.MAIN_MENU) renderMainMenu();
+    if (screen === SCREENS.FIND_TABLE) renderFindTable();
 }
 
 function setAuthMode(mode) {
@@ -3780,7 +4526,14 @@ function renderAuthScreen() {
 
 let menuToastTimer = null;
 function showMenuToast(text) {
-    const toastEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-toast]");
+    // Подбираем тост по текущему экрану — overlay-тосты живут внутри каждого .splash-inner,
+    // чтобы не зависеть от transform анимаций родительской панели.
+    let toastEl = null;
+    if (appState.currentScreen === SCREENS.FIND_TABLE && findTableScreenEl) {
+        toastEl = findTableScreenEl.querySelector("[data-find-toast]");
+    } else if (mainMenuScreenEl) {
+        toastEl = mainMenuScreenEl.querySelector("[data-menu-toast]");
+    }
     if (!toastEl) return;
     toastEl.textContent = text;
     toastEl.classList.add("is-visible");
@@ -3824,8 +4577,9 @@ async function handleMenuShare() {
    создания стола — подменить `create` на переход в SCREENS.CREATE_TABLE и т.п. */
 const MENU_ACTION_HANDLERS = {
     find: () => {
-        setScreen(SCREENS.GAME);
-        resetGame();
+        // Переход на экран выбора стола. Старт игры произойдёт позже —
+        // при нажатии «Сесть» на конкретном столе (см. bindFindTableHandlers).
+        setScreen(SCREENS.FIND_TABLE);
     },
     create:   () => showMenuToast(UI_TEXT.menu.toastSoon),
     friends:  () => showMenuToast(UI_TEXT.menu.toastSoon),
@@ -3948,6 +4702,249 @@ function renderMainMenu() {
     closeMenuSheet();
 }
 
+/* ==============================================================
+   FIND TABLE SCREEN — поиск/фильтрация столов + логика "Сесть"
+   Клиентский слой. Когда появится сервер лобби, filterTables()
+   нужно будет заменить на запрос к API + подписку на изменения,
+   а renderFindTable() переиспользовать для отрисовки результата.
+   ============================================================== */
+
+/* Цвет фишки-чипа в строке таблицы — по тиру. */
+const CHIP_TIER_COLORS = Object.freeze({
+    low:  { base: "#5a1a28", stripe: "#8d2a3d", center: "#2a0a12" },
+    mid:  { base: "#1d4a2a", stripe: "#2e6d3f", center: "#0a1f12" },
+    high: { base: "#1a3a62", stripe: "#2a5890", center: "#0a1a2a" },
+    vip:  { base: "#3a1a5a", stripe: "#5a2a82", center: "#1a0a2a" },
+});
+
+/* Собираем SVG фишки казино нужного цвета. */
+function buildChipSvg(tier) {
+    const c = CHIP_TIER_COLORS[tier] || CHIP_TIER_COLORS.low;
+    return `
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+            <circle cx="20" cy="20" r="18.5" fill="${c.base}" stroke="#d8b24c" stroke-width="0.9" />
+            <g stroke="#f7e3a5" stroke-width="2.6" stroke-linecap="round">
+                <line x1="20" y1="2.5"  x2="20" y2="6.5" />
+                <line x1="20" y1="33.5" x2="20" y2="37.5" />
+                <line x1="2.5"  y1="20" x2="6.5"  y2="20" />
+                <line x1="33.5" y1="20" x2="37.5" y2="20" />
+                <line x1="7"  y1="7"  x2="10" y2="10" />
+                <line x1="30" y1="30" x2="33" y2="33" />
+                <line x1="7"  y1="33" x2="10" y2="30" />
+                <line x1="30" y1="10" x2="33" y2="7" />
+            </g>
+            <circle cx="20" cy="20" r="11" fill="${c.center}" stroke="#d8b24c" stroke-width="0.7" />
+            <text x="20" y="24" text-anchor="middle"
+                  font-family="Cormorant Garamond, serif" font-style="italic"
+                  font-size="11" font-weight="600" fill="#d8b24c">A</text>
+        </svg>
+    `;
+}
+
+/* SVG иконок для строк — монетка (ставка) и люди (игроки). */
+const ROW_COIN_SVG = `
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8.5" fill="#d8b24c" stroke="#5a3a0f" stroke-width="0.8" />
+        <circle cx="10" cy="10" r="5.8" fill="none" stroke="#8c6a2a" stroke-width="0.6" />
+        <text x="10" y="13.4" text-anchor="middle"
+              font-family="Cormorant Garamond, serif" font-style="italic"
+              font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+    </svg>
+`;
+const ROW_PEOPLE_SVG = `
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="7.5"  cy="8" r="2.8" fill="currentColor" />
+        <circle cx="13.5" cy="8.5" r="2.4" fill="currentColor" opacity="0.82" />
+        <path d="M2.5 16 C 3 13, 12 13, 12.5 16 Z" fill="currentColor" />
+        <path d="M10 16 C 10.5 13.5, 17.5 13.5, 18 16 Z" fill="currentColor" opacity="0.82" />
+    </svg>
+`;
+
+/* Берём только таблицы выбранного тира + опционально только свободные + текстовый фильтр. */
+function filterTables() {
+    const f = appState.findTable || {};
+    const term = (f.search || "").trim().toLowerCase();
+    return (appState.tables || []).filter((t) => {
+        if (t.tier !== f.category) return false;
+        if (f.freeOnly && t.players >= t.capacity) return false;
+        if (term) {
+            const hay = `${UI_TEXT.findTable.rowNamePrefix} ${t.id}`.toLowerCase();
+            // Разрешаем поиск и по чистому номеру: "12", "стол 12", "12"
+            if (!hay.includes(term) && !String(t.id).includes(term)) return false;
+        }
+        return true;
+    });
+}
+
+function renderFindTable() {
+    if (!findTableScreenEl) return;
+
+    const profile = appState.profile || {};
+
+    /* Топбар — ровно те же данные, что и в main menu. */
+    const nameEl = findTableScreenEl.querySelector("[data-find-name]");
+    if (nameEl) {
+        const name = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
+        nameEl.textContent = name;
+    }
+    const levelEl = findTableScreenEl.querySelector("[data-find-level]");
+    if (levelEl) levelEl.textContent = String(profile.level != null ? profile.level : 1);
+
+    const levelFillEl = findTableScreenEl.querySelector("[data-find-level-fill]");
+    if (levelFillEl) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        levelFillEl.style.width = (xp * 100).toFixed(1) + "%";
+    }
+
+    const balanceEl = findTableScreenEl.querySelector("[data-find-balance]");
+    if (balanceEl) balanceEl.textContent = formatBalance(profile.balance);
+
+    const notifEl = findTableScreenEl.querySelector("[data-find-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+
+    /* Активная вкладка */
+    findTableScreenEl.querySelectorAll("[data-find-tab]").forEach((btn) => {
+        const isActive = btn.dataset.findTab === appState.findTable.category;
+        btn.classList.toggle("is-active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    /* Состояние поиска/тоггла — синхронизируем контролы (например, при смене вкладки). */
+    const searchInput = findTableScreenEl.querySelector("[data-find-search]");
+    if (searchInput && searchInput.value !== appState.findTable.search) {
+        searchInput.value = appState.findTable.search;
+    }
+    const freeToggle = findTableScreenEl.querySelector("[data-find-free-only]");
+    if (freeToggle) freeToggle.checked = !!appState.findTable.freeOnly;
+
+    /* Список */
+    const listEl = findTableScreenEl.querySelector("[data-find-list]");
+    const emptyEl = findTableScreenEl.querySelector("[data-find-empty]");
+    if (!listEl) return;
+
+    const tables = filterTables();
+    if (!tables.length) {
+        listEl.innerHTML = "";
+        if (emptyEl) {
+            emptyEl.textContent = UI_TEXT.findTable.emptyList;
+            emptyEl.classList.remove("hidden");
+        }
+        return;
+    }
+    if (emptyEl) emptyEl.classList.add("hidden");
+
+    const t = UI_TEXT.findTable;
+    listEl.innerHTML = tables.map((tbl) => {
+        const full = tbl.players >= tbl.capacity;
+        return `
+            <div class="find-row${full ? " is-full" : ""}" role="listitem" data-table-id="${tbl.id}">
+                <span class="find-row-chip">${buildChipSvg(tbl.tier)}</span>
+                <span class="find-row-name">${t.rowNamePrefix} ${tbl.id}</span>
+                <span class="find-row-stake">${ROW_COIN_SVG}<span>${formatBalance(tbl.stake)}</span></span>
+                <span class="find-row-players">${ROW_PEOPLE_SVG}<span>${tbl.players}/${tbl.capacity}</span></span>
+                <button class="find-sit-btn" type="button"
+                        data-find-sit="${tbl.id}"
+                        ${full ? 'disabled aria-disabled="true"' : ""}>
+                    ${t.btnSit}
+                </button>
+            </div>
+        `;
+    }).join("");
+}
+
+function bindFindTableHandlers() {
+    if (!findTableScreenEl) return;
+
+    /* Назад в главное меню */
+    const backBtn = findTableScreenEl.querySelector("[data-find-back]");
+    if (backBtn) backBtn.addEventListener("click", () => setScreen(SCREENS.MAIN_MENU));
+
+    /* Вкладки категорий */
+    const tabsEl = findTableScreenEl.querySelector("[data-find-tabs]");
+    if (tabsEl) tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-find-tab]");
+        if (!btn) return;
+        const tab = btn.dataset.findTab;
+        if (!tab || tab === appState.findTable.category) return;
+        appState.findTable.category = tab;
+        renderFindTable();
+    });
+
+    /* Поиск */
+    const searchInput = findTableScreenEl.querySelector("[data-find-search]");
+    if (searchInput) searchInput.addEventListener("input", (e) => {
+        appState.findTable.search = e.target.value || "";
+        renderFindTable();
+    });
+
+    /* "Только свободные" */
+    const freeToggle = findTableScreenEl.querySelector("[data-find-free-only]");
+    if (freeToggle) freeToggle.addEventListener("change", (e) => {
+        appState.findTable.freeOnly = !!e.target.checked;
+        renderFindTable();
+    });
+
+    /* Фильтр-иконка и pill-фильтры (Ставки/Игроки) — пока заглушка.
+       Здесь в будущем: открыть дропдаун или bottom-sheet с параметрами. */
+    const filterBtn = findTableScreenEl.querySelector("[data-find-filter]");
+    if (filterBtn) filterBtn.addEventListener("click", () => showMenuToast(UI_TEXT.menu.toastSoon));
+
+    findTableScreenEl.querySelectorAll("[data-find-action]").forEach((btn) => {
+        btn.addEventListener("click", () => showMenuToast(UI_TEXT.menu.toastSoon));
+    });
+
+    /* Топбар: баланс+топап, колокольчик, аватар */
+    const topupBtn = findTableScreenEl.querySelector("[data-find-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+
+    const bellBtn = findTableScreenEl.querySelector("[data-find-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", () => {
+        const n = (appState.profile && appState.profile.notifications) || 0;
+        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    });
+
+    /* "Сесть" — делегирование. Клик на активную кнопку стартует игру. */
+    const listEl = findTableScreenEl.querySelector("[data-find-list]");
+    if (listEl) listEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-find-sit]");
+        if (!btn || btn.disabled) return;
+        const tableId = Number(btn.dataset.findSit);
+        const tbl = (appState.tables || []).find((x) => x.id === tableId);
+        if (!tbl || tbl.players >= tbl.capacity) return;
+        // Запуск игры. При подключении бэка сюда добавится join-запрос к лобби.
+        setScreen(SCREENS.GAME);
+        resetGame();
+    });
+
+    /* Esc — назад в меню */
+    document.addEventListener("keydown", (e) => {
+        if (appState.currentScreen !== SCREENS.FIND_TABLE) return;
+        if (e.key !== "Escape") return;
+        // Если фокус внутри input поиска — пусть Escape сначала его очистит.
+        const active = document.activeElement;
+        if (active && active.matches("[data-find-search]") && active.value) {
+            active.value = "";
+            appState.findTable.search = "";
+            renderFindTable();
+            return;
+        }
+        e.preventDefault();
+        setScreen(SCREENS.MAIN_MENU);
+    });
+}
+
 /* ---------- Splash flow (минимум 3с + tap) ---------- */
 function startSplashFlow() {
     const splashInnerEl = splashScreenEl.querySelector(".splash-inner");
@@ -4010,6 +5007,7 @@ async function bootstrap() {
     injectSplashFrames();
     bindAuthHandlers();
     bindMainMenuHandlers();
+    bindFindTableHandlers();
 
     try {
         const res = await authService.loadSession();
