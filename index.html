@@ -6513,7 +6513,7 @@ const UI_TEXT = Object.freeze({
     seatWaiting: {
         statusShort:    "Ожидает",
         handPlaceholder: "Ожидание следующей раздачи",
-        statusMessage:   "Идёт текущая партия. Вы подключены к столу и ожидаете следующую раздачу.",
+        statusMessage:   "Идёт текущая партия. Вы войдёте в игру со следующей раздачи.",
         nextHandSoon:    "Раздача завершена. Начинаем следующую…",
     },
     /* Тексты для временного выхода («Встать»): место сохраняется на 7 минут. */
@@ -7430,19 +7430,11 @@ function bindFindTableHandlers() {
            игроков за столом после посадки. При подключении бэка — здесь будет
            POST /tables/:id/sit. */
         if (!appState.findTable) appState.findTable = {};
-        appState.findTable.currentTable = {
-            id:       tbl.id,
-            stake:    tbl.stake,
-            tier:     tbl.tier,
-            capacity: tbl.capacity,
-            players:  tbl.players + 1, // +1 = локальный игрок только что сел
-            /* Фаза / тип / владелец стола пробрасываются в resetGame(), чтобы
-               правильно выбрать сценарий старта (см. tablePhaseFromStatus). */
-            status:   tbl.status || "playing",
-            type:     tbl.type || "public",
-            ownerId:  tbl.ownerId || null,
-            isListed: tbl.isListed !== false,
-        };
+        /* Копируем строку стола из appState.tables — вместе с gameSession,
+           чтобы при повторном входе поднять тот же матч, а не пустую комнату. */
+        appState.findTable.currentTable = Object.assign({}, tbl, {
+            players: tbl.players + 1, // +1 = локальный игрок только что сел
+        });
         selectedPlayersCount = appState.findTable.currentTable.players;
         setScreen(SCREENS.GAME);
         resetGame();
@@ -8081,6 +8073,295 @@ function tableMaybeAutoStart() {
     if (tableCanStartRound()) tableStartRound();
 }
 
+/* ---------- TABLE SESSION (состояние матча для «Найти стол») ----------
+   У каждого стола в appState.tables может быть gameSession — снимок
+   движка. При входе подгружаем его вместо «пустой комнаты». ---------- */
+
+function getTableById(id) {
+    return (appState.tables || []).find((t) => Number(t.id) === Number(id));
+}
+
+function mulberry32(a) {
+    return function () {
+        let t = (a += 0x6d2b79f5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function engineNextActivePlayerIdx(fromIdx) {
+    const n = engine.players.length;
+    for (let step = 1; step <= n; step++) {
+        const j = (fromIdx + step) % n;
+        if (engine.players[j].active) return j;
+    }
+    return fromIdx;
+}
+
+/** Перерисовать центр стола по engine.trickCards (без сброса массива). */
+function engineSyncPlayedAreaDom() {
+    const el = enginePlayedAreaEl();
+    if (!el) return;
+    el.innerHTML = "";
+    engine.trickCards.forEach((entry) => {
+        const wrap = document.createElement("div");
+        wrap.className = "table-card";
+        wrap.dataset.playerIdx = String(entry.playerIdx);
+        const inner = document.createElement("div");
+        inner.className = "card table-played-card";
+        inner.style.cursor = "default";
+        inner.style.margin = "0 auto";
+        inner.innerHTML = renderCardFace(entry.card);
+        wrap.appendChild(inner);
+        el.appendChild(wrap);
+    });
+    engineSetPlayedAreaSize();
+}
+
+function engineExportSnapshot() {
+    return {
+        v: 1,
+        capacity: engine.capacity,
+        phase: engine.phase,
+        trumpCard: engine.trumpCard,
+        trickCards: engine.trickCards.map((x) => ({ playerIdx: x.playerIdx, card: x.card })),
+        trickNumber: engine.trickNumber,
+        leaderIdx: engine.leaderIdx,
+        currentTurn: engine.currentTurn,
+        pot: engine.pot,
+        currentBid: engine.currentBid,
+        lastBidderIdx: engine.lastBidderIdx,
+        auctionWinnerIdx: engine.auctionWinnerIdx,
+        baseStake: engine.baseStake,
+        humanIdx: engine.humanIdx,
+        humanJoinedMidGame: engine.humanJoinedMidGame,
+        actionLock: engine.actionLock,
+        pendingAuctionResolve: engine.pendingAuctionResolve,
+        spectating: engine.spectating,
+        betweenHands: !!engine.betweenHands,
+        totalTricks: engine.totalTricks,
+        players: engine.players.map((p) => ({
+            id: p.id,
+            seatSlot: p.seatSlot,
+            name: p.name,
+            level: p.level,
+            tint: p.tint,
+            isHuman: p.isHuman,
+            hand: p.hand.slice(),
+            scoreTricks: p.scoreTricks,
+            bank: p.bank,
+            bid: p.bid,
+            passedAuction: !!p.passedAuction,
+            status: p.status,
+            active: !!p.active,
+            awayUntil: p.awayUntil != null ? p.awayUntil : null,
+        })),
+    };
+}
+
+/**
+ * Восстановить движок из снимка (после выхода другого игрока или при
+ * повторном входе за тот же стол).
+ */
+function engineImportSnapshot(snap, options) {
+    options = options || {};
+    if (!snap || snap.v !== 1) return;
+    if (typeof engineClearAwayTimers === "function") engineClearAwayTimers();
+    if (engine.nextHandTimer) {
+        clearTimeout(engine.nextHandTimer);
+        engine.nextHandTimer = null;
+    }
+    engine.betweenHands = false;
+
+    engine.capacity = snap.capacity;
+    engine.phase = snap.phase;
+    engine.trumpCard = snap.trumpCard;
+    engine.trickCards = (snap.trickCards || []).map((x) => ({ playerIdx: x.playerIdx, card: x.card }));
+    engine.trickNumber = snap.trickNumber != null ? snap.trickNumber : 1;
+    engine.leaderIdx = snap.leaderIdx;
+    engine.currentTurn = snap.currentTurn;
+    engine.pot = snap.pot != null ? snap.pot : 0;
+    engine.currentBid = snap.currentBid != null ? snap.currentBid : 0;
+    engine.lastBidderIdx = snap.lastBidderIdx;
+    engine.auctionWinnerIdx = snap.auctionWinnerIdx;
+    engine.baseStake = options.stake != null ? options.stake : snap.baseStake;
+    engine.humanIdx = snap.humanIdx != null ? snap.humanIdx : 0;
+    engine.humanJoinedMidGame = !!snap.humanJoinedMidGame;
+    engine.actionLock = false;
+    engine.pendingAuctionResolve = !!snap.pendingAuctionResolve;
+    engine.spectating = false;
+    engine.totalTricks = snap.totalTricks != null ? snap.totalTricks : 3;
+    engine.currentTable = options.table || engine.currentTable;
+
+    engine.players = snap.players.map((sp) => ({
+        id: sp.id,
+        seatSlot: sp.seatSlot,
+        name: sp.name,
+        level: sp.level,
+        tint: sp.tint,
+        isHuman: !!sp.isHuman,
+        hand: (sp.hand || []).slice(),
+        scoreTricks: sp.scoreTricks || 0,
+        bank: sp.bank,
+        bid: sp.bid,
+        passedAuction: !!sp.passedAuction,
+        status: sp.status,
+        active: !!sp.active,
+        awayUntil: sp.awayUntil != null ? sp.awayUntil : null,
+    }));
+
+    if (options.patchHumanWaiting) {
+        const hp = appState.profile || {};
+        const hn = (appState.user && (appState.user.name || appState.user.email)) ||
+            (UI_TEXT.menu && UI_TEXT.menu.fallbackName) || "Вы";
+        const human = engine.players[engine.humanIdx];
+        if (human && human.isHuman) {
+            human.name = hn;
+            human.level = hp.level != null ? hp.level : human.level;
+            human.bank = Number(hp.balance) || human.bank;
+            human.status = "waiting";
+            human.active = false;
+            human.hand = [];
+            human.bid = null;
+            human.passedAuction = false;
+        }
+    }
+
+    engineRenderSeats();
+    engineRenderTrump();
+    engineUpdatePotUI();
+    engineUpdateSeatBalances();
+    engineRenderTrickDots();
+    engineSyncPlayedAreaDom();
+
+    if (auctionBarEl) {
+        const human = engine.players[engine.humanIdx];
+        const hideAuction = (human && human.status === "waiting") || engine.phase !== "auction";
+        auctionBarEl.classList.toggle("hidden", hideAuction);
+    }
+    renderGameTopbar();
+    engineUpdateActiveTurnClass();
+    if (typeof engineUpdateAuctionUI === "function") engineUpdateAuctionUI();
+
+    const leaveBtnPost = document.querySelector("[data-game-leave]");
+    if (leaveBtnPost) {
+        const hum = engine.players[engine.humanIdx];
+        leaveBtnPost.hidden = !(hum && hum.active);
+    }
+}
+
+function enginePersistCurrentTableSession() {
+    const tid = engine.currentTable && engine.currentTable.id;
+    if (tid == null) return;
+    if (engine.phase === "idle" || engine.phase === "waiting") return;
+    const snap = engineExportSnapshot();
+    const row = getTableById(tid);
+    if (row) row.gameSession = snap;
+    if (appState.findTable && appState.findTable.currentTable &&
+        Number(appState.findTable.currentTable.id) === Number(tid)) {
+        appState.findTable.currentTable.gameSession = snap;
+    }
+}
+
+/** Первый вход в «идущий» стол без снимка — синтетическая живая позиция. */
+function engineBootstrapMidGameVisual(table) {
+    const rnd = mulberry32((Number(table && table.id) || 1) * 977620923 + 42);
+    const activeIdxs = engine.players.map((p, i) => (p.active ? i : -1)).filter((i) => i >= 0);
+    if (activeIdxs.length < 2) {
+        setTimeout(() => engineStartAuction(), 450);
+        return;
+    }
+    if (rnd() < 0.42) {
+        engineBootstrapAuctionInProgress(rnd, activeIdxs);
+    } else {
+        engineBootstrapPlayInProgress(rnd, activeIdxs);
+    }
+}
+
+function engineBootstrapAuctionInProgress(rnd, activeIdxs) {
+    engine.phase = "auction";
+    const raisedIdx = activeIdxs[Math.floor(rnd() * activeIdxs.length)];
+    const raisedBid = 1 + Math.floor(rnd() * 3);
+    engine.currentBid = raisedBid;
+    engine.lastBidderIdx = raisedIdx;
+    const raiser = engine.players[raisedIdx];
+    engine.players.forEach((p) => {
+        p.passedAuction = false;
+        p.bid = null;
+    });
+    raiser.bid = raisedBid;
+    const addAmount = Math.max(0, engine.currentBid * engine.baseStake - engine.pot);
+    if (addAmount > 0 && raiser.bank >= addAmount) {
+        raiser.bank -= addAmount;
+        engine.pot += addAmount;
+    } else if (addAmount > 0) {
+        engine.pot += Math.max(0, raiser.bank);
+        raiser.bank = 0;
+    }
+    activeIdxs.filter((i) => i !== raisedIdx).forEach((i) => {
+        if (rnd() < 0.55) engine.players[i].passedAuction = true;
+    });
+    const stillIn = activeIdxs.filter((i) => !engine.players[i].passedAuction);
+    let turnIdx = stillIn.length ? stillIn[Math.floor(rnd() * stillIn.length)] : raisedIdx;
+    if (engine.players[turnIdx].passedAuction) turnIdx = raisedIdx;
+    engine.currentTurn = turnIdx;
+    engine.auctionWinnerIdx = null;
+
+    engineUpdatePotUI();
+    engineUpdateSeatBalances();
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+    renderGameTopbar();
+    engineUpdateActiveTurnClass();
+    engineUpdateAuctionUI();
+    setTimeout(() => engineRunAuctionTurn(), 500);
+}
+
+function engineBootstrapPlayInProgress(rnd, activeIdxs) {
+    engine.phase = "play";
+    engine.auctionWinnerIdx = activeIdxs[0];
+    engine.pot = Math.floor(rnd() * 4) * engine.baseStake;
+
+    const leader = activeIdxs[Math.floor(rnd() * activeIdxs.length)];
+    engine.leaderIdx = leader;
+    engine.trickCards = [];
+    const k = activeIdxs.length;
+    const maxPartial = Math.min(k - 1, 2);
+    const nPlayed = Math.floor(rnd() * (maxPartial + 1));
+
+    let idx = leader;
+    const trumpSuit = getSuit(engine.trumpCard);
+    for (let t = 0; t < nPlayed; t++) {
+        const p = engine.players[idx];
+        const card = engine.trickCards.length === 0
+            ? pickBotLeadCard(p.hand, trumpSuit)
+            : pickBotResponseCard(p, engine.trickCards, trumpSuit);
+        if (!card) break;
+        const ci = p.hand.indexOf(card);
+        if (ci < 0) break;
+        p.hand.splice(ci, 1);
+        engine.trickCards.push({ playerIdx: idx, card });
+        idx = engineNextActivePlayerIdx(idx);
+    }
+    engine.currentTurn = idx;
+    engine.trickNumber = 1 + Math.floor(rnd() * 2);
+    activeIdxs.forEach((i) => {
+        if (rnd() < 0.35) engine.players[i].scoreTricks = 1;
+    });
+
+    engine.players.forEach((p) => { p.passedAuction = false; });
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+    engineSyncPlayedAreaDom();
+    engineRenderHands();
+    engineUpdatePotUI();
+    engineUpdateSeatBalances();
+    engineRenderTrickDots();
+    renderGameTopbar();
+    engineUpdateActiveTurnClass();
+    setMessage(UI_TEXT.seatWaiting.statusMessage);
+    setTimeout(() => engineRunPlayTurn(), 550);
+}
+
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
 
 function makeAvatarSvg() {
@@ -8582,6 +8863,7 @@ function engineResolveAuction() {
 
     setTimeout(() => {
         engine.trickNumber = 1;
+        if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
         engineStartTrick();
     }, 700);
 }
@@ -8804,6 +9086,8 @@ function enginePlayCardCommit(playerIdx, card, idxInHand) {
 
     engine.actionLock = false;
 
+    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+
     const activeCount = engineActivePlayersInPlay().length;
     if (engine.trickCards.length >= activeCount) {
         setTimeout(engineEndTrick, 420);
@@ -8862,6 +9146,8 @@ function engineEndTrick() {
             engine.trickNumber++;
             engine.leaderIdx = winnerIdx;
             engine.currentTurn = winnerIdx;
+
+            if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
 
             if (engine.trickNumber > engine.totalTricks) {
                 engineFinishGame();
@@ -8957,6 +9243,8 @@ function engineFinishGame() {
         engineUpdateSeatBalances();
     }
 
+    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+
     /* Между раздачами даём паузу на показ итогов, затем автоматически
        запускаем следующую раздачу — с промоутом всех waiting → active.
        Для waiting-игрока на время паузы меняем текст баннера. */
@@ -9045,6 +9333,7 @@ function engineStartNextHand() {
 
     renderGameTopbar();
     setMessage("Новая раздача. Начинаются торги.");
+    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
     setTimeout(() => engineStartAuction(), 600);
 }
 
@@ -9129,17 +9418,24 @@ function engineStart(playersCount, options) {
     }
 
     engineDeal();  /* skip dealing to inactive players — см. engineDeal */
+    /* Критично: engineRenderSeats() вызывался ДО раздачи — руки были пустыми.
+       Обновляем DOM рук сразу после engineDeal, иначе до первого хода
+       не видно ни рубашек соперников, ни своих карт. */
+    engineRenderHands();
     engineRenderTrump();
 
     renderGameTopbar();
     if (humanWaiting) {
-        /* Человек подключился в середине партии: ждёт следующую раздачу,
-           интерфейс торгов для него скрыт; auctionStart запустит торги
-           между ботами (advanceTurn пропускает waiting-игроков). */
+        /* Человек подключился в середине партии: ждёт следующую раздачу.
+           Не стартуем «торги с нуля» — показываем уже идущую фазу (торги
+           или розыгрыш) между ботами; состояние сохраняется в table.gameSession. */
         setMessage(UI_TEXT.seatWaiting.statusMessage);
-    } else {
-        setMessage("Карты розданы. Начинаются торги.");
+        engineBootstrapMidGameVisual(options.table);
+        enginePersistCurrentTableSession();
+        if (leaveBtn) leaveBtn.hidden = true;
+        return;
     }
+    setMessage("Карты розданы. Начинаются торги.");
     setTimeout(() => engineStartAuction(), 500);
 }
 
@@ -9297,6 +9593,12 @@ function engineReturnFromAway() {
 /* Полный выход со стола. Используется кнопкой «Лобби» и таймаутом away. */
 function engineExitTable(options) {
     options = options || {};
+    /* Сохраняем живой матч на строку стола до сброса engine — иначе при
+       возврате в «Найти стол» и повторном входе стол «умирает». */
+    if (engine.currentTable && engine.currentTable.id != null &&
+        engine.phase !== "idle" && engine.phase !== "waiting") {
+        enginePersistCurrentTableSession();
+    }
     const human = engine.players[engine.humanIdx];
 
     engineClearAwayTimers();
@@ -9391,7 +9693,21 @@ function resetGame() {
     const midGame = !!(table && ACTIVE_STATUSES.has(String(table.status)));
 
     if (midGame) {
-        engineStart(count, { stake, table, humanWaiting: true });
+        const masterTable = table && table.id != null ? getTableById(table.id) : null;
+        const session = masterTable && masterTable.gameSession;
+        const tRef = masterTable || table;
+        if (session && session.v === 1 && session.capacity === count &&
+            session.players && session.players.length === count) {
+            engineImportSnapshot(session, { table: tRef, stake, patchHumanWaiting: true });
+            setMessage(UI_TEXT.seatWaiting.statusMessage);
+            if (engine.phase === "play") {
+                setTimeout(() => engineRunPlayTurn(), 500);
+            } else if (engine.phase === "auction") {
+                setTimeout(() => engineRunAuctionTurn(), 500);
+            }
+            return;
+        }
+        engineStart(count, { stake, table: tRef, humanWaiting: true });
         return;
     }
 
