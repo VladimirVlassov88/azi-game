@@ -795,6 +795,26 @@ h1 {
         height 0.38s ease;
 }
 
+/** Раздача с колоды: плавный «дорогой» полёт дольше стандартного fly-card */
+.fly-card.fly-card--deal {
+    z-index: 10050;
+    border-radius: 9px;
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(247, 227, 165, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition:
+        left 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        top 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        transform 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        opacity 300ms ease,
+        width 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        height 360ms cubic-bezier(0.22, 0.82, 0.22, 1);
+}
+.fly-card.fly-card--deal.is-arriving {
+    transform: rotate(3deg);
+}
+
 .fly-chip {
     position: fixed;
     z-index: 9999;
@@ -942,8 +962,7 @@ h1 {
     align-items: center;
     text-align: center;
     padding: 24px;
-    transform: translateY(-4%);
-    animation: splashRise 1.1s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: splashRiseHero 1.1s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .splash-title {
@@ -1016,7 +1035,15 @@ h1 {
     to   { opacity: 1; }
 }
 
+/* Вход меню/auth/«Найти стол»: финал на translateY(0), иначе панель остаётся
+   сдвинутой вверх (~−4%) и шапка визуально «уезжает» под обрезку вьюпорта. */
 @keyframes splashRise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Только первый экран: лёгкое парение вниз на −4% */
+@keyframes splashRiseHero {
     from { opacity: 0; transform: translateY(calc(-4% + 10px)); }
     to   { opacity: 1; transform: translateY(-4%); }
 }
@@ -1286,10 +1313,14 @@ h1 {
 
 /* --- базовый контейнер игры и фон --- */
 .game.game--v2 {
+    position: relative;
     max-width: 100%;
     margin: 0;
     padding: 0;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     color: #f4d68a;
@@ -1298,6 +1329,7 @@ h1 {
         radial-gradient(ellipse at 50% 100%, rgba(140, 30, 60, 0.25) 0%, transparent 55%),
         linear-gradient(180deg, #2e0a12 0%, #1c0610 55%, #0f0308 100%);
     overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* Старый заголовок "Azi by Bobby" больше не используется */
@@ -1351,11 +1383,19 @@ h1 {
     z-index: 20;
     display: flex;
     align-items: center;
-    gap: clamp(6px, 1.4vw, 12px);
-    padding: 8px clamp(8px, 2vw, 14px);
+    gap: clamp(8px, 1.8vw, 14px);
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    padding-bottom: 10px;
+    padding-left: calc(clamp(12px, 2.4vw, 22px) + env(safe-area-inset-left, 0px));
+    padding-right: calc(clamp(12px, 2.4vw, 22px) + env(safe-area-inset-right, 0px));
     background: linear-gradient(180deg, rgba(20, 6, 12, 0.95) 0%, rgba(46, 10, 18, 0.88) 100%);
     border-bottom: 1px solid rgba(216, 178, 76, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 214, 130, 0.06),
+        0 4px 12px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    width: 100%;
+    flex-shrink: 0;
 }
 
 .game-profile {
@@ -1589,7 +1629,7 @@ h1 {
 /* ------------------ Баннер ожидания ------------------ */
 .game-waiting-banner {
     position: absolute;
-    top: 64px;
+    top: calc(64px + env(safe-area-inset-top, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 18;
@@ -1962,7 +2002,7 @@ h1 {
     .game-invite-btn { padding: 6px 12px; font-size: 12.5px; gap: 5px; }
     .game-invite-btn span { display: none; } /* оставляем только иконку на мобиле */
     .game-invite-btn svg { width: 16px; height: 16px; }
-    .game-waiting-banner { top: 56px; font-size: 12.5px; padding: 6px 13px; }
+    .game-waiting-banner { top: calc(56px + env(safe-area-inset-top, 0px)); font-size: 12.5px; padding: 6px 13px; }
     .invite-card { padding: 16px 14px 14px; }
     .invite-title { font-size: 20px; }
 }
@@ -2254,31 +2294,78 @@ h1 {
 .spectator-sit:hover, .spectator-lobby:hover { transform: translateY(-1px); filter: brightness(1.06); }
 .spectator-sit:active, .spectator-lobby:active { transform: translateY(0); }
 
-/* ======================== ARENA (grid) ======================== */
+/* ======================== ARENA — симметрия как на эталонном макете ========================
+   Колонки: левый фланг | центр (банк + розыгрыш) | правый фланг.
+   Строки: верх центр · верхние бока · центральный стол (2 дорожки) · нижние бока · Вы.
+
+   Имена data-seat-slot и логика движка не меняются. */
 
 .game--v2 .game-arena {
     position: relative;
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(90px, 1fr) minmax(220px, 2.4fr) minmax(90px, 1fr);
-    grid-template-rows: auto auto 1fr auto;
-    grid-template-areas:
-        "top-l  top     top-r"
-        "mid-l  center  mid-r"
-        "bot-l  center  bot-r"
-        "you-l  you     you-r";
-    gap: clamp(4px, 1vw, 10px);
-    padding: clamp(6px, 1.4vw, 12px);
+    grid-template-columns:
+        minmax(96px, 1.22fr)
+        minmax(200px, 2.85fr)
+        minmax(96px, 1.22fr);
+    grid-template-rows:
+        auto
+        auto
+        auto
+        minmax(128px, 1.52fr)
+        auto
+        auto;
+    gap: clamp(6px, 1.6vw, 12px);
+    padding: clamp(6px, 1.8vw, 14px);
+    align-items: start;
 }
-.game-seat--top        { grid-area: top;    grid-column: 1 / -1; justify-self: center; }
-.game-seat--mid-left   { grid-area: mid-l; }
-.game-seat--mid-right  { grid-area: mid-r; }
-.game-seat--bot-left   { grid-area: bot-l; }
-.game-seat--bot-right  { grid-area: bot-r; }
-/* Нижняя зона «Вы» + панель «Готов» под местом (не в области ботов). */
-.game-you-stack {
-    grid-area: you;
+
+.game-seat--top {
     grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    align-self: start;
+}
+
+.game-seat--mid-left {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+    align-self: start;
+}
+
+.game-seat--mid-right {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: start;
+    align-self: start;
+}
+
+.game-center {
+    grid-column: 2;
+    grid-row: 3 / 5;
+    align-self: stretch;
+    justify-self: stretch;
+    width: 100%;
+}
+
+.game-seat--bot-left {
+    grid-column: 1;
+    grid-row: 5;
+    justify-self: end;
+    align-self: end;
+}
+
+.game-seat--bot-right {
+    grid-column: 3;
+    grid-row: 5;
+    justify-self: start;
+    align-self: end;
+}
+
+.game-you-stack {
+    grid-column: 1 / -1;
+    grid-row: 6;
     justify-self: center;
     display: flex;
     flex-direction: column;
@@ -2286,9 +2373,8 @@ h1 {
     gap: 10px;
     min-width: 0;
     width: 100%;
-    max-width: min(100%, 460px);
+    max-width: min(100%, 492px);
 }
-.game-center           { grid-area: center; }
 
 /* ======================== SEATS ======================== */
 
@@ -2362,6 +2448,9 @@ h1 {
     max-width: 90px;
     letter-spacing: 0.01em;
 }
+.game-seat:not(.game-seat--bottom) .seat-name {
+    max-width: 88px;
+}
 .seat-balance {
     display: inline-flex;
     align-items: center;
@@ -2381,29 +2470,115 @@ h1 {
     flex-shrink: 0;
 }
 
-/* Hand-раскладка карт для разных мест */
+/* Hand-раскладка: общий веер у оппонентов; крупнее — у «Вы» */
 .seat-hand { display: flex; justify-content: center; align-items: center; }
-.seat-hand .cards { gap: 3px; }
+.seat-hand .cards {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: nowrap;
+    gap: 0;
+}
 
-/* Верхнее место (Марина — живой бот): горизонтальный веер из 3 карт, средний размер */
-.game-seat--top { --card-w: 52px; --card-h: 74px; --bot-card-w: 52px; --bot-card-h: 74px; }
-.game-seat--top .cards { gap: 4px; }
-
-/* Боковые декоративные места: более узкие горизонтальные карты */
+/* Единый масштаб всех оппонентов (верх + все боковые) */
+.game-seat--top,
 .game-seat--mid-left,
 .game-seat--mid-right,
-.game-seat--bot-left   { --card-w: 44px; --card-h: 62px; --bot-card-w: 44px; --bot-card-h: 62px; }
-.seat-hand--side .cards { gap: 2px; }
+.game-seat--bot-left,
+.game-seat--bot-right {
+    --card-w: clamp(36px, 8vw, 46px);
+    --card-h: clamp(52px, 11vw, 64px);
+    --bot-card-w: var(--card-w);
+    --bot-card-h: var(--card-h);
+}
 
-/* Нижнее "Вы" — крупнее, карты лицом вверх и интерактивные */
-.game-seat--bottom { --card-w: min(22vw, 84px); --card-h: min(32vw, 120px); }
-.game-seat--bottom .seat-hand { margin-top: 2px; }
+/* Нижний игрок — заметно крупнее + мягкое свечение для фокуса */
+.game-seat--bottom {
+    --card-w: min(28vw, 102px);
+    --card-h: min(40vw, 144px);
+}
+.game-seat--bottom .seat-hand { margin-top: 4px; }
+.game-seat--bottom .card {
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 12px rgba(247, 227, 165, 0.12));
+}
 
-/* Карты в верхнем/боковых местах меньше — отменяем глобальный min-width/height */
+/* Веер оппонентов (рубашки) */
+.seat-hand--fan-opp .cards > .card {
+    transform-origin: bottom center;
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+.seat-hand--fan-opp .cards > .card:nth-child(1) {
+    transform: rotate(-18deg);
+    margin-right: calc(-0.42 * var(--card-w, 44px));
+}
+.seat-hand--fan-opp .cards > .card:nth-child(2) {
+    transform: translateY(-3px) rotate(0deg);
+    z-index: 2;
+    margin-right: calc(-0.42 * var(--card-w, 44px));
+}
+.seat-hand--fan-opp .cards > .card:nth-child(3) {
+    transform: rotate(18deg);
+    margin-right: 0;
+}
+
+.seat-hand--fan-opp .cards > .card:nth-child(1):hover {
+    transform: rotate(-18deg) translateY(-4px);
+    z-index: 3;
+}
+.seat-hand--fan-opp .cards > .card:nth-child(2):hover {
+    transform: translateY(-6px) rotate(0deg);
+    z-index: 4;
+}
+.seat-hand--fan-opp .cards > .card:nth-child(3):hover {
+    transform: rotate(18deg) translateY(-4px);
+    z-index: 3;
+}
+
+/* Веер игрока от первого лица */
+.seat-hand--fan-you .cards > .card {
+    transform-origin: bottom center;
+}
+.seat-hand--fan-you .cards > .card:nth-child(1) {
+    transform: rotate(-13deg);
+    margin-right: clamp(-18px, -2.2vw, -10px);
+}
+.seat-hand--fan-you .cards > .card:nth-child(2) {
+    transform: translateY(-5px) rotate(0deg);
+    z-index: 2;
+    margin-right: clamp(-18px, -2.2vw, -10px);
+}
+.seat-hand--fan-you .cards > .card:nth-child(3) {
+    transform: rotate(13deg);
+    margin-right: 0;
+}
+
+.seat-hand--fan-you .cards > .card:nth-child(1):hover {
+    transform: rotate(-13deg) translateY(-10px);
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.35);
+}
+.seat-hand--fan-you .cards > .card:nth-child(2):hover {
+    transform: translateY(-12px) rotate(0deg);
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.35);
+}
+.seat-hand--fan-you .cards > .card:nth-child(3):hover {
+    transform: rotate(13deg) translateY(-10px);
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Одинаковая «пилюля» профиля оппонентов */
+.game-seat:not(.game-seat--bottom) .seat-card {
+    width: min(184px, 100%);
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+}
+
+/* Карты верх/боков — единый масштаб */
 .game-seat--top .card,
 .game-seat--mid-left .card,
 .game-seat--mid-right .card,
-.game-seat--bot-left .card {
+.game-seat--bot-left .card,
+.game-seat--bot-right .card {
     min-width: 0;
     min-height: 0;
     width: var(--card-w);
@@ -2411,20 +2586,20 @@ h1 {
     border-radius: 8px;
 }
 
-/* Декоративная компоновка мест: верх-центр горизонтально, боковые в колонку с seat-card слева */
+/* Декоративная компоновка мест: верх-центр; боковые — к центру столбиком */
 .game-seat--top .seat-card { order: 1; }
 .game-seat--top .seat-hand { order: 2; }
 .game-seat--top .seat-trick-pill { order: 3; }
 
 .game-seat--mid-left,
 .game-seat--bot-left {
-    align-items: flex-start;
-    text-align: left;
+    align-items: flex-end;
+    text-align: right;
 }
 .game-seat--mid-right,
 .game-seat--bot-right {
-    align-items: flex-end;
-    text-align: right;
+    align-items: flex-start;
+    text-align: left;
 }
 
 /* Пустое место */
@@ -2493,11 +2668,12 @@ h1 {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(6px, 1.5vw, 14px);
-    padding: clamp(4px, 1.2vw, 10px);
-    min-height: calc(var(--card-h, 100px) + 160px);
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: clamp(6px, 1.4vw, 10px);
+    padding: clamp(2px, 0.9vw, 8px) clamp(4px, 1.4vw, 12px) clamp(8px, 2vw, 14px);
+    --card-w: clamp(44px, 11vw, 54px);
+    --card-h: clamp(64px, 15vw, 78px);
 }
 
 .game--v2 .game-center .pot-area {
@@ -2505,13 +2681,15 @@ h1 {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 22px;
+    align-self: center;
+    flex: 0 0 auto;
+    padding: 6px 18px;
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(58, 14, 24, 0.92) 100%);
     border: 1px solid rgba(216, 178, 76, 0.55);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
     color: #f7e3a5;
-    min-width: 128px;
+    min-width: 112px;
     text-align: center;
 }
 .game--v2 .pot-label {
@@ -2521,7 +2699,7 @@ h1 {
     color: rgba(216, 178, 76, 0.8);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    margin-bottom: 0;
 }
 .game--v2 .pot-value-row {
     display: inline-flex;
@@ -2529,7 +2707,7 @@ h1 {
     gap: 8px;
     font-family: 'Cormorant Garamond', serif;
     font-weight: 600;
-    font-size: 22px;
+    font-size: clamp(18px, 4vw, 22px);
     color: #f7e3a5;
     line-height: 1;
 }
@@ -2540,6 +2718,25 @@ h1 {
     background: linear-gradient(180deg, #f7e3a5, #9b7626);
     box-shadow: inset 0 0 0 1px rgba(58, 26, 10, 0.55), 0 0 6px rgba(216, 178, 76, 0.35);
     display: inline-block;
+}
+
+/* Больше воздуха под выложенные карты и взятки; козырь у края, без съедания центра */
+.game--v2 .game-center .played-area {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: clamp(112px, 22vh, 240px);
+    margin-top: clamp(2px, 0.9vw, 8px);
+}
+
+.game--v2 .game-center .trump-area {
+    position: absolute;
+    top: clamp(36px, 5.5vh, 64px);
+    right: clamp(0px, 1vw, 12px);
+    z-index: 4;
+    pointer-events: none;
+}
+.game--v2 .game-center .trump-area * {
+    pointer-events: auto;
 }
 
 /* Козырь: полноценная карта с подписью */
@@ -2571,9 +2768,12 @@ h1 {
     border-radius: 9px;
 }
 
-/* ======================== PLAYED AREA (центр розыгрыша) ======================== */
-/* Компактный стек: карты идут в одну "пачку" с небольшим смещением.
-   Чем больше игроков — тем плотнее. 2p — мягкий вертикальный нахлёст. */
+/* ======================== PLAYED AREA (центр розыгрыша) ========================
+   Расклад — engineApplyPlayedCardLayout(): ряд с промежутком, без наложений
+   там, где хватает ширины; при нехватке — не более ~6–7% нахлеста. */
+.game--v2 .played-area[data-js-trick-layout="1"] {
+    isolation: isolate;
+}
 
 .game--v2 .played-area { position: relative; }
 .game--v2 .played-area .table-card {
@@ -2582,62 +2782,77 @@ h1 {
     left: 50%;
     margin: 0;
     transform: translate(-50%, -50%);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+    transform-origin: center center;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease, left 0.22s ease, top 0.22s ease;
 }
-/* 2 игрока: первая карта чуть сверху, вторая чуть снизу — компактно */
-.game--v2 .played-area[data-players="2"] .table-card:nth-child(1) { transform: translate(-60%, -58%) rotate(-4deg); z-index: 1; }
-.game--v2 .played-area[data-players="2"] .table-card:nth-child(2) { transform: translate(-40%, -42%) rotate(4deg);  z-index: 2; }
-/* 3p */
-.game--v2 .played-area[data-players="3"] .table-card:nth-child(1) { transform: translate(-70%, -55%) rotate(-6deg); z-index: 1; }
-.game--v2 .played-area[data-players="3"] .table-card:nth-child(2) { transform: translate(-50%, -45%) rotate(0);     z-index: 2; }
-.game--v2 .played-area[data-players="3"] .table-card:nth-child(3) { transform: translate(-30%, -55%) rotate(6deg);  z-index: 3; }
-/* 4p */
-.game--v2 .played-area[data-players="4"] .table-card:nth-child(1) { transform: translate(-72%, -60%) rotate(-10deg); z-index: 1; }
-.game--v2 .played-area[data-players="4"] .table-card:nth-child(2) { transform: translate(-55%, -44%) rotate(-3deg);  z-index: 2; }
-.game--v2 .played-area[data-players="4"] .table-card:nth-child(3) { transform: translate(-45%, -56%) rotate(4deg);   z-index: 3; }
-.game--v2 .played-area[data-players="4"] .table-card:nth-child(4) { transform: translate(-28%, -40%) rotate(10deg);  z-index: 4; }
-/* 5p */
-.game--v2 .played-area[data-players="5"] .table-card:nth-child(1) { transform: translate(-76%, -58%) rotate(-12deg); z-index: 1; }
-.game--v2 .played-area[data-players="5"] .table-card:nth-child(2) { transform: translate(-60%, -44%) rotate(-5deg);  z-index: 2; }
-.game--v2 .played-area[data-players="5"] .table-card:nth-child(3) { transform: translate(-48%, -56%) rotate(0);      z-index: 3; }
-.game--v2 .played-area[data-players="5"] .table-card:nth-child(4) { transform: translate(-36%, -42%) rotate(5deg);   z-index: 4; }
-.game--v2 .played-area[data-players="5"] .table-card:nth-child(5) { transform: translate(-22%, -58%) rotate(12deg);  z-index: 5; }
-/* 6p */
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(1) { transform: translate(-80%, -58%) rotate(-14deg); z-index: 1; }
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(2) { transform: translate(-64%, -42%) rotate(-7deg);  z-index: 2; }
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(3) { transform: translate(-52%, -58%) rotate(-2deg);  z-index: 3; }
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(4) { transform: translate(-40%, -44%) rotate(3deg);   z-index: 4; }
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(5) { transform: translate(-28%, -58%) rotate(8deg);   z-index: 5; }
-.game--v2 .played-area[data-players="6"] .table-card:nth-child(6) { transform: translate(-18%, -42%) rotate(14deg);  z-index: 6; }
 
-/* Winner card: подъём, золотое свечение, выше z-index */
-.game--v2 .played-area .table-played-card.winner-card {
-    filter: none;
-    box-shadow:
-        0 0 0 2px rgba(247, 227, 165, 0.9),
-        0 0 22px 6px rgba(247, 200, 100, 0.55),
-        0 14px 34px rgba(216, 140, 60, 0.5) !important;
-    z-index: 20 !important;
-    animation: winnerCardPulse 900ms ease-in-out 1;
+.game--v2 .played-area .table-card:has(.winner-card),
+.game--v2 .played-area .table-card:has(.lead-card-live) {
+    z-index: 55 !important;
 }
-.game--v2 .played-area .table-card:has(.winner-card) { z-index: 20; transform: translate(-50%, -55%) scale(1.06) !important; }
+
+.game--v2 .played-area .table-card:has(.winner-card) {
+    z-index: 65 !important;
+}
+
+/* На время набора взятки — тонкая подсказка кто выигрывает ходом */
+.game--v2 .played-area .table-played-card.lead-card-live {
+    transform-origin: center center;
+    box-shadow:
+        0 0 0 1.5px rgba(247, 227, 165, 0.55),
+        0 0 14px rgba(247, 200, 100, 0.28),
+        0 8px 20px rgba(0, 0, 0, 0.2) !important;
+    opacity: 1;
+    animation: trickLeadGlow 900ms ease-in-out infinite alternate;
+}
+
+@keyframes trickLeadGlow {
+    from {
+        box-shadow:
+            0 0 0 1.5px rgba(247, 227, 165, 0.45),
+            0 0 10px rgba(247, 200, 100, 0.22);
+    }
+    to {
+        box-shadow:
+            0 0 0 2px rgba(247, 227, 165, 0.72),
+            0 0 18px rgba(247, 200, 100, 0.36);
+    }
+}
+
+.game--v2 .played-area .table-played-card.winner-card {
+    transform-origin: center center;
+    filter:
+        brightness(1.04)
+        drop-shadow(0 0 14px rgba(247, 200, 100, 0.55))
+        drop-shadow(0 0 26px rgba(216, 140, 60, 0.35));
+    box-shadow:
+        0 0 0 3px rgba(247, 227, 165, 0.98),
+        0 0 32px 12px rgba(247, 200, 110, 0.48),
+        0 14px 40px rgba(216, 140, 60, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    z-index: 10 !important;
+    animation: winnerPlayedPulse 760ms cubic-bezier(0.22, 0.82, 0.22, 1) 1 forwards;
+}
+
 .game--v2 .played-area .table-played-card.loser-card {
     filter: brightness(0.82) saturate(0.88);
     opacity: 0.8;
 }
-@keyframes winnerCardPulse {
-    0%   { transform: scale(1);   }
-    30%  { transform: scale(1.07); }
-    60%  { transform: scale(1.04); }
-    100% { transform: scale(1.05); }
+
+@keyframes winnerPlayedPulse {
+    0%   { transform: scale(1); filter: brightness(1.05) saturate(1.05); }
+    40%  { transform: scale(1.095); filter: brightness(1.06) saturate(1.06); }
+    100% { transform: scale(1.084); filter: brightness(1.05) saturate(1.06); }
 }
 
 /* --- Не-скоупленные правила подсветки winner/loser ---
    Оригинальная карта живёт внутри .game--v2 .played-area, но во время полёта
    клонируется в document.body (см. animateTableCardsToPile). Чтобы подсветка
    работала и на клонe, держим эти правила без скопа. */
-.fly-card .winner-card,
-.game--v2 .played-area .table-played-card.winner-card {
+.fly-card .lead-card-live {
+    animation: none;
+}
+.fly-card .winner-card {
     box-shadow:
         0 0 0 2px rgba(247, 227, 165, 0.9),
         0 0 22px 6px rgba(247, 200, 100, 0.55),
@@ -2650,7 +2865,58 @@ h1 {
     opacity: 0.85;
 }
 .fly-card--winner {
-    filter: drop-shadow(0 6px 18px rgba(216, 140, 60, 0.45));
+    filter: drop-shadow(0 0 12px rgba(247, 200, 100, 0.45)) drop-shadow(0 6px 22px rgba(216, 140, 60, 0.4));
+}
+
+/* Победа в раздаче: короткий баннер перед авто-следующей рукой */
+.party-victory-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.32s ease, visibility 0.32s linear;
+}
+.party-victory-overlay.hidden {
+    display: none !important;
+}
+.party-victory-overlay--visible {
+    opacity: 1;
+    visibility: visible;
+}
+.party-victory-overlay__panel {
+    max-width: min(440px, 100% - 24px);
+    padding: clamp(14px, 3.2vw, 20px) clamp(20px, 4vw, 32px);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(62, 16, 32, 0.97) 0%, rgba(22, 6, 12, 0.99) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(216, 140, 60, 0.18),
+        inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    transform: translateY(12px) scale(0.94);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.35s ease;
+}
+.party-victory-overlay--visible .party-victory-overlay__panel {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.party-victory-overlay__text {
+    margin: 0;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: clamp(20px, 4.6vw, 26px);
+    color: #f7e3a5;
+    text-align: center;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
 }
 
 /* ======================== STATUS + AUCTION (actions) ======================== */
@@ -2681,7 +2947,7 @@ h1 {
 }
 
 .game--v2 .auction-bar {
-    margin: 10px auto 6px;
+    margin: 10px auto 16px;
     width: min(480px, calc(100% - 20px));
     padding: 10px 12px 12px;
     border-radius: 20px;
@@ -2749,41 +3015,53 @@ h1 {
 .game--v2 .game-act--pass .game-act-icon { color: #c06060; }
 .game--v2 .game-act--raise .game-act-icon { color: #f7e3a5; }
 
-.game--v2 .new-game-btn {
-    display: inline-block;
-    margin: 10px auto 18px;
-    padding: 8px 20px;
-    border: 1px solid rgba(216, 178, 76, 0.45);
-    border-radius: 999px;
-    background: transparent;
-    color: rgba(216, 178, 76, 0.8);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    cursor: pointer;
-}
-.game--v2 .new-game-btn:hover { color: #f7e3a5; border-color: rgba(247, 227, 165, 0.8); }
-
 /* ======================== RESPONSIVE ======================== */
 
 @media (max-width: 700px) {
     .game--v2 .game-arena {
-        grid-template-columns: minmax(74px, 1fr) minmax(160px, 1.8fr) minmax(74px, 1fr);
+        grid-template-columns: minmax(68px, 1fr) minmax(146px, 2.72fr) minmax(68px, 1fr);
         gap: 4px;
+        padding: 4px clamp(5px, 1.8vw, 10px);
+        grid-template-rows:
+            auto
+            auto
+            auto
+            minmax(108px, 1.42fr)
+            auto
+            auto;
     }
     .seat-name { max-width: 74px; font-size: 13px; }
     .seat-balance { font-size: 10.5px; }
-    .game-seat--top { --card-w: 46px; --card-h: 66px; --bot-card-w: 46px; --bot-card-h: 66px; }
+
+    .game-seat:not(.game-seat--bottom) .seat-card { width: min(158px, 100%); min-height: 42px; }
+
+    .game-seat--top,
     .game-seat--mid-left,
     .game-seat--mid-right,
-    .game-seat--bot-left { --card-w: 38px; --card-h: 54px; --bot-card-w: 38px; --bot-card-h: 54px; }
-    .game-you-stack .game-seat--bottom { --card-w: min(22vw, 76px); --card-h: min(32vw, 108px); }
+    .game-seat--bot-left,
+    .game-seat--bot-right {
+        --card-w: clamp(31px, 8.2vw, 40px);
+        --card-h: clamp(45px, 11.5vw, 54px);
+    }
+    .game-you-stack .game-seat--bottom { --card-w: min(25vw, 88px); --card-h: min(36vw, 124px); }
+
+    .game--v2 .game-center .played-area {
+        min-height: clamp(100px, 20vh, 200px);
+    }
+
     .seat-empty-card { width: 82px; padding: 10px 8px; }
     .seat-empty-icon { width: 34px; height: 34px; }
     .seat-empty-icon svg { width: 22px; height: 22px; }
 }
 
 @media (max-width: 480px) {
-    .game--v2 .game-topbar { gap: 6px; padding: 6px 8px; }
+    .game--v2 .game-topbar {
+        gap: 7px;
+        padding-top: calc(8px + env(safe-area-inset-top, 0px));
+        padding-bottom: 8px;
+        padding-left: calc(10px + env(safe-area-inset-left, 0px));
+        padding-right: calc(10px + env(safe-area-inset-right, 0px));
+    }
     .game-user-name { max-width: 80px; }
     .game-balance { padding: 4px 4px 4px 8px; gap: 6px; }
     .game-balance-value { font-size: 13px; }
@@ -2810,6 +3088,7 @@ h1 {
 #findTableScreen .splash-inner,
 #createTableScreen .splash-inner {
     padding: 0;
+    padding-top: env(safe-area-inset-top, 0px);
     justify-content: flex-start;
     align-items: center;
     overflow-y: auto;
@@ -5210,6 +5489,11 @@ h1 {
     <!-- ========== ARENA ========== -->
     <div class="game-arena" id="tableZone">
         <div class="impact-layer" id="impactLayer"></div>
+        <div class="party-victory-overlay hidden" id="partyVictoryOverlay" role="status" aria-live="polite">
+            <div class="party-victory-overlay__panel">
+                <p class="party-victory-overlay__text" id="partyVictoryOverlayText"></p>
+            </div>
+        </div>
 
         <!-- 6 слотов-мест: движок (renderSeats) сам заселяет их, в т.ч. меняет
              "пустое место" на активного игрока/бота и обратно. Фиксированные id
@@ -5369,8 +5653,6 @@ h1 {
             </button>
         </div>
     </div>
-
-    <button class="button new-game-btn" onclick="resetGame()" type="button">Новая партия</button>
 </div>
 
 <script>
@@ -5930,12 +6212,18 @@ function afterTrick(winner) {
 }
 
 function getDeckTopRect() {
+    if (deckStackEl && document.querySelector(".game--v2 .game-center") && typeof engineGetDealSourceRect === "function") {
+        try {
+            const logical = engineGetDealSourceRect();
+            if (logical && logical.width > 3 && logical.height > 3) return logical;
+        } catch (_) {}
+    }
     const rect = deckStackEl.getBoundingClientRect();
     return {
         left: rect.left,
         top: rect.top,
         width: rect.width,
-        height: rect.height
+        height: rect.height,
     };
 }
 
@@ -6642,6 +6930,7 @@ const UI_TEXT = Object.freeze({
         handPlaceholder: "Ожидание следующей раздачи",
         statusMessage:   "Идёт текущая партия. Вы войдёте в игру со следующей раздачи.",
         nextHandSoon:    "Раздача завершена. Начинаем следующую…",
+        partyTransition: "Следующая раздача…",
     },
     /* Тексты для временного выхода («Встать»): место сохраняется на 7 минут. */
     seatAway: {
@@ -8202,12 +8491,16 @@ function goAfterSplash() {
      2) renderSeats — заселяет data-seat-slot шаблонами
      3) deal — раздача N×3 карт + козырь
      4) аукцион round-robin (1 круг: пас / уровнять / поднять)
-     5) розыгрыш 3 взяток между всеми активными игроками
+     5) розыгрыш взяток; партия завершается при ≥2 взятках у активного игрока
+        или когда кончились карты в руках или лимит totalTricks
      6) определение взятки по старшему козырю или старшей карте захода
      7) spectator-режим для "Встать"
    ============================================================== */
 
 const SEAT_ORDER = ["bottom", "top", "mid-left", "mid-right", "bot-left", "bot-right"];
+/** Сколько взяток даёт победу в текущей раздаче (логика счётчика scoreTricks). */
+const ENGINE_TRICKS_TO_WIN_PARTY = 2;
+
 const BOT_PROFILES = [
     { name: "Марина",  level: 2, tint: "#7a2a3e", bank: 8940  },
     { name: "Игорь",   level: 3, tint: "#5a3a2a", bank: 12300 },
@@ -8482,7 +8775,7 @@ function engineSyncPlayedAreaDom() {
         wrap.appendChild(inner);
         el.appendChild(wrap);
     });
-    engineSetPlayedAreaSize();
+    engineRefreshPlayedSurface();
 }
 
 function engineExportSnapshot() {
@@ -8742,7 +9035,9 @@ function makeAvatarSvg() {
 
 function makePlayerMarkup(p) {
     const isYou = p.isHuman;
-    const handModCls = isYou ? "seat-hand--you" : (p.seatSlot === "top" ? "seat-hand--top" : "seat-hand--side");
+    const handModCls = isYou
+        ? "seat-hand--you seat-hand--fan-you"
+        : ("seat-hand--" + (p.seatSlot === "top" ? "top" : "side") + " seat-hand--fan-opp");
     /* Бейдж "Ожидает" показывается игроку, подключившемуся к столу
        в середине партии (player.status === "waiting"). */
     const waitingBadge = p.status === "waiting"
@@ -9098,6 +9393,80 @@ function engineDeal() {
     engine.trumpCard = deck[i];
 }
 
+/**
+ * Пошаговая раздача: три круга по одной карте каждому активному игроку;
+ * карты улетают с колоды в руки (engineFlyDealCardToHand), затем козырь.
+ */
+function engineDealSequentialAnimated(onDone) {
+    const deck = shuffleDeck(buildDeck());
+    const actives = engine.players.filter((p) => p.active);
+    const n = actives.length;
+
+    if (!n) {
+        engine.trumpCard = deck[0] || null;
+        engineRenderHands();
+        engineRenderTrump();
+        engine.actionLock = false;
+        if (typeof onDone === "function") onDone();
+        return;
+    }
+
+    actives.forEach((p) => {
+        p.hand = [];
+    });
+    engine.trumpCard = null;
+    if (trumpSlotEl) trumpSlotEl.innerHTML = "";
+
+    engine.phase = "dealing";
+    engine.actionLock = true;
+    engineRenderHands();
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+
+    const delayRoundPauseMs = 150;
+    const delayBetweenMs = 38;
+
+    let round = 0;
+    let pi = 0;
+
+    function finalizeDeal() {
+        engine.trumpCard = deck[n * 3];
+        engineRenderHands();
+        engineRenderTrump();
+        engine.actionLock = false;
+        if (typeof onDone === "function") onDone();
+    }
+
+    function stepDeal() {
+        if (!engine || engine.phase !== "dealing") return;
+
+        if (round >= 3) {
+            window.setTimeout(finalizeDeal, 90);
+            return;
+        }
+
+        if (pi >= n) {
+            pi = 0;
+            round++;
+            if (round >= 3) {
+                window.setTimeout(finalizeDeal, delayRoundPauseMs);
+                return;
+            }
+            window.setTimeout(stepDeal, delayRoundPauseMs);
+            return;
+        }
+
+        const cardStr = deck[round * n + pi];
+        const recipient = actives[pi];
+        const recipientIdx = engine.players.indexOf(recipient);
+        engineFlyDealCardToHand(cardStr, recipientIdx, round, round + 1, () => {
+            pi++;
+            window.setTimeout(stepDeal, delayBetweenMs);
+        });
+    }
+
+    window.setTimeout(stepDeal, 70);
+}
+
 /* ---------- AUCTION ---------- */
 
 function engineStartAuction() {
@@ -9279,6 +9648,7 @@ function enginePlayedAreaEl() { return document.getElementById("playedArea"); }
 function engineClearPlayed() {
     const el = enginePlayedAreaEl();
     if (!el) return;
+    el.removeAttribute("data-js-trick-layout");
     el.innerHTML = "";
     engine.trickCards = [];
 }
@@ -9288,6 +9658,252 @@ function engineSetPlayedAreaSize() {
     if (!el) return;
     const n = Math.max(2, Math.min(6, engineActivePlayersInPlay().length));
     el.dataset.players = String(n);
+}
+
+/** Ширина одной центральной карты (пиксели) для раскладки. */
+function engineReadPlayedCardWidthPx(played) {
+    const w = played.querySelector(".table-card");
+    if (w) {
+        const r = w.getBoundingClientRect();
+        if (r.width > 4) return r.width;
+    }
+    const cs = getComputedStyle(played);
+    const cx = parseFloat(cs.getPropertyValue("--card-w"));
+    return Number.isFinite(cx) && cx > 0 ? cx : 52;
+}
+
+/**
+ * Прямоугольник старта анимации раздачи (.game--v2): центр между зоной козыря и
+ * логической колодой (#deckStack); иначе колода / правый край центра / вьюпорт.
+ */
+function engineGetDealSourceRect() {
+    const cardW = 48;
+    const cardH = 68;
+
+    try {
+        const center = document.querySelector(".game--v2 .game-center");
+        const trumpZone = center ? center.querySelector(".trump-area") : null;
+        const rTrump = trumpZone ? trumpZone.getBoundingClientRect() : null;
+        const rDeck =
+            deckStackEl && deckStackEl.isConnected ? deckStackEl.getBoundingClientRect() : null;
+        const trumpOk = rTrump && rTrump.width > 3 && rTrump.height > 3;
+        const deckOk = rDeck && rDeck.width > 3 && rDeck.height > 3;
+
+        let cx;
+        let cy;
+        if (trumpOk && deckOk) {
+            const tcx = (rTrump.left + rTrump.right) / 2;
+            const dcx = (rDeck.left + rDeck.right) / 2;
+            const tcy = (rTrump.top + rTrump.bottom) / 2;
+            const dcy = (rDeck.top + rDeck.bottom) / 2;
+            cx = (tcx + dcx) / 2;
+            cy = (tcy + dcy) / 2;
+        } else if (trumpOk) {
+            cx = (rTrump.left + rTrump.right) / 2;
+            cy = (rTrump.top + rTrump.bottom) / 2;
+        } else if (deckOk) {
+            cx = (rDeck.left + rDeck.right) / 2;
+            cy = (rDeck.top + rDeck.bottom) / 2;
+        }
+
+        if (Number.isFinite(cx) && Number.isFinite(cy)) {
+            return {
+                left: Math.round(cx - cardW / 2),
+                top: Math.round(cy - cardH / 2),
+                width: cardW,
+                height: cardH,
+            };
+        }
+    } catch (_) {}
+
+    try {
+        if (deckStackEl) {
+            const r = deckStackEl.getBoundingClientRect();
+            if (r.width > 3 && r.height > 3) return r;
+        }
+    } catch (_) {}
+    const center = document.querySelector(".game--v2 .game-center");
+    if (center) {
+        const r = center.getBoundingClientRect();
+        const w = cardW;
+        const h = Math.round(cardH);
+        return {
+            left: Math.round(r.right - w - 24),
+            top: Math.round(r.top + r.height * 0.44 - h / 2),
+            width: w,
+            height: h,
+        };
+    }
+    return {
+        left: window.innerWidth * 0.5 - 24,
+        top: window.innerHeight * 0.38,
+        width: cardW,
+        height: cardH,
+    };
+}
+
+/** Прямоугольник слота следующей карты в руке игрока (пиксели на экране). */
+function engineHandSlotTargetRect(handEl, slotIndex, totalCards) {
+    if (!handEl) return null;
+    const hr = handEl.getBoundingClientRect();
+    const total = Math.max(1, Math.min(8, totalCards));
+    const idx = Math.max(0, Math.min(slotIndex, total - 1));
+    let cw = Math.min(96, Math.max(36, hr.width / (total + 0.78)));
+    const ch = Math.round(cw * 1.42);
+    const overlap = Math.min(cw * 0.43, 30);
+    const step = Math.max(cw - overlap, cw * 0.48);
+    const rowW = step * Math.max(total - 1, 0) + cw;
+    const startLeft = hr.left + (hr.width - rowW) / 2 + idx * step;
+    const top = hr.top + Math.max(4, (hr.height - ch) * 0.48);
+    return { left: startLeft, top, width: cw, height: ch };
+}
+
+/**
+ * Анимированная карта колода → рука; затем добавление карты в p.hand и render.
+ */
+function engineFlyDealCardToHand(cardStr, recipientPlayerIdx, handSlotIdx, cardsTotalAfter, doneCallback) {
+    const p = engine.players[recipientPlayerIdx];
+    if (!p || !p.active) {
+        if (typeof doneCallback === "function") doneCallback();
+        return;
+    }
+    const from = engineGetDealSourceRect();
+
+    const handEl = engineGetHandEl(recipientPlayerIdx);
+    const to = engineHandSlotTargetRect(handEl, handSlotIdx, cardsTotalAfter);
+
+    const finishImmediate = () => {
+        p.hand.push(cardStr);
+        engineRenderHands();
+        if (typeof doneCallback === "function") doneCallback();
+    };
+
+    if (!to || !from || from.width < 2 || from.height < 2) {
+        finishImmediate();
+        return;
+    }
+
+    const clone = document.createElement("div");
+    clone.className = "card fly-card fly-card--deal is-arriving";
+    if (p.isHuman) {
+        clone.innerHTML = renderCardFace(cardStr);
+        if (isRedSuit(getSuit(cardStr))) clone.classList.add("red-card");
+    } else {
+        clone.classList.add("back");
+    }
+    clone.style.left = from.left + "px";
+    clone.style.top = from.top + "px";
+    clone.style.width = Math.max(from.width * 0.92, to.width * 0.78) + "px";
+    clone.style.height = Math.max(from.height * 0.92, to.height * 0.78) + "px";
+
+    document.body.appendChild(clone);
+
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            clone.style.left = to.left + "px";
+            clone.style.top = to.top + "px";
+            clone.style.width = to.width + "px";
+            clone.style.height = to.height + "px";
+            clone.classList.remove("is-arriving");
+        });
+    });
+
+    let finishedFlight = false;
+    const finalize = () => {
+        if (finishedFlight) return;
+        finishedFlight = true;
+        if (clone.isConnected) clone.remove();
+        finishImmediate();
+    };
+    clone.addEventListener("transitionend", (ev) => {
+        if (ev.propertyName !== "left" && ev.propertyName !== "top") return;
+        finalize();
+    }, { once: true });
+    window.setTimeout(() => {
+        if (clone.isConnected) finalize();
+    }, 460);
+}
+
+/**
+ * Положение карт текущего хода по центру (`.game--v2`):
+ * обычно без нахлеста — шаг между центрами ≥ ~0.94× ширины карты.
+ */
+function engineApplyPlayedCardLayout() {
+    const played = enginePlayedAreaEl();
+    if (!played || !played.closest(".game--v2")) return;
+    const wraps = Array.from(played.querySelectorAll(".table-card"));
+    const k = wraps.length;
+    if (!k) {
+        played.removeAttribute("data-js-trick-layout");
+        return;
+    }
+    played.dataset.jsTrickLayout = "1";
+
+    const activeSeatCount = Math.max(2, Math.min(6, engineActivePlayersInPlay().length));
+
+    let leaderIdxInTrick = -1;
+    if (engine.phase === "play" && engine.trickCards.length) {
+        leaderIdxInTrick = engineComputeTrickWinner(engine.trickCards, engine.trumpCard);
+    }
+
+    const cw = engineReadPlayedCardWidthPx(played);
+    const areaW = played.getBoundingClientRect().width || 380;
+    const maxFan = Math.min(areaW * 0.97, Math.max(areaW - 16, cw * Math.max(k + 5, activeSeatCount + 4)));
+
+    if (k === 1) {
+        wraps[0].style.left = "50%";
+        wraps[0].style.top = "50%";
+        wraps[0].style.transform = "translate(-50%, -50%) rotate(-2deg)";
+        let zi = 14;
+        if (leaderIdxInTrick === 0) zi = 60;
+        const in0 = wraps[0].querySelector(".table-played-card");
+        if (in0 && in0.classList.contains("lead-card-live")) zi = Math.max(zi, 52);
+        if (in0 && in0.classList.contains("winner-card")) zi += 50;
+        wraps[0].style.zIndex = String(zi);
+        played.style.minHeight = Math.round(cw * 1.12 + 16) + "px";
+        return;
+    }
+
+    let gapPx = Math.round(Math.max(
+        activeSeatCount <= 2 ? 16 : activeSeatCount === 3 ? 12 : 8,
+        Math.min(28, cw * (0.28 - 0.024 * Math.max(0, activeSeatCount - 2)))
+    ));
+
+    let span = k * cw + (k - 1) * gapPx;
+    while (span > maxFan && gapPx > 4) {
+        gapPx--;
+        span = k * cw + (k - 1) * gapPx;
+    }
+    let stepPx = cw + gapPx;
+    const spanCt = cw + stepPx * (k - 1);
+    if (spanCt > maxFan) {
+        stepPx = (maxFan - cw) / (k - 1);
+        stepPx = Math.max(stepPx, cw * 0.935);
+    }
+    const halfFan = (stepPx * (k - 1)) / 2;
+    const rotSpread = Math.min(6.8, Math.max(1.8, 7 - k * 0.62 - (activeSeatCount > 4 ? 0.9 : 0)));
+
+    wraps.forEach((wrap, i) => {
+        const cxOff = -halfFan + i * stepPx;
+        const rn = ((i / (k - 1)) - 0.5) * rotSpread * 2;
+        wrap.style.left = "50%";
+        wrap.style.top = "50%";
+        wrap.style.transform =
+            "translate(calc(-50% + " + cxOff.toFixed(1) + "px), -50%) rotate(" + rn.toFixed(2) + "deg)";
+        let zi = 12 + i;
+        if (leaderIdxInTrick >= 0 && i === leaderIdxInTrick) zi = 60;
+        const inner = wrap.querySelector(".table-played-card");
+        if (inner && inner.classList.contains("lead-card-live")) zi = Math.max(zi, 52);
+        if (inner && inner.classList.contains("winner-card")) zi += 50;
+        wrap.style.zIndex = String(zi);
+    });
+
+    played.style.minHeight = Math.round(cw * 1.15 + Math.max(20, rotSpread > 12 ? 16 : 8)) + "px";
+}
+
+function engineRefreshPlayedSurface() {
+    engineSetPlayedAreaSize();
+    engineApplyPlayedCardLayout();
 }
 
 function engineRenderTrickCard(trickEntry) {
@@ -9482,11 +10098,12 @@ function enginePlayCardCommit(playerIdx, card, idxInHand) {
     engine.trickCards.push({ playerIdx, card });
 
     engineRenderHands();
-    engineSetPlayedAreaSize();
     engineRenderTrickCard({ playerIdx, card });
 
     // Живая подсветка текущего лидера взятки во время сбора карт
     engineMarkLiveLeader();
+
+    engineRefreshPlayedSurface();
 
     engine.actionLock = false;
 
@@ -9510,13 +10127,15 @@ function engineMarkLiveLeader() {
     cardEls.forEach((el, i) => {
         const inner = el.querySelector(".table-played-card");
         if (!inner) return;
-        inner.classList.remove("winner-card", "loser-card");
-        if (i === leaderLocal) inner.classList.add("winner-card");
+        inner.classList.remove("winner-card", "loser-card", "lead-card-live");
+        if (i === leaderLocal) inner.classList.add("lead-card-live");
     });
 }
 
 function engineEndTrick() {
     if (engine.phase !== "play") return;
+    engine.actionLock = true;
+
     const winnerLocal = engineComputeTrickWinner(engine.trickCards, engine.trumpCard);
     const winnerEntry = engine.trickCards[winnerLocal];
     const winnerIdx = winnerEntry.playerIdx;
@@ -9529,9 +10148,10 @@ function engineEndTrick() {
         cardEls.forEach((el, i) => {
             const inner = el.querySelector(".table-played-card");
             if (!inner) return;
-            inner.classList.remove("winner-card", "loser-card");
+            inner.classList.remove("winner-card", "loser-card", "lead-card-live");
             inner.classList.add(i === winnerLocal ? "winner-card" : "loser-card");
         });
+        engineApplyPlayedCardLayout();
     }
 
     const winnerSeatEl = engineGetSeatEl(winner.seatSlot);
@@ -9544,6 +10164,10 @@ function engineEndTrick() {
     engineRenderTrickDots();
     setMessage((winner.isHuman ? "Ты" : winner.name) + " забрал взятку");
 
+    const partyWinByScore = engine.players.some(
+        (p) => p.active && p.scoreTricks >= ENGINE_TRICKS_TO_WIN_PARTY
+    );
+
     setTimeout(() => {
         engineFlyTrickToWinner(winnerIdx, () => {
             engineClearPlayed();
@@ -9553,17 +10177,59 @@ function engineEndTrick() {
 
             if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
 
-            if (engine.trickNumber > engine.totalTricks) {
-                engineFinishGame();
+            const handsRemain = engine.players.some((p) => p.active && p.hand.length > 0);
+            const trickCapReached = engine.trickNumber > engine.totalTricks;
+
+            if (partyWinByScore || trickCapReached || !handsRemain) {
+                engineCompletePartyRound();
                 return;
             }
-            if (engine.players.some((p) => p.active && p.hand.length > 0)) {
-                engineStartTrick();
-            } else {
-                engineFinishGame();
-            }
+            engine.actionLock = false;
+            engineStartTrick();
         });
     }, 520);
+}
+
+function showPartyVictoryOverlay(message, callback) {
+    const ov = document.getElementById("partyVictoryOverlay");
+    const te = document.getElementById("partyVictoryOverlayText");
+    if (!ov || !te) {
+        if (typeof callback === "function") callback();
+        return;
+    }
+    te.textContent = message;
+    ov.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        void ov.offsetWidth;
+        ov.classList.add("party-victory-overlay--visible");
+    });
+    const holdMs = 2080;
+    const fadeMs = 360;
+    window.setTimeout(() => {
+        ov.classList.remove("party-victory-overlay--visible");
+        window.setTimeout(() => {
+            ov.classList.add("hidden");
+            if (typeof callback === "function") callback();
+        }, fadeMs);
+    }, holdMs);
+}
+
+function engineGetPartyWinnerDisplayLine() {
+    const sorted = engine.players.slice().sort((a, b) => b.scoreTricks - a.scoreTricks);
+    if (!sorted.length) return { line: "Партия завершена" };
+    const w = sorted[0];
+    const tie = sorted[1] && sorted[1].scoreTricks === w.scoreTricks;
+    if (tie) return { line: "Партия завершена", tie: true };
+    if (w.isHuman) return { line: "Вы выиграли", winner: w };
+    return { line: "Игрок " + w.name + " выиграл", winner: w };
+}
+
+function engineCompletePartyRound() {
+    engine.actionLock = true;
+    const d = engineGetPartyWinnerDisplayLine();
+    showPartyVictoryOverlay(d.line, () => {
+        engineFinishGame({ skipPartySummaryMessage: true });
+    });
 }
 
 function engineFlyTrickToWinner(winnerIdx, callback) {
@@ -9585,7 +10251,8 @@ function engineFlyTrickToWinner(winnerIdx, callback) {
 
     let finished = 0;
     entries.forEach((entry, k) => {
-        const inner = entry.wrap.querySelector(".card");
+        const inner =
+            entry.wrap.querySelector(".table-played-card") || entry.wrap.querySelector(".card");
         if (!inner) { finished++; if (finished === entries.length) callback(); return; }
         const rect = inner.getBoundingClientRect();
         const isWinner = !!entry.wrap.querySelector(".winner-card");
@@ -9622,8 +10289,10 @@ function engineFlyTrickToWinner(winnerIdx, callback) {
     });
 }
 
-function engineFinishGame() {
+function engineFinishGame(opts) {
+    opts = opts || {};
     engine.phase = "gameover";
+    engine.actionLock = true;
     engineClearPlayed();
     engineUpdateActiveTurnClass();
 
@@ -9631,12 +10300,16 @@ function engineFinishGame() {
     const winner = sorted[0];
     const tie = sorted[1] && sorted[1].scoreTricks === winner.scoreTricks;
 
-    if (tie) {
-        setMessage("Партия завершена");
-    } else if (winner.isHuman) {
-        setMessage("ПОБЕДА — ты взял " + winner.scoreTricks + " взяток");
+    if (!opts.skipPartySummaryMessage) {
+        if (tie) {
+            setMessage("Партия завершена");
+        } else if (winner.isHuman) {
+            setMessage("ПОБЕДА — ты взял " + winner.scoreTricks + " взяток");
+        } else {
+            setMessage(winner.name + " взял " + winner.scoreTricks + " взяток");
+        }
     } else {
-        setMessage(winner.name + " взял " + winner.scoreTricks + " взяток");
+        setMessage(UI_TEXT.seatWaiting.partyTransition);
     }
 
     // Банк победителю
@@ -9660,6 +10333,13 @@ function engineFinishGame() {
         if (textEl) textEl.textContent = UI_TEXT.seatWaiting.nextHandSoon;
     }
 
+    const pauseMs =
+        opts.nextHandDelayMs != null
+            ? opts.nextHandDelayMs
+            : opts.skipPartySummaryMessage
+              ? 3000
+              : 3500;
+
     engine.nextHandTimer = setTimeout(() => {
         engine.nextHandTimer = null;
         engine.betweenHands = false;
@@ -9679,7 +10359,7 @@ function engineFinishGame() {
             return;
         }
         engineStartNextHand();
-    }, 3500);
+    }, pauseMs);
 }
 
 /* Новая раздача за ТЕМ ЖЕ столом. Сохраняем список игроков, но:
@@ -9724,24 +10404,28 @@ function engineStartNextHand() {
     }
     engine.currentTurn = engine.leaderIdx;
     engine.phase = "dealing";
-    engine.actionLock = false;
+    engine.actionLock = true;
 
-    engineDeal();
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+
     engineRenderSeats();
-    engineRenderTrump();
     engineUpdatePotUI();
     engineClearPlayed();
     engineSetPlayedAreaSize();
 
-    /* Если человек снова в активе — показываем кнопку "Встать". */
-    const humanActive = engine.players[engine.humanIdx] && engine.players[engine.humanIdx].active;
-    const leaveBtn = document.querySelector("[data-game-leave]");
-    if (leaveBtn) leaveBtn.hidden = !humanActive;
+    setMessage("Раздаём карты…");
 
-    renderGameTopbar();
-    setMessage("Новая раздача. Начинаются торги.");
-    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
-    setTimeout(() => engineStartAuction(), 600);
+    engineDealSequentialAnimated(() => {
+        /* Если человек снова в активе — показываем кнопку "Встать". */
+        const humanActive = engine.players[engine.humanIdx] && engine.players[engine.humanIdx].active;
+        const leaveBtn = document.querySelector("[data-game-leave]");
+        if (leaveBtn) leaveBtn.hidden = !humanActive;
+
+        renderGameTopbar();
+        setMessage("Новая раздача. Начинаются торги.");
+        if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+        setTimeout(() => engineStartAuction(), 600);
+    });
 }
 
 function engineUpdatePotUI() {
@@ -9831,26 +10515,30 @@ function engineStart(playersCount, options) {
         return;
     }
 
-    engineDeal();  /* skip dealing to inactive players — см. engineDeal */
-    /* Критично: engineRenderSeats() вызывался ДО раздачи — руки были пустыми.
-       Обновляем DOM рук сразу после engineDeal, иначе до первого хода
-       не видно ни рубашек соперников, ни своих карт. */
-    engineRenderHands();
-    engineRenderTrump();
-
-    renderGameTopbar();
     if (humanWaiting) {
-        /* Человек подключился в середине партии: ждёт следующую раздачу.
-           Не стартуем «торги с нуля» — показываем уже идущую фазу (торги
-           или розыгрыш) между ботами; состояние сохраняется в table.gameSession. */
+        /* Подключение в середине партии: поднимаем текущую сессию, без «живой» раздачи. */
+        engineDeal();
+        engineRenderHands();
+        engineRenderTrump();
+        renderGameTopbar();
         setMessage(UI_TEXT.seatWaiting.statusMessage);
         engineBootstrapMidGameVisual(options.table);
-        enginePersistCurrentTableSession();
+        if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
         if (leaveBtn) leaveBtn.hidden = true;
         return;
     }
-    setMessage("Карты розданы. Начинаются торги.");
-    setTimeout(() => engineStartAuction(), 500);
+
+    engine.phase = "dealing";
+    engine.actionLock = true;
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+    setMessage("Раздаём карты…");
+
+    engineDealSequentialAnimated(() => {
+        renderGameTopbar();
+        setMessage("Карты розданы. Начинаются торги.");
+        if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+        setTimeout(() => engineStartAuction(), 500);
+    });
 }
 
 /* ================== AWAY / LOBBY / TABLE-EXIT LOGIC ==================
