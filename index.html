@@ -804,12 +804,12 @@ h1 {
         0 0 0 1px rgba(247, 227, 165, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.12);
     transition:
-        left 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
-        top 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
-        transform 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
-        opacity 300ms ease,
-        width 360ms cubic-bezier(0.22, 0.82, 0.22, 1),
-        height 360ms cubic-bezier(0.22, 0.82, 0.22, 1);
+        left 240ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        top 240ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        transform 240ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        opacity 220ms ease,
+        width 240ms cubic-bezier(0.22, 0.82, 0.22, 1),
+        height 240ms cubic-bezier(0.22, 0.82, 0.22, 1);
 }
 .fly-card.fly-card--deal.is-arriving {
     transform: rotate(3deg);
@@ -8498,6 +8498,14 @@ function goAfterSplash() {
    ============================================================== */
 
 const SEAT_ORDER = ["bottom", "top", "mid-left", "mid-right", "bot-left", "bot-right"];
+
+/**
+ * Порядок мест по часовой стрелке (вид сверху). НЕ совпадает с порядком
+ * индексов в SEAT_ORDER / engine.players — отсюда баг «следующий после
+ * торгов был напротив», если шагать по i+1.
+ */
+const CLOCKWISE_SEAT_RING = ["bottom", "bot-left", "mid-left", "top", "mid-right", "bot-right"];
+
 /** Сколько взяток даёт победу в текущей раздаче (логика счётчика scoreTricks). */
 const ENGINE_TRICKS_TO_WIN_PARTY = 2;
 
@@ -8749,13 +8757,53 @@ function mulberry32(a) {
     };
 }
 
-function engineNextActivePlayerIdx(fromIdx) {
-    const n = engine.players.length;
-    for (let step = 1; step <= n; step++) {
-        const j = (fromIdx + step) % n;
-        if (engine.players[j].active) return j;
+function engineNextClockwiseEligibleIdx(fromIdx) {
+    const isEligiblePlay = function (np) {
+        if (!np || !np.active) return false;
+        if (engine.phase === "auction") return !np.passedAuction;
+        return true;
+    };
+
+    const ordered = engine.players
+        .map((p, idx) => ({ p, idx }))
+        .filter((o) => isEligiblePlay(o.p))
+        .map((o) => ({
+            idx: o.idx,
+            ring: CLOCKWISE_SEAT_RING.indexOf(o.p.seatSlot),
+        }))
+        .filter((o) => o.ring >= 0)
+        .sort((a, b) => a.ring - b.ring);
+
+    if (!ordered.length) return fromIdx;
+
+    const pos = ordered.findIndex((o) => o.idx === fromIdx);
+    if (pos >= 0) return ordered[(pos + 1) % ordered.length].idx;
+
+    const fromSlot = engine.players[fromIdx] && engine.players[fromIdx].seatSlot;
+    const start = typeof fromSlot === "string" ? CLOCKWISE_SEAT_RING.indexOf(fromSlot) : -1;
+    if (start < 0) return ordered[0].idx;
+    for (let k = 0; k < ordered.length; k++) {
+        if (ordered[k].ring > start) return ordered[k].idx;
     }
-    return fromIdx;
+    return ordered[0].idx;
+}
+
+function engineNextActivePlayerIdx(fromIdx) {
+    return engineNextClockwiseEligibleIdx(fromIdx);
+}
+
+function engineActivePlayersInPlayOrderClockwise() {
+    return engine.players
+        .filter((p) => p.active)
+        .slice()
+        .sort(function (a, b) {
+            const ia = CLOCKWISE_SEAT_RING.indexOf(a.seatSlot);
+            const ib = CLOCKWISE_SEAT_RING.indexOf(b.seatSlot);
+            return (
+                (ia < 0 ? 99 : ia) -
+                (ib < 0 ? 99 : ib)
+            );
+        });
 }
 
 /** Перерисовать центр стола по engine.trickCards (без сброса массива). */
@@ -8887,6 +8935,10 @@ function engineImportSnapshot(snap, options) {
             human.bid = null;
             human.passedAuction = false;
         }
+    }
+
+    if (engine.phase === "play") {
+        engine.players.forEach((p) => { p.passedAuction = false; });
     }
 
     engineRenderSeats();
@@ -9341,11 +9393,13 @@ function engineUpdateActiveTurnClass() {
     engine.players.forEach((p, idx) => {
         const seatEl = engineGetSeatEl(p.seatSlot);
         if (!seatEl) return;
+        const allowTurnHighlight =
+            engine.phase !== "auction" || !p.passedAuction;
         seatEl.classList.toggle("is-active-turn",
             (engine.phase === "auction" || engine.phase === "play") &&
             engine.currentTurn === idx &&
             p.active &&
-            !p.passedAuction
+            allowTurnHighlight
         );
         seatEl.classList.toggle("is-passed-auction", p.passedAuction && engine.phase === "auction");
     });
@@ -9359,17 +9413,10 @@ function engineRenderTrump() {
 }
 
 function engineAdvanceTurn() {
-    const n = engine.players.length;
-    for (let step = 1; step <= n; step++) {
-        const nextIdx = (engine.currentTurn + step) % n;
-        const np = engine.players[nextIdx];
-        if (np.active && (engine.phase !== "auction" || !np.passedAuction)) {
-            engine.currentTurn = nextIdx;
-            engineUpdateActiveTurnClass();
-            return nextIdx;
-        }
-    }
-    return engine.currentTurn;
+    const nextIdx = engineNextClockwiseEligibleIdx(engine.currentTurn);
+    engine.currentTurn = nextIdx;
+    engineUpdateActiveTurnClass();
+    return nextIdx;
 }
 
 function engineActivePlayersInAuction() {
@@ -9399,7 +9446,7 @@ function engineDeal() {
  */
 function engineDealSequentialAnimated(onDone) {
     const deck = shuffleDeck(buildDeck());
-    const actives = engine.players.filter((p) => p.active);
+    const actives = engineActivePlayersInPlayOrderClockwise();
     const n = actives.length;
 
     if (!n) {
@@ -9422,8 +9469,8 @@ function engineDealSequentialAnimated(onDone) {
     engineRenderHands();
     if (auctionBarEl) auctionBarEl.classList.add("hidden");
 
-    const delayRoundPauseMs = 150;
-    const delayBetweenMs = 38;
+    const delayRoundPauseMs = 68;
+    const delayBetweenMs = 16;
 
     let round = 0;
     let pi = 0;
@@ -9464,7 +9511,7 @@ function engineDealSequentialAnimated(onDone) {
         });
     }
 
-    window.setTimeout(stepDeal, 70);
+    window.setTimeout(stepDeal, 32);
 }
 
 /* ---------- AUCTION ---------- */
@@ -9821,7 +9868,7 @@ function engineFlyDealCardToHand(cardStr, recipientPlayerIdx, handSlotIdx, cards
     }, { once: true });
     window.setTimeout(() => {
         if (clone.isConnected) finalize();
-    }, 460);
+    }, 340);
 }
 
 /**
@@ -9922,6 +9969,7 @@ function engineRenderTrickCard(trickEntry) {
     return wrap;
 }
 
+/** Лидер взятки: 1-я — победитель торгов, далее — победитель предыдущей взятки. Ход по кругу — engineAdvanceTurn. */
 function engineStartTrick() {
     if (engine.phase !== "play") return;
     engineClearPlayed();
@@ -10391,14 +10439,16 @@ function engineStartNextHand() {
     engine.auctionWinnerIdx = null;
     engine.trickCards = [];
     engine.trickNumber = 1;
-    /* Передаём ход по часовой — сдвигаем лидера на одного активного вперёд. */
+    /* Сдвиг первого отдающего: по CLOCKWISE_SEAT_RING, не по индексу в engine.players
+       (SEAT_ORDER ≠ порядок мест по часовой). */
     const activeIdxList = engine.players
         .map((p, idx) => (p.active ? idx : -1))
         .filter((idx) => idx !== -1);
     if (activeIdxList.length) {
         const prevLeader = typeof engine.leaderIdx === "number" ? engine.leaderIdx : engine.humanIdx;
-        const pos = activeIdxList.indexOf(prevLeader);
-        engine.leaderIdx = pos === -1 ? activeIdxList[0] : activeIdxList[(pos + 1) % activeIdxList.length];
+        let nextLead = engineNextClockwiseEligibleIdx(prevLeader);
+        if (activeIdxList.indexOf(nextLead) < 0) nextLead = activeIdxList[0];
+        engine.leaderIdx = nextLead;
     } else {
         engine.leaderIdx = engine.humanIdx;
     }
