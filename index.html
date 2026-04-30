@@ -1610,6 +1610,100 @@ h1 {
     pointer-events: none;
 }
 .game-waiting-banner.hidden { display: none !important; }
+.game-waiting-banner.pointer-allow { pointer-events: auto; }
+
+.game-ready-btn {
+    padding: 8px 26px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.95) 0%, #d8b24c 52%, #9b7626 100%);
+    border: 1px solid rgba(247, 227, 165, 0.85);
+    color: #3a1a0a;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(216, 140, 60, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: transform 0.15s ease, filter 0.18s ease, opacity 0.18s ease;
+}
+.game-ready-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.04); }
+.game-ready-btn:active:not(:disabled) { transform: translateY(0); }
+.game-ready-btn:disabled {
+    cursor: default;
+    opacity: 0.72;
+    background: linear-gradient(180deg, rgba(46, 18, 28, 0.9) 0%, rgba(28, 8, 16, 0.95) 100%);
+    border-color: rgba(216, 178, 76, 0.4);
+    color: #e8c97a;
+    box-shadow: none;
+}
+.game-human-lobby-bar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 14px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.88) 0%, rgba(20, 6, 12, 0.92) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 214, 130, 0.08);
+    z-index: 6;
+    max-width: 100%;
+}
+.game-human-lobby-bar.hidden { display: none !important; }
+.game-human-ready-timer {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(247, 227, 165, 0.92);
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(8, 2, 6, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.35);
+}
+.game-human-ready-timer.is-urgent {
+    color: #ffb4a8;
+    border-color: rgba(255, 100, 80, 0.45);
+    animation: lobbyTimerPulse 1.1s ease-in-out infinite;
+}
+@keyframes lobbyTimerPulse {
+    0%, 100% { opacity: 0.92; }
+    50%      { opacity: 1; }
+}
+.game-human-ready-timer.hidden { display: none !important; }
+
+.seat-lobby-ready-dot {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    margin-left: 5px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: #143218;
+    background: radial-gradient(circle at 35% 30%, #c8f0c8, #3a8a46 72%);
+    border: 1px solid rgba(247, 227, 165, 0.45);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.game-seat.game-seat--join-flash {
+    animation: seatJoinFlash 0.85s ease-out 1;
+}
+@keyframes seatJoinFlash {
+    0% {
+        filter: brightness(1.25);
+        box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.55), 0 8px 22px rgba(216, 140, 60, 0.35);
+    }
+    100% {
+        filter: none;
+        box-shadow: none;
+    }
+}
 .game-waiting-dot {
     width: 8px;
     height: 8px;
@@ -1938,10 +2032,10 @@ h1 {
 
     /* У нижнего "Вы" сиденья dots размещаем справа от профиля как бейдж,
        чтобы не вклиниваться между профилем и крупной рукой. */
-    .game--v2 .game-seat--bottom {
+    .game--v2 .game-you-stack .game-seat--bottom {
         position: relative;
     }
-    .game--v2 .game-seat--bottom > .seat-trick-dots {
+    .game--v2 .game-you-stack .game-seat--bottom > .seat-trick-dots {
         order: unset;
         position: absolute;
         top: 6px;
@@ -2181,7 +2275,19 @@ h1 {
 .game-seat--mid-right  { grid-area: mid-r; }
 .game-seat--bot-left   { grid-area: bot-l; }
 .game-seat--bot-right  { grid-area: bot-r; }
-.game-seat--bottom     { grid-area: you;    grid-column: 1 / -1; justify-self: center; }
+/* Нижняя зона «Вы» + панель «Готов» под местом (не в области ботов). */
+.game-you-stack {
+    grid-area: you;
+    grid-column: 1 / -1;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+    max-width: min(100%, 460px);
+}
 .game-center           { grid-area: center; }
 
 /* ======================== SEATS ======================== */
@@ -2670,7 +2776,7 @@ h1 {
     .game-seat--mid-left,
     .game-seat--mid-right,
     .game-seat--bot-left { --card-w: 38px; --card-h: 54px; --bot-card-w: 38px; --bot-card-h: 54px; }
-    .game-seat--bottom { --card-w: min(22vw, 76px); --card-h: min(32vw, 108px); }
+    .game-you-stack .game-seat--bottom { --card-w: min(22vw, 76px); --card-h: min(32vw, 108px); }
     .seat-empty-card { width: 82px; padding: 10px 8px; }
     .seat-empty-icon { width: 34px; height: 34px; }
     .seat-empty-icon svg { width: 22px; height: 22px; }
@@ -4796,7 +4902,7 @@ h1 {
                                 <circle cx="12" cy="15.5" r="1.4" fill="currentColor" />
                             </svg>
                         </span>
-                        <span class="create-private-label">Только по приглашению</span>
+                        <span class="create-private-label">Приватный (по приглашению)</span>
                         <input type="checkbox" class="create-private-input" data-create-private />
                         <span class="create-private-switch" aria-hidden="true"></span>
                     </label>
@@ -5149,8 +5255,14 @@ h1 {
             </div>
         </div>
 
-        <!-- ======= BOTTOM: "Вы" — тоже слот, но всегда занят локальным игроком ======= -->
-        <section class="game-seat game-seat--bottom game-seat--you" data-seat-slot="bottom"></section>
+        <!-- Нижнее место «Вы» — в отдельном стеке под ним панель «Готов» (не пересекается с ботами). -->
+        <div class="game-you-stack">
+            <section class="game-seat game-seat--bottom game-seat--you" data-seat-slot="bottom"></section>
+            <div class="game-human-lobby-bar hidden" id="gameLobbyReadyWrap" role="region" aria-label="Готовность к игре">
+                <button type="button" class="game-ready-btn" data-game-ready>Готов</button>
+                <span class="game-human-ready-timer hidden" data-human-ready-timer aria-live="polite"></span>
+            </div>
+        </div>
     </div>
 
     <!-- Баннер ожидания: показывается только в phase === "waiting" (только что
@@ -5160,6 +5272,7 @@ h1 {
         <span class="game-waiting-text" data-game-waiting-text>Ждём игроков…</span>
     </div>
 
+    <!-- Панель «Готов» перенесена в .game-you-stack под местом игрока -->
     <!-- Пригласить друзей — модалка (mock). В проде — данные придут с сервера:
          /friends, /invite POST. Пока данные лежат в appState.friends. -->
     <div class="invite-overlay hidden" id="inviteOverlay" role="dialog" aria-modal="true" aria-labelledby="inviteTitle">
@@ -6481,7 +6594,7 @@ const UI_TEXT = Object.freeze({
         sectionStake:      "1. Ставка",
         sectionPlayers:    "2. Количество игроков",
         sectionPrivate:    "3. Приватная игра",
-        labelPrivate:      "Только по приглашению",
+        labelPrivate:      "Приватный (по приглашению)",
         previewTitle:      "Предварительный просмотр",
         previewStake:      "Ставка",
         previewPlayers:    "Игроков",
@@ -6492,6 +6605,7 @@ const UI_TEXT = Object.freeze({
         toastCreatedOpen:    "Открытый стол создан. Ждём игроков…",
         toastCreatedPrivate: "Приватный стол создан. Пригласите друзей",
         toastLowBalance:     "Недостаточно средств для такой ставки",
+        lobbyBotJoined:      "{name} подключился к столу",
     },
     invite: {
         title:          "Пригласить друзей",
@@ -6507,6 +6621,19 @@ const UI_TEXT = Object.freeze({
         toastInvited:    "Приглашение отправлено",
         waitingText:    "Ждём игроков…",
         waitingPrivate: "Ждём приглашённых…",
+    },
+    /* Лобби до первой раздачи: мин. 2 игрока, кнопка «Готов». */
+    lobby: {
+        playerJoined:         "{name} присоединился к столу",
+        btnReady:             "Готов",
+        btnReadyDone:         "Вы готовы",
+        bannerNeedPlayers:    "Ожидание игроков — для старта нужно минимум двое",
+        bannerPressReady:     "Нажмите «Готов», когда будете готовы начать",
+        bannerWaitAllReady:   "Ждём, пока все за столом нажмут «Готов»…",
+        bannerYouReadyWait:   "Вы готовы. Ждём остальных…",
+        toastReadyTimeout:    "Время на подтверждение «Готов» истекло. Вы возвращены в лобби.",
+        botReadyTitle:        "Готов к игре",
+        timerSec:             "сек",
     },
     /* Тексты для игроков, подключившихся к столу в середине партии
        (player.status === "waiting" — ждут следующей раздачи). */
@@ -7149,12 +7276,67 @@ function renderGameTopbar() {
         if (textEl) {
             if (isPlayerWaiting) {
                 textEl.textContent = UI_TEXT.seatWaiting.statusMessage;
+            } else if (isTableWaiting && typeof tableIsPreGameLobby === "function" && tableIsPreGameLobby()) {
+                const L = UI_TEXT.lobby || {};
+                const seated = (engine.players || []).filter((p) => p.status === "seated");
+                const allReady = seated.length > 0 && seated.every((p) => !p.isHuman || p.lobbyReady === true);
+                if (seated.length < 2) {
+                    textEl.textContent = (room && room.type === "private")
+                        ? UI_TEXT.invite.waitingPrivate
+                        : (L.bannerNeedPlayers || UI_TEXT.invite.waitingText);
+                } else if (!allReady) {
+                    if (human && human.isHuman && human.lobbyReady === true) {
+                        textEl.textContent = L.bannerYouReadyWait || UI_TEXT.invite.waitingText;
+                    } else {
+                        textEl.textContent = L.bannerPressReady || UI_TEXT.invite.waitingText;
+                    }
+                } else {
+                    textEl.textContent = L.bannerWaitAllReady || UI_TEXT.invite.waitingText;
+                }
             } else if (room && room.type === "private") {
                 textEl.textContent = UI_TEXT.invite.waitingPrivate;
             } else {
                 textEl.textContent = UI_TEXT.invite.waitingText;
             }
         }
+    }
+    updateLobbyReadyUI();
+}
+
+/** Кнопка «Готов» в предыгровом лобби: видна только сидящему человеку до старта раздачи. */
+function updateLobbyReadyUI() {
+    const wrap = document.getElementById("gameLobbyReadyWrap");
+    const btn = document.querySelector("[data-game-ready]");
+    const timerEl = document.querySelector("[data-human-ready-timer]");
+    if (!wrap || !btn || !engine || !engine.players) return;
+    const human = engine.players[engine.humanIdx];
+    const pre = typeof tableIsPreGameLobby === "function" && tableIsPreGameLobby();
+    const show = !!(human && human.isHuman && human.status === "seated" && pre);
+    wrap.classList.toggle("hidden", !show);
+    if (timerEl) {
+        if (!show || !(human && human.isHuman) || human.lobbyReady === true) {
+            timerEl.classList.add("hidden");
+            timerEl.textContent = "";
+            timerEl.classList.remove("is-urgent");
+        } else {
+            timerEl.classList.remove("hidden");
+            const d = human.lobbyReadyDeadlineMs;
+            const sec = typeof d === "number" ? Math.max(0, Math.ceil((d - Date.now()) / 1000)) : LOBBY_READY_SECONDS;
+            const L = UI_TEXT.lobby || {};
+            const unit = L.timerSec || "сек";
+            timerEl.textContent = sec + " " + unit;
+            timerEl.classList.toggle("is-urgent", sec <= 10);
+        }
+    }
+    if (!show) return;
+    const tx = UI_TEXT.lobby || {};
+    if (human.lobbyReady === true) {
+        btn.disabled = true;
+        btn.textContent = tx.btnReadyDone || "Вы готовы";
+        if (timerEl) { timerEl.classList.add("hidden"); timerEl.textContent = ""; timerEl.classList.remove("is-urgent"); }
+    } else {
+        btn.disabled = false;
+        btn.textContent = tx.btnReady || "Готов";
     }
 }
 
@@ -7197,6 +7379,19 @@ function bindGameTopbarHandlers() {
         if (typeof showMenuToast === "function") {
             showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
         }
+    });
+
+    const readyBtn = rootEl.querySelector("[data-game-ready]");
+    if (readyBtn) readyBtn.addEventListener("click", () => {
+        if (!engine || !engine.players) return;
+        if (typeof tableIsPreGameLobby !== "function" || !tableIsPreGameLobby()) return;
+        const human = engine.players[engine.humanIdx];
+        if (!human || !human.isHuman || human.status !== "seated" || human.lobbyReady === true) return;
+        human.lobbyReady = true;
+        delete human.lobbyReadyDeadlineMs;
+        clearHumanLobbyReadyWatch();
+        renderGameTopbar();
+        tableMaybeAutoStart();
     });
 }
 
@@ -7606,8 +7801,98 @@ function bindCreateTableHandlers() {
     });
 }
 
-/* Генерация id нового стола — берём максимум из текущих +1.
-   Когда появится backend — id будет приходить в ответе сервера. */
+/* Генерация id стола + mock-подсаживание ботов в открытое лобби (MVP).
+   id = max(tables)+1. Боты — только public, с задержками; старт партии —
+   tableMaybeAutoStart() после минимума игроков и «Готов». Таймеры снимаются при старте раздачи или выходе. */
+
+function cancelOpenTableLobbyBots(tableRow) {
+    if (!tableRow) return;
+    tableRow._lobbyBotsDisabled = true;
+    const arr = tableRow._lobbyBotTimers;
+    if (arr && arr.length) arr.forEach((id) => clearTimeout(id));
+    tableRow._lobbyBotTimers = [];
+}
+
+function engineGetFirstLobbyFreeSeatSlot(capacity) {
+    const cap = Math.max(2, Math.min(6, Number(capacity) || 2));
+    const slots = SEAT_ORDER.slice(0, cap);
+    for (let s = 0; s < slots.length; s++) {
+        const slot = slots[s];
+        if (!engine.players.some((p) => p.seatSlot === slot)) return slot;
+    }
+    return null;
+}
+
+function lobbyBotJoinTick(tableRow) {
+    if (!tableRow || tableRow._lobbyBotsDisabled) return;
+    if (!engine.currentTable || Number(engine.currentTable.id) !== Number(tableRow.id)) return;
+    if (engine.phase !== "waiting") return;
+    if (tableRow.type === "private" || tableRow.isPrivate) return;
+
+    const cap = Math.max(2, Math.min(6, Number(engine.capacity) || Number(tableRow.capacity) || 2));
+    const seatedCount = engine.players.filter(
+        (p) => p.status !== "spectator" && p.status !== "removed"
+    ).length;
+    if (seatedCount >= cap) return;
+
+    const freeSlot = engineGetFirstLobbyFreeSeatSlot(cap);
+    if (!freeSlot) return;
+
+    const botIdx = engine.players.length;
+    const profile = BOT_PROFILES[(botIdx - 1) % BOT_PROFILES.length];
+    engine.players.push({
+        id: botIdx,
+        seatSlot: freeSlot,
+        name: profile.name,
+        level: profile.level,
+        tint: profile.tint,
+        isHuman: false,
+        hand: [],
+        scoreTricks: 0,
+        bank: profile.bank,
+        bid: null,
+        passedAuction: false,
+        status: "seated",
+        active: false,
+        awayUntil: null,
+    });
+
+    tableRow.players = seatedCount + 1;
+    if (tableRow.seats && typeof tableRow.seats === "object") {
+        tableRow.seats[freeSlot] = "mock-bot-" + botIdx;
+    }
+    if (engine.currentTable && engine.currentTable.seats) {
+        engine.currentTable.seats[freeSlot] = "mock-bot-" + botIdx;
+    }
+
+    engineRenderSeats();
+    renderGameTopbar();
+    const joinMsg = (UI_TEXT.lobby && UI_TEXT.lobby.playerJoined) || (UI_TEXT.createTable.lobbyBotJoined || "{name} подключился к столу");
+    setMessage(joinMsg.replace("{name}", profile.name));
+    const joinSeat = engineGetSeatEl(freeSlot);
+    if (joinSeat) {
+        joinSeat.classList.add("game-seat--join-flash");
+        setTimeout(() => joinSeat.classList.remove("game-seat--join-flash"), 900);
+    }
+    updateLobbyReadyUI();
+
+    tableMaybeAutoStart();
+}
+
+function scheduleOpenTableLobbyBots(tableRow) {
+    if (!tableRow || tableRow.type === "private" || tableRow.isPrivate) return;
+    cancelOpenTableLobbyBots(tableRow);
+    tableRow._lobbyBotsDisabled = false;
+    tableRow._lobbyBotTimers = [];
+    const cap = Math.max(2, Math.min(6, Number(tableRow.capacity) || 2));
+    let accum = 0;
+    for (let b = 1; b < cap; b++) {
+        accum += 800 + Math.floor(Math.random() * 1600);
+        const tid = setTimeout(() => lobbyBotJoinTick(tableRow), accum);
+        tableRow._lobbyBotTimers.push(tid);
+    }
+}
+
 function nextTableId() {
     const ids = (appState.tables || []).map((t) => Number(t.id) || 0);
     return (ids.length ? Math.max.apply(null, ids) : 10) + 1;
@@ -7669,7 +7954,10 @@ function handleCreateTableSubmit() {
        engineStart(..., {waiting:true}) не раздаёт карты и не запускает торги. */
     selectedPlayersCount = count;
     setScreen(SCREENS.GAME);
-    engineStart(count, { stake: stake, table: newTable, waiting: true });
+    engineStart(count, { stake: stake, table: newTable, waiting: true, lobbySeatedCount: 1 });
+
+    /* Открытый стол: mock-игроки подсаживаются с задержкой (нет онлайна). */
+    if (!isPriv) scheduleOpenTableLobbyBots(newTable);
 
     showMenuToast(isPriv
         ? UI_TEXT.createTable.toastCreatedPrivate
@@ -7972,7 +8260,17 @@ const engine = {
      awayPlayers    — временно отсутствуют (место занято AWAY_KICK_MS)
    ====================================================================== */
 
-const TABLE_MIN_PLAYERS = 2;
+const TABLE_MIN_PLAYERS = 2; /* minPlayersToStart (MVP): игра с 2 игроками, max = вместимость стола */
+
+/** true только в «предыгровом» лобби: phase waiting и все участники ещё в status seated. */
+function tableIsPreGameLobby() {
+    if (!engine || engine.phase !== "waiting") return false;
+    const participants = (engine.players || []).filter(
+        (p) => p.status !== "spectator" && p.status !== "removed" && p.status !== "away"
+    );
+    if (!participants.length) return false;
+    return participants.every((p) => p.status === "seated");
+}
 
 function tableGetPhase() {
     if (!engine.currentTable) return "lobby";
@@ -8033,7 +8331,13 @@ function tableReadyForRound() {
 function tableCanStartRound() {
     if (!engine.currentTable) return false;
     if (tableHasActiveRound()) return false;
-    return tableReadyForRound().length >= TABLE_MIN_PLAYERS;
+    const readyList = tableReadyForRound();
+    if (readyList.length < TABLE_MIN_PLAYERS) return false;
+    if (tableIsPreGameLobby()) {
+        /* Боты считаются готовыми всегда; «Готов» нужен только от живых игроков. */
+        return readyList.every((p) => !p.isHuman || p.lobbyReady === true);
+    }
+    return true;
 }
 
 /**
@@ -8057,6 +8361,11 @@ function tableStartRound() {
         return false;
     }
 
+    clearHumanLobbyReadyWatch();
+    if (engine.currentTable) {
+        cancelOpenTableLobbyBots(engine.currentTable);
+        engine.currentTable.status = "playing";
+    }
     engineStartNextHand();
     return true;
 }
@@ -8071,6 +8380,63 @@ function tableMaybeAutoStart() {
     if (tableHasActiveRound()) return;
     if (engine.phase === "gameover") return; /* ждём плановый engineStartNextHand */
     if (tableCanStartRound()) tableStartRound();
+}
+
+const LOBBY_READY_SECONDS = 30;
+
+function clearHumanLobbyReadyWatch() {
+    if (engine._lobbyReadyTick) {
+        clearInterval(engine._lobbyReadyTick);
+        engine._lobbyReadyTick = null;
+    }
+    if (engine._lobbyReadyKickTimer) {
+        clearTimeout(engine._lobbyReadyKickTimer);
+        engine._lobbyReadyKickTimer = null;
+    }
+}
+
+function kickHumanLobbyTimeout() {
+    clearHumanLobbyReadyWatch();
+    const msg = UI_TEXT.lobby && UI_TEXT.lobby.toastReadyTimeout;
+    if (typeof showMenuToast === "function") {
+        showMenuToast(msg || "Время на «Готов» истекло. Вы покинули стол.");
+    }
+    engineExitTable({ navigateToLobby: true });
+}
+
+/** Таймер «Готов»: только для локального человека в предыгровом лобби. */
+function armHumanLobbyReadyWatch() {
+    clearHumanLobbyReadyWatch();
+    if (!engine || !engine.players) return;
+    const human = engine.players[engine.humanIdx];
+    if (!human || !human.isHuman || human.status !== "seated") return;
+    if (typeof tableIsPreGameLobby !== "function" || !tableIsPreGameLobby()) return;
+    if (human.lobbyReady === true) return;
+
+    human.lobbyReadyDeadlineMs = Date.now() + LOBBY_READY_SECONDS * 1000;
+
+    engine._lobbyReadyKickTimer = setTimeout(() => {
+        engine._lobbyReadyKickTimer = null;
+        const h = engine.players && engine.players[engine.humanIdx];
+        if (!h || !h.isHuman || h.status !== "seated" || h.lobbyReady === true) return;
+        if (typeof tableIsPreGameLobby !== "function" || !tableIsPreGameLobby()) return;
+        kickHumanLobbyTimeout();
+    }, LOBBY_READY_SECONDS * 1000);
+
+    engine._lobbyReadyTick = setInterval(() => {
+        if (!engine.players || !engine.players[engine.humanIdx]) {
+            clearHumanLobbyReadyWatch();
+            return;
+        }
+        const h = engine.players[engine.humanIdx];
+        if (!h || h.lobbyReady === true ||
+            typeof tableIsPreGameLobby !== "function" || !tableIsPreGameLobby()) {
+            clearHumanLobbyReadyWatch();
+            updateLobbyReadyUI();
+            return;
+        }
+        updateLobbyReadyUI();
+    }, 400);
 }
 
 /* ---------- TABLE SESSION (состояние матча для «Найти стол») ----------
@@ -8156,6 +8522,7 @@ function engineExportSnapshot() {
             status: p.status,
             active: !!p.active,
             awayUntil: p.awayUntil != null ? p.awayUntil : null,
+            lobbyReady: p.isHuman ? p.lobbyReady === true : false,
         })),
     };
 }
@@ -8209,6 +8576,7 @@ function engineImportSnapshot(snap, options) {
         status: sp.status,
         active: !!sp.active,
         awayUntil: sp.awayUntil != null ? sp.awayUntil : null,
+        lobbyReady: sp.lobbyReady === true,
     }));
 
     if (options.patchHumanWaiting) {
@@ -8380,6 +8748,14 @@ function makePlayerMarkup(p) {
     const waitingBadge = p.status === "waiting"
         ? ('<span class="seat-waiting-pill" data-seat-waiting>' + esc(UI_TEXT.seatWaiting.statusShort) + '</span>')
         : '';
+    const showBotLobbyReady = !p.isHuman && p.status === "seated" && engine &&
+        engine.phase === "waiting" &&
+        typeof tableIsPreGameLobby === "function" && tableIsPreGameLobby();
+    const bt = UI_TEXT.lobby && UI_TEXT.lobby.botReadyTitle;
+    const botReadyDot = showBotLobbyReady
+        ? ('<span class="seat-lobby-ready-dot" title="' + esc(bt || "Готов к игре") +
+            '" aria-label="' + esc(bt || "Готов к игре") + '">✓</span>')
+        : '';
     /* Away-плашка: «Отошёл · 06:59». Таймер обновляется каждую секунду
        через engineTickAwayTimers(); data-seat-away-timer связывает элемент
        с конкретным игроком по id. */
@@ -8408,6 +8784,7 @@ function makePlayerMarkup(p) {
             '<span class="seat-balance"><span class="seat-coin"></span>' +
                 '<span data-seat-balance>' + formatCompactMoney(p.bank) + '</span>' +
             '</span>' +
+            botReadyDot +
             waitingBadge +
             awayBadge +
         '</header>' +
@@ -8495,7 +8872,7 @@ function engineBuildPlayers(playersCount, options) {
     const humanWaiting = !!options.humanWaiting;
     const humanSeated  = !!options.humanSeated && !humanWaiting;
     const humanStatus = humanWaiting ? "waiting" : (humanSeated ? "seated" : "active");
-    list.push({
+    const humanRow = {
         id: 0,
         seatSlot: "bottom",
         name: humanName,
@@ -8510,7 +8887,34 @@ function engineBuildPlayers(playersCount, options) {
         status: humanStatus,
         active: humanStatus === "active",
         awayUntil: null,   // ms-timestamp истечения удержания места (только для status === "away")
-    });
+    };
+    if (humanSeated) humanRow.lobbyReady = false;
+    list.push(humanRow);
+
+    /* Лобби до первой раздачи: все места — seated, без карт; mock-боты считаются
+       уже нажавшими «Готов» (ожидание только от живого игрока). */
+    if (humanSeated) {
+        for (let i = 1; i < playersCount; i++) {
+            const profile = BOT_PROFILES[(i - 1) % BOT_PROFILES.length];
+            list.push({
+                id: i,
+                seatSlot: SEAT_ORDER[i],
+                name: profile.name,
+                level: profile.level,
+                tint: profile.tint,
+                isHuman: false,
+                hand: [],
+                scoreTricks: 0,
+                bank: profile.bank,
+                bid: null,
+                passedAuction: false,
+                status: "seated",
+                active: false,
+                awayUntil: null,
+            });
+        }
+        return list;
+    }
 
     for (let i = 1; i < playersCount; i++) {
         const profile = BOT_PROFILES[(i - 1) % BOT_PROFILES.length];
@@ -9285,6 +9689,7 @@ function engineFinishGame() {
    - сбрасываем руку/взятки/торги/банк — как в engineStart, но без перестройки
      массива игроков. Это выполняет требование п.3 ТЗ. */
 function engineStartNextHand() {
+    clearHumanLobbyReadyWatch();
     /* Сбор состава новой раздачи: seated + waiting → active.
        away/spectator/removed остаются вне партии. */
     engine.players.forEach((p) => {
@@ -9292,6 +9697,8 @@ function engineStartNextHand() {
             p.status = "active";
             p.active = true;
         }
+        if ("lobbyReady" in p) delete p.lobbyReady;
+        if ("lobbyReadyDeadlineMs" in p) delete p.lobbyReadyDeadlineMs;
         p.hand = [];
         p.scoreTricks = 0;
         p.bid = null;
@@ -9358,6 +9765,7 @@ function engineStart(playersCount, options) {
     /* Сбрасываем любые зависшие away-таймеры от предыдущего стола, чтобы
        они не срабатывали на новом столе. */
     if (typeof engineClearAwayTimers === "function") engineClearAwayTimers();
+    clearHumanLobbyReadyWatch();
     const overlay = document.getElementById("spectatorOverlay");
     if (overlay) {
         overlay.classList.add("hidden");
@@ -9376,7 +9784,12 @@ function engineStart(playersCount, options) {
        3. без флагов           — обычный старт партии со всеми активными. */
     const waiting = !!options.waiting;
     const humanWaiting = !!options.humanWaiting && !waiting;
-    engine.players = engineBuildPlayers(waiting ? 1 : n, {
+    let lobbyN = 1;
+    if (waiting) {
+        const lc = Number(options.lobbySeatedCount);
+        lobbyN = Number.isFinite(lc) && lc >= 1 ? Math.max(1, Math.min(6, Math.floor(lc))) : 1;
+    }
+    engine.players = engineBuildPlayers(waiting ? lobbyN : n, {
         humanSeated:  waiting,
         humanWaiting: humanWaiting,
     });
@@ -9414,6 +9827,7 @@ function engineStart(playersCount, options) {
         setMessage(table && table.type === "private"
             ? "Приглашайте друзей — они сядут по ссылке."
             : "Ожидаем, пока игроки займут места.");
+        armHumanLobbyReadyWatch();
         return;
     }
 
@@ -9509,6 +9923,8 @@ function engineLeaveSeat() {
     if (!human) return;
     if (human.status === "away" || human.status === "removed") return;
 
+    clearHumanLobbyReadyWatch();
+
     /* Место сохраняется: status → "away", таймер 7 минут до kick. */
     engine.spectating = true;
     human.active = false;
@@ -9571,6 +9987,10 @@ function engineReturnFromAway() {
     const midHand = (engine.phase === "auction" || engine.phase === "play");
     human.status = midHand ? "waiting" : "seated";
     human.active = false;
+    if (!midHand) {
+        human.lobbyReady = false;
+        delete human.lobbyReadyDeadlineMs;
+    }
 
     const overlay = document.getElementById("spectatorOverlay");
     if (overlay) overlay.classList.add("hidden");
@@ -9585,6 +10005,7 @@ function engineReturnFromAway() {
         setMessage(UI_TEXT.seatWaiting.statusMessage);
     } else {
         setMessage("Вы вернулись за стол. Ждём начала раздачи…");
+        armHumanLobbyReadyWatch();
         /* Если стол давно ждёт и теперь игроков хватает — автостарт раздачи. */
         tableMaybeAutoStart();
     }
@@ -9593,6 +10014,8 @@ function engineReturnFromAway() {
 /* Полный выход со стола. Используется кнопкой «Лобби» и таймаутом away. */
 function engineExitTable(options) {
     options = options || {};
+    cancelOpenTableLobbyBots(engine.currentTable);
+    clearHumanLobbyReadyWatch();
     /* Сохраняем живой матч на строку стола до сброса engine — иначе при
        возврате в «Найти стол» и повторном входе стол «умирает». */
     if (engine.currentTable && engine.currentTable.id != null &&
@@ -9684,11 +10107,11 @@ function resetGame() {
           → humanWaiting: true, движок строит (human waiting + N-1 active bots),
           боты доигрывают текущую раздачу, человек входит в следующую.
 
-       B) Стол в lobby, игроков хватает (>=2 включая человека):
-          → обычный старт раздачи, человек активен с первой раздачи.
+       B) Стол в lobby до первой партии (любое число игроков < max):
+          → waiting-room: без раздачи; старт после min 2 игроков и «Готов».
 
-       C) Стол в lobby, но меньше 2 игроков (или приватный стол владельца):
-          → options.waiting=true, стол в waitingPlayers, ждём народ. */
+       C) Устаревший мгновенный старт без лобби — удалён; всегда ждём готовность
+          в предыгровом режиме (см. tableCanStartRound / tableIsPreGameLobby). */
     const ACTIVE_STATUSES = new Set(["playing", "bidding", "trick", "roundActive"]);
     const midGame = !!(table && ACTIVE_STATUSES.has(String(table.status)));
 
@@ -9711,21 +10134,12 @@ function resetGame() {
         return;
     }
 
-    /* Приватный стол, который только что создал сам пользователь: он один,
-       бот-заглушек быть не должно, ждём реальных гостей по ссылке. */
-    const isOwnedPrivateLobby =
-        !!(table && table.type === "private" &&
-           table.ownerId && appState.profile && table.ownerId === appState.profile.id &&
-           count <= 1);
+    const capacityForEngine = table && Number.isFinite(table.capacity)
+        ? Math.max(2, Math.min(6, Number(table.capacity)))
+        : Math.max(2, Math.min(6, Number(selectedPlayersCount) || 2));
 
-    /* Lobby с недостаточным количеством игроков → waiting-room. */
-    if (isOwnedPrivateLobby || count < TABLE_MIN_PLAYERS) {
-        engineStart(count, { stake, table, waiting: true });
-        return;
-    }
-
-    /* Достаточно игроков в lobby → сразу стартуем раздачу. */
-    engineStart(count, { stake, table });
+    /* Лобби до первой партии: карты не раздаём; старт после минимума игроков (2) и «Готов». */
+    engineStart(capacityForEngine, { stake, table, waiting: true, lobbySeatedCount: count });
 }
 
 function onPlayerPass() {
