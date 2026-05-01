@@ -2007,6 +2007,130 @@ h1 {
     .invite-title { font-size: 20px; }
 }
 
+/* ======================== TABLE FOOTER: события + торги ======================== */
+
+.game--v2 .game-table-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 2vw, 11px);
+    width: 100%;
+    padding: 6px clamp(10px, 2.4vw, 16px);
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    margin-top: auto;
+    box-sizing: border-box;
+}
+
+.game--v2 .game-status-panel {
+    width: min(560px, 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(216, 178, 76, 0.5);
+    background: linear-gradient(180deg, rgba(52, 14, 28, 0.96) 0%, rgba(14, 4, 10, 0.98) 100%);
+    box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 214, 130, 0.08);
+    overflow: hidden;
+}
+
+.game-status-panel__head {
+    padding: 5px 12px 4px;
+    border-bottom: 1px solid rgba(216, 178, 76, 0.22);
+    background: linear-gradient(180deg, rgba(30, 8, 16, 0.55), transparent);
+}
+
+.game-status-panel__title {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247, 227, 165, 0.75);
+}
+
+.game-status-panel__feed {
+    max-height: clamp(52px, 13vh, 96px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.38) transparent;
+    padding: 6px 12px;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    line-height: 1.42;
+    color: rgba(244, 214, 138, 0.9);
+    -webkit-overflow-scrolling: touch;
+}
+
+.game-status-panel__feed::-webkit-scrollbar { width: 5px; }
+.game-status-panel__feed::-webkit-scrollbar-thumb {
+    background: rgba(216, 178, 76, 0.35);
+    border-radius: 4px;
+}
+
+.game-status-panel__entry {
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(216, 178, 76, 0.12);
+}
+
+.game-status-panel__entry:last-child {
+    border-bottom-width: 0;
+    padding-bottom: 2px;
+}
+
+@media (min-width: 701px) {
+    .game-status-panel__feed {
+        max-height: min(116px, 18vh);
+        font-size: 12px;
+    }
+}
+
+.game--v2 #result.game-status-panel__sticky {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 7px 10px;
+    pointer-events: none;
+    z-index: 5;
+    border-top: 1px solid rgba(216, 178, 76, 0.22);
+    background: rgba(10, 3, 8, 0.35);
+    box-sizing: border-box;
+}
+
+.game--v2 .game-status-panel .status-pill,
+.game--v2 .game-status-current.status-pill {
+    display: block;
+    width: 100%;
+    max-width: none;
+    text-align: center;
+    pointer-events: auto;
+    margin: 0 auto;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+
+
+
+.seat-tricks-strip {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(216, 178, 76, 0.22);
+    box-sizing: border-box;
+}
+
+.seat-tricks-strip .seat-trick-dots {
+    flex-shrink: 0;
+}
+
 /* ======================== SEAT TRICK DOTS ======================== */
 /* Компактный индикатор взяток: 3 точки, горят золотым когда взятка взята.
    Никаких крупных надписей "Взято: N" — только деликатный ряд точек. */
@@ -2034,55 +2158,22 @@ h1 {
 }
 .seat-trick-dots[hidden] { display: none !important; }
 
-/* ------------------------------------------------------------------
-   Desktop-layout для индикатора взяток.
-   Проблема: в колоночном flex'е seat'а dots-капсула по дефолту оказывалась
-   ПОД рукой, а карты на десктопе большие и у них ровно тот же бордово-
-   золотой палитра-код — капсула с ними визуально сливалась. На top-seat,
-   наоборот, старое правило `seat-hand { order: 2 }` отправляло dots
-   (order:0) вверх, и они "висели" отдельно от профиля.
-   Решение: только на desktop задаём явный порядок
-     [seat-card] → [dots] → [seat-hand]
-   и усиливаем контур капсулы. На mobile раскладка остаётся прежней
-   (проблема там не проявляется — карты мелкие). */
+/* Десктоп: чуть крупнее капсула точек под именем отдельной полосой .seat-tricks-strip */
 @media (min-width: 701px) {
-    .game--v2 .game-seat > .seat-card       { order: 1; }
-    .game--v2 .game-seat > .seat-trick-dots { order: 2; }
-    .game--v2 .game-seat > .seat-hand       { order: 3; margin-top: 4px; }
-    .game--v2 .game-seat > [data-seat-bank] { order: 4; }
+    .game--v2 .game-seat > .seat-trick-pill { order: 5; }
 
-    /* Переопределяем унаследованные orders для top-seat и side seats,
-       где исторически были свои правила под старый .seat-trick-pill. */
-    .game--v2 .game-seat--top .seat-card       { order: 1; }
-    .game--v2 .game-seat--top .seat-trick-dots { order: 2; }
-    .game--v2 .game-seat--top .seat-hand       { order: 3; margin-top: 4px; }
-    .game--v2 .game-seat--top .seat-trick-pill { order: 4; }
-
-    /* Визуальный апгрейд: темнее фон, ярче золотой бордер + мягкая тень —
-       теперь капсула не растворяется на фоне карт/арены. */
+    .game--v2 .game-seat .seat-tricks-strip {
+        margin-top: 5px;
+        padding-top: 6px;
+    }
     .game--v2 .game-seat .seat-trick-dots {
-        margin-top: 3px;
-        padding: 3px 10px;
+        padding: 3px 11px;
         gap: 6px;
         background: linear-gradient(180deg, rgba(20, 6, 12, 0.96) 0%, rgba(46, 10, 18, 0.92) 100%);
         border-color: rgba(247, 227, 165, 0.55);
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
     }
     .game--v2 .game-seat .seat-trick-dots .trick-dot { width: 7px; height: 7px; }
-
-    /* У нижнего "Вы" сиденья dots размещаем справа от профиля как бейдж,
-       чтобы не вклиниваться между профилем и крупной рукой. */
-    .game--v2 .game-you-stack .game-seat--bottom {
-        position: relative;
-    }
-    .game--v2 .game-you-stack .game-seat--bottom > .seat-trick-dots {
-        order: unset;
-        position: absolute;
-        top: 6px;
-        right: clamp(8px, 2vw, 22px);
-        margin-top: 0;
-        z-index: 4;
-    }
 }
 
 /* ======================== ACTIVE TURN / WINNER HIGHLIGHT ======================== */
@@ -2098,6 +2189,16 @@ h1 {
 .game-seat.is-passed-auction .seat-card {
     opacity: 0.55;
     filter: saturate(0.7);
+}
+/* Вышел из текущей раздачи («сброс» после открывающей торговли): не активен в партии до новой раздачи */
+.game-seat.is-folded-deal .seat-card {
+    opacity: 0.52;
+    filter: saturate(0.55) grayscale(0.15);
+}
+.game-seat.is-folded-deal .seat-hand {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: saturate(0.65);
 }
 .game-seat.is-spectator .seat-card {
     opacity: 0.5;
@@ -2588,9 +2689,15 @@ h1 {
 
 /* Декоративная компоновка мест: верх-центр; боковые — к центру столбиком */
 .game-seat--top .seat-card { order: 1; }
-.game-seat--top .seat-hand { order: 2; }
-.game-seat--top .seat-trick-pill { order: 3; }
+.game-seat--top .seat-tricks-strip { order: 2; }
+.game-seat--top .seat-hand { order: 3; }
+.game-seat--top .seat-trick-pill { order: 4; }
 
+/* Единый порядок: профиль → взятки → рука (v2 со strip; иначе DOM-порядок). */
+.game--v2 .game-seat > .seat-card { order: 1; }
+.game--v2 .game-seat > .seat-tricks-strip { order: 2; }
+.game--v2 .game-seat > .seat-hand { order: 3; }
+.game--v2 .game-seat > .logic-ghost[data-seat-bank] { order: 4; }
 .game-seat--mid-left,
 .game-seat--bot-left {
     align-items: flex-end;
@@ -2921,18 +3028,6 @@ h1 {
 
 /* ======================== STATUS + AUCTION (actions) ======================== */
 
-.game--v2 #result {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    transform: none;
-    width: auto;
-    min-height: 0;
-    margin: 4px auto 0;
-    padding: 0 12px;
-    pointer-events: none;
-    z-index: 5;
-}
 .game--v2 .status-pill {
     background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(58, 14, 24, 0.85) 100%);
     border: 1px solid rgba(216, 178, 76, 0.45);
@@ -2940,14 +3035,14 @@ h1 {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 500;
     letter-spacing: 0.01em;
-    font-size: 14px;
-    padding: 7px 16px;
+    font-size: clamp(12px, 3.2vw, 14px);
+    padding: 6px 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
     pointer-events: auto;
 }
 
 .game--v2 .auction-bar {
-    margin: 10px auto 16px;
+    margin: 0 auto;
     width: min(480px, calc(100% - 20px));
     padding: 10px 12px 12px;
     border-radius: 20px;
@@ -3052,6 +3147,17 @@ h1 {
     .seat-empty-card { width: 82px; padding: 10px 8px; }
     .seat-empty-icon { width: 34px; height: 34px; }
     .seat-empty-icon svg { width: 22px; height: 22px; }
+
+    .game--v2 .game-table-footer {
+        padding-left: 8px;
+        padding-right: 8px;
+        gap: 8px;
+    }
+    .game-status-panel__feed {
+        max-height: 48px;
+        font-size: 10.5px;
+        padding: 5px 10px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -4631,7 +4737,7 @@ h1 {
         grid-template-columns: 1fr;
     }
 
-    #result {
+    .game:not(.game--v2) #result {
         bottom: 14px;
     }
 }
@@ -5618,10 +5724,17 @@ h1 {
         </div>
     </div>
 
-    <!-- ========== STATUS PILL ========== -->
-    <div id="result">
-        <div class="status-pill" id="statusPill">Начинаются торги. Выбери действие.</div>
-    </div>
+    <!-- Нижняя зона: хронология/события + текущая строка + торги -->
+    <div class="game-table-footer" id="gameTableFooter">
+        <aside class="game-status-panel" id="gameStatusPanel" aria-label="События и статус партии">
+            <div class="game-status-panel__head">
+                <span class="game-status-panel__title">События стола</span>
+            </div>
+            <div class="game-status-panel__feed" id="gameStatusFeed" role="log"></div>
+            <div id="result" class="game-status-panel__sticky">
+                <div class="status-pill game-status-current" id="statusPill">Начинаются торги. Выбери действие.</div>
+            </div>
+        </aside>
 
     <!-- ========== ACTIONS (Сброс / Уровнять / Поднять) ========== -->
     <div class="auction-bar game-actions" id="auctionBar">
@@ -5652,6 +5765,7 @@ h1 {
                 <span class="game-act-label">Поднять</span>
             </button>
         </div>
+    </div>
     </div>
 </div>
 
@@ -5697,6 +5811,8 @@ const fullDeckSize = 27;
 const playerCardEl = document.getElementById("playerCard");
 const botCardEl = document.getElementById("botCard");
 const statusPillEl = document.getElementById("statusPill");
+const gameStatusFeedEl = document.getElementById("gameStatusFeed");
+const GAME_STATUS_FEED_CAP = 40;
 const trumpSlotEl = document.getElementById("trumpSlot");
 const deckCountEl = document.getElementById("deckCount");
 const deckStackEl = document.getElementById("deckStack");
@@ -5747,8 +5863,24 @@ passBtn.addEventListener("click", onPlayerPass);
 callBtn.addEventListener("click", onPlayerCall);
 raiseBtn.addEventListener("click", onPlayerRaise);
 
+function pushGameStatusFeedLine(text) {
+    if (!gameStatusFeedEl || text == null) return;
+    const t = String(text).trim();
+    if (!t) return;
+    const last = gameStatusFeedEl.lastElementChild;
+    if (last && last.textContent === t) return;
+    const row = document.createElement("div");
+    row.className = "game-status-panel__entry";
+    row.textContent = t;
+    gameStatusFeedEl.appendChild(row);
+    while (gameStatusFeedEl.children.length > GAME_STATUS_FEED_CAP)
+        gameStatusFeedEl.removeChild(gameStatusFeedEl.firstChild);
+    gameStatusFeedEl.scrollTop = gameStatusFeedEl.scrollHeight;
+}
+
 function setMessage(text) {
-    statusPillEl.innerText = text;
+    if (statusPillEl) statusPillEl.innerText = text;
+    pushGameStatusFeedLine(text);
 }
 
 function getRank(card) {
@@ -8141,6 +8273,7 @@ function lobbyBotJoinTick(tableRow) {
         bank: profile.bank,
         bid: null,
         passedAuction: false,
+        foldedFromAuction: false,
         status: "seated",
         active: false,
         awayUntil: null,
@@ -8757,10 +8890,58 @@ function mulberry32(a) {
     };
 }
 
+/** Участвует в текущей раздаче (карты / взятки). Сброс после хода в торгах → false до новой раздачи. */
+function enginePlayerActiveInRound(p) {
+    return !!(p && p.active);
+}
+
+/** Ещё имеет право хода в торгах (не спасовал на сброс из раздачи и не уравнял/вышел из круга торгов). */
+function enginePlayerActiveInBidding(p) {
+    return !!(p && p.active && !p.passedAuction);
+}
+
+/** Сохранить копию рук после раздачи — для восстановления при «все сбросили на нулевой торговле». */
+function engineCaptureAuctionHandsBackup() {
+    engine._auctionHandsBackup = engine.players.map((p) =>
+        p && p.hand && p.hand.length ? p.hand.slice() : []
+    );
+}
+
+/**
+ * Никто не остался в торгах: возвращаем руки как после раздачи и назначаем минимальный контракт
+ * (поведение эквивалентно старому «все спасовали на 0», без поломки раздачи).
+ */
+function engineAuctionRestoreAfterAllDroppedFromBidding() {
+    const backup = engine._auctionHandsBackup;
+    if (!backup || !backup.length) {
+        engine.lastBidderIdx = engine.humanIdx;
+        engine.currentBid = 1;
+        return;
+    }
+    engine.players.forEach((p, i) => {
+        const h = backup[i];
+        if (!h || !h.length || p.status !== "active") return;
+        p.active = true;
+        p.foldedFromAuction = false;
+        p.passedAuction = false;
+        p.hand = h.slice();
+    });
+    let idx = engine.humanIdx;
+    const hum = engine.players[idx];
+    if (!hum || hum.status !== "active" || !(hum.hand && hum.hand.length)) {
+        idx = engine.players.findIndex(
+            (pp) => pp && pp.status === "active" && pp.hand && pp.hand.length
+        );
+        if (idx < 0) idx = engine.humanIdx;
+    }
+    engine.lastBidderIdx = idx;
+    engine.currentBid = 1;
+}
+
 function engineNextClockwiseEligibleIdx(fromIdx) {
     const isEligiblePlay = function (np) {
-        if (!np || !np.active) return false;
-        if (engine.phase === "auction") return !np.passedAuction;
+        if (!enginePlayerActiveInRound(np)) return false;
+        if (engine.phase === "auction") return enginePlayerActiveInBidding(np);
         return true;
     };
 
@@ -8860,6 +9041,7 @@ function engineExportSnapshot() {
             bank: p.bank,
             bid: p.bid,
             passedAuction: !!p.passedAuction,
+            foldedFromAuction: !!p.foldedFromAuction,
             status: p.status,
             active: !!p.active,
             awayUntil: p.awayUntil != null ? p.awayUntil : null,
@@ -8914,6 +9096,7 @@ function engineImportSnapshot(snap, options) {
         bank: sp.bank,
         bid: sp.bid,
         passedAuction: !!sp.passedAuction,
+        foldedFromAuction: !!sp.foldedFromAuction,
         status: sp.status,
         active: !!sp.active,
         awayUntil: sp.awayUntil != null ? sp.awayUntil : null,
@@ -8934,6 +9117,7 @@ function engineImportSnapshot(snap, options) {
             human.hand = [];
             human.bid = null;
             human.passedAuction = false;
+            human.foldedFromAuction = false;
         }
     }
 
@@ -9135,11 +9319,13 @@ function makePlayerMarkup(p) {
             waitingBadge +
             awayBadge +
         '</header>' +
+        '<div class="seat-tricks-strip">' +
+            '<div class="seat-trick-dots" data-seat-tricks aria-label="Взятки">' +
+            '<span class="trick-dot"></span><span class="trick-dot"></span><span class="trick-dot"></span>' +
+            '</div>' +
+        '</div>' +
         '<div class="seat-hand ' + handModCls + '">' +
             handInner +
-        '</div>' +
-        '<div class="seat-trick-dots" data-seat-tricks aria-label="Взятки">' +
-            '<span class="trick-dot"></span><span class="trick-dot"></span><span class="trick-dot"></span>' +
         '</div>' +
         '<div class="logic-ghost" data-seat-bank></div>'
     );
@@ -9195,8 +9381,9 @@ function engineBuildPlayers(playersCount, options) {
     const humanName = (appState.user && (appState.user.name || appState.user.email)) || (UI_TEXT.menu && UI_TEXT.menu.fallbackName) || "Вы";
 
     /* Архитектура статусов игроков за столом (seatedPlayers):
-       - "active"    — участник ТЕКУЩЕЙ раздачи (получает карты, торгуется,
-                       играет взятки). engine.players.filter(p => p.active).
+       - "active"    — место в партии (может получить карты после раздачи); в текущем
+                       коне игрок в розыгрыше только если enginePlayerActiveInRound(p)
+                       (обычно после раздачи p.active; «Сброс» в торгах → false до новой раздачи).
        - "seated"    — сидит за столом, но игра ещё не начата или ждёт первой
                        раздачи (лобби / waiting-room / перед началом партии).
                        На старте новой раздачи автоматически становится active.
@@ -9215,7 +9402,9 @@ function engineBuildPlayers(playersCount, options) {
 
        activePlayers  = { p ∈ seatedPlayers | p.status === "active" }
        seatedPlayers  = { p ∈ engine.players | p.status ∉ {"spectator","removed"} }
-       Поле p.active = true ⇔ p.status === "active". */
+       Поле в раздаче: enginePlayerActiveInRound(p) ≡ p.active.
+       Поле «в торгах»: enginePlayerActiveInBidding(p) ≡ active и !passedAuction
+       («Уровнять» задаёт passedAuction, но активность в розыгрыше сохраняется). */
     const humanWaiting = !!options.humanWaiting;
     const humanSeated  = !!options.humanSeated && !humanWaiting;
     const humanStatus = humanWaiting ? "waiting" : (humanSeated ? "seated" : "active");
@@ -9231,6 +9420,7 @@ function engineBuildPlayers(playersCount, options) {
         bank: Number(humanProfile.balance) || 3000,
         bid: null,
         passedAuction: false,
+        foldedFromAuction: false,
         status: humanStatus,
         active: humanStatus === "active",
         awayUntil: null,   // ms-timestamp истечения удержания места (только для status === "away")
@@ -9255,6 +9445,7 @@ function engineBuildPlayers(playersCount, options) {
                 bank: profile.bank,
                 bid: null,
                 passedAuction: false,
+                foldedFromAuction: false,
                 status: "seated",
                 active: false,
                 awayUntil: null,
@@ -9277,6 +9468,7 @@ function engineBuildPlayers(playersCount, options) {
             bank: profile.bank,
             bid: null,
             passedAuction: false,
+            foldedFromAuction: false,
             status: "active",
             active: true,
             awayUntil: null,
@@ -9310,7 +9502,7 @@ function engineRenderSeats() {
 
         const player = engine.players.find((p) => p.seatSlot === slotName);
 
-        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-spectator", "is-waiting", "is-away", "game-seat--empty");
+        slotEl.classList.remove("is-active-turn", "is-trick-winner", "is-passed-auction", "is-folded-deal", "is-spectator", "is-waiting", "is-away", "game-seat--empty");
 
         if (!player) {
             slotEl.classList.add("game-seat--empty");
@@ -9328,6 +9520,8 @@ function engineRenderSeats() {
         if (player.status === "waiting") slotEl.classList.add("is-waiting");
         else if (player.status === "away") slotEl.classList.add("is-away");
         else if (player.status === "spectator") slotEl.classList.add("is-spectator");
+
+        if (player.foldedFromAuction) slotEl.classList.add("is-folded-deal");
     });
 
     engineRenderHands();
@@ -9420,7 +9614,7 @@ function engineAdvanceTurn() {
 }
 
 function engineActivePlayersInAuction() {
-    return engine.players.filter((p) => p.active && !p.passedAuction);
+    return engine.players.filter(enginePlayerActiveInBidding);
 }
 
 function engineActivePlayersInPlay() {
@@ -9438,6 +9632,7 @@ function engineDeal() {
         i += 3;
     });
     engine.trumpCard = deck[i];
+    engineCaptureAuctionHandsBackup();
 }
 
 /**
@@ -9451,6 +9646,7 @@ function engineDealSequentialAnimated(onDone) {
 
     if (!n) {
         engine.trumpCard = deck[0] || null;
+        engine._auctionHandsBackup = engine.players.map(() => []);
         engineRenderHands();
         engineRenderTrump();
         engine.actionLock = false;
@@ -9477,6 +9673,7 @@ function engineDealSequentialAnimated(onDone) {
 
     function finalizeDeal() {
         engine.trumpCard = deck[n * 3];
+        engineCaptureAuctionHandsBackup();
         engineRenderHands();
         engineRenderTrump();
         engine.actionLock = false;
@@ -9555,10 +9752,16 @@ function engineUpdateAuctionUI() {
     if (raiseBtn) raiseBtn.disabled = !isHumansTurn || engine.currentBid >= 3;
 
     if (auctionSummaryEl) {
-        const turnOwner = engine.players[engine.currentTurn];
-        const turnText  = engine.phase === "auction"
-            ? (turnOwner && turnOwner.isHuman ? "Твой ход" : ("Ход: " + (turnOwner ? turnOwner.name : "—")))
-            : "Торги завершены";
+        let turnText = "Торги завершены";
+        if (engine.phase === "auction") {
+            const cur = engine.players[engine.currentTurn];
+            if (cur && enginePlayerActiveInBidding(cur)) {
+                turnText = cur.isHuman ? "Твой ход" : ("Ход: " + cur.name);
+            } else {
+                const nxt = engine.players.find(enginePlayerActiveInBidding);
+                turnText = nxt ? (nxt.isHuman ? "Твой ход" : ("Ход: " + nxt.name)) : "—";
+            }
+        }
         auctionSummaryEl.innerText = "Ставка: " + engine.currentBid + " · " + turnText;
     }
 }
@@ -9569,14 +9772,15 @@ function engineRunAuctionTurn() {
     engineUpdateAuctionUI();
 
     const remaining = engineActivePlayersInAuction();
-    if (remaining.length <= 1 && engine.lastBidderIdx !== null) {
+    /* Сначала «никого», иначе (0 ≤ 1) уйдём в завершение без восстановления рук. */
+    if (remaining.length === 0) {
+        engineAuctionRestoreAfterAllDroppedFromBidding();
+        engineRenderSeats();
+        if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
         engineResolveAuction();
         return;
     }
-    if (remaining.length === 0) {
-        // все спасовали на 0 — победителем считается локальный игрок
-        engine.lastBidderIdx = engine.humanIdx;
-        engine.currentBid = 1;
+    if (remaining.length <= 1 && engine.lastBidderIdx !== null) {
         engineResolveAuction();
         return;
     }
@@ -9626,27 +9830,39 @@ function engineBotAuctionDecision(p) {
 
 function engineDoAuctionPass(playerIdx) {
     const p = engine.players[playerIdx];
+    if (!p || !p.active) return;
+    /* «Сброс» — всегда выход из торгов и из текущей раздачи (руки до следующего кона нет).
+       Если после этого никто не остался в торгах, engineRunAuctionTurn восстановит минимальный контракт. */
     p.passedAuction = true;
-    setMessage(p.isHuman ? "Ты спасовал" : (p.name + " спасовал"));
+    p.active = false;
+    p.foldedFromAuction = true;
+    p.hand = [];
+    setMessage(p.isHuman ? "Ты сошёл с раздачи" : (p.name + " сошёл с раздачи"));
+    engineRenderSeats();
+    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
     engineAfterAuctionAction();
 }
 
 function engineDoAuctionCall(playerIdx) {
     const p = engine.players[playerIdx];
+    if (!p || !p.active) return;
     p.bid = engine.currentBid;
-    setMessage((p.isHuman ? "Ты" : p.name) + " уравнял " + engine.currentBid);
-    p.passedAuction = true; // принял текущую и выходит из дальнейшего торга
+    /* «Уровнять» — ставка текущего уровня, дальнейший торг не ведёт, но участие в розыгрыше сохраняет. */
+    setMessage((p.isHuman ? "Ты" : p.name) + " уровнял " + engine.currentBid);
+    p.passedAuction = true;
     engineAfterAuctionAction();
 }
 
 function engineDoAuctionRaise(playerIdx, raiseTo) {
     const p = engine.players[playerIdx];
+    if (!p || !p.active) return;
     if (raiseTo <= engine.currentBid) raiseTo = engine.currentBid + 1;
     raiseTo = Math.min(raiseTo, 3);
 
     engine.currentBid = raiseTo;
     engine.lastBidderIdx = playerIdx;
     p.bid = raiseTo;
+    p.passedAuction = false;
 
     const addAmount = Math.max(0, engine.currentBid * engine.baseStake - engine.pot);
     if (addAmount > 0 && p.bank >= addAmount) {
@@ -9670,14 +9886,34 @@ function engineAfterAuctionAction() {
 
 function engineResolveAuction() {
     engine.phase = "play";
-    engine.auctionWinnerIdx = engine.lastBidderIdx != null ? engine.lastBidderIdx : engine.humanIdx;
+    let winIdx = engine.lastBidderIdx != null ? engine.lastBidderIdx : engine.humanIdx;
+    const w0 = engine.players[winIdx];
+    /* Последний игрок мог поднять ставку и позже спасовать с выходом из раздачи;
+       победитель торгов — активный игрок с картами. */
+    if (!w0 || !w0.active || !(w0.hand && w0.hand.length)) {
+        winIdx = engine.players.findIndex(
+            (p) => p && p.active && p.hand && p.hand.length > 0
+        );
+        if (winIdx < 0) {
+            winIdx = engine.players.findIndex((p) => p && p.active);
+        }
+        if (winIdx < 0) {
+            winIdx = engine.lastBidderIdx != null ? engine.lastBidderIdx : engine.humanIdx;
+        }
+    }
+    engine.auctionWinnerIdx = winIdx;
     engine.leaderIdx = engine.auctionWinnerIdx;
     engine.currentTurn = engine.leaderIdx;
     engine.players.forEach((p) => { p.passedAuction = false; });
 
     if (auctionBarEl) auctionBarEl.classList.add("hidden");
     const winner = engine.players[engine.auctionWinnerIdx];
-    setMessage("Торги завершены. Первый ход: " + (winner.isHuman ? "ты" : winner.name));
+    const firstName = winner && (winner.isHuman ? "ты" : winner.name);
+    setMessage(
+        firstName
+            ? "Торги завершены. Первый ход: " + firstName
+            : "Торги завершены."
+    );
 
     engineUpdateActiveTurnClass();
 
@@ -9720,70 +9956,63 @@ function engineReadPlayedCardWidthPx(played) {
 }
 
 /**
- * Прямоугольник старта анимации раздачи (.game--v2): центр между зоной козыря и
- * логической колодой (#deckStack); иначе колода / правый край центра / вьюпорт.
+ * Старт анимации раздачи: зона козыря / колоды (не геом. центр стола).
+ * Раньше бралось среднее trump+deck; у .deck-area задан inset:0 на весь .game-center,
+ * поэтому «центр колоды» оказывался в середине поля — карты «вылетали из центра».
  */
 function engineGetDealSourceRect() {
     const cardW = 48;
     const cardH = 68;
 
-    try {
-        const center = document.querySelector(".game--v2 .game-center");
-        const trumpZone = center ? center.querySelector(".trump-area") : null;
-        const rTrump = trumpZone ? trumpZone.getBoundingClientRect() : null;
-        const rDeck =
-            deckStackEl && deckStackEl.isConnected ? deckStackEl.getBoundingClientRect() : null;
-        const trumpOk = rTrump && rTrump.width > 3 && rTrump.height > 3;
-        const deckOk = rDeck && rDeck.width > 3 && rDeck.height > 3;
+    function fromCenter(cx, cy) {
+        return {
+            left: Math.round(cx - cardW / 2),
+            top: Math.round(cy - cardH / 2),
+            width: cardW,
+            height: cardH,
+        };
+    }
 
-        let cx;
-        let cy;
-        if (trumpOk && deckOk) {
-            const tcx = (rTrump.left + rTrump.right) / 2;
-            const dcx = (rDeck.left + rDeck.right) / 2;
-            const tcy = (rTrump.top + rTrump.bottom) / 2;
-            const dcy = (rDeck.top + rDeck.bottom) / 2;
-            cx = (tcx + dcx) / 2;
-            cy = (tcy + dcy) / 2;
-        } else if (trumpOk) {
-            cx = (rTrump.left + rTrump.right) / 2;
-            cy = (rTrump.top + rTrump.bottom) / 2;
-        } else if (deckOk) {
-            cx = (rDeck.left + rDeck.right) / 2;
-            cy = (rDeck.top + rDeck.bottom) / 2;
+    try {
+        const gameCenter = document.querySelector(".game--v2 .game-center");
+
+        const trumpSlot = document.getElementById("trumpSlot");
+        if (trumpSlot) {
+            const r = trumpSlot.getBoundingClientRect();
+            if (r.width > 3 && r.height > 3) {
+                return fromCenter((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+            }
         }
 
-        if (Number.isFinite(cx) && Number.isFinite(cy)) {
+        if (deckStackEl && deckStackEl.isConnected) {
+            const r = deckStackEl.getBoundingClientRect();
+            if (r.width > 3 && r.height > 3) {
+                return fromCenter((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+            }
+        }
+
+        const trumpArea = gameCenter ? gameCenter.querySelector(".trump-area") : null;
+        if (trumpArea) {
+            const r = trumpArea.getBoundingClientRect();
+            if (r.width > 3 && r.height > 3) {
+                return fromCenter((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+            }
+        }
+
+        if (gameCenter) {
+            const r = gameCenter.getBoundingClientRect();
             return {
-                left: Math.round(cx - cardW / 2),
-                top: Math.round(cy - cardH / 2),
+                left: Math.round(r.right - cardW - 12),
+                top: Math.round(r.top + 44),
                 width: cardW,
                 height: cardH,
             };
         }
     } catch (_) {}
 
-    try {
-        if (deckStackEl) {
-            const r = deckStackEl.getBoundingClientRect();
-            if (r.width > 3 && r.height > 3) return r;
-        }
-    } catch (_) {}
-    const center = document.querySelector(".game--v2 .game-center");
-    if (center) {
-        const r = center.getBoundingClientRect();
-        const w = cardW;
-        const h = Math.round(cardH);
-        return {
-            left: Math.round(r.right - w - 24),
-            top: Math.round(r.top + r.height * 0.44 - h / 2),
-            width: w,
-            height: h,
-        };
-    }
     return {
-        left: window.innerWidth * 0.5 - 24,
-        top: window.innerHeight * 0.38,
+        left: Math.round(window.innerWidth * 0.5 - cardW / 2),
+        top: Math.round(window.innerHeight * 0.3),
         width: cardW,
         height: cardH,
     };
@@ -10418,11 +10647,14 @@ function engineFinishGame(opts) {
      массива игроков. Это выполняет требование п.3 ТЗ. */
 function engineStartNextHand() {
     clearHumanLobbyReadyWatch();
+    engine._auctionHandsBackup = null;
     /* Сбор состава новой раздачи: seated + waiting → active.
        away/spectator/removed остаются вне партии. */
     engine.players.forEach((p) => {
         if (p.status === "seated" || p.status === "waiting") {
             p.status = "active";
+            p.active = true;
+        } else if (p.status === "active") {
             p.active = true;
         }
         if ("lobbyReady" in p) delete p.lobbyReady;
@@ -10431,6 +10663,7 @@ function engineStartNextHand() {
         p.scoreTricks = 0;
         p.bid = null;
         p.passedAuction = false;
+        p.foldedFromAuction = false;
     });
     engine.humanJoinedMidGame = false;
     engine.pot = 0;
