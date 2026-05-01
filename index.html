@@ -1336,7 +1336,7 @@ h1 {
 .game--v2 h1 { display: none; }
 
 /* Нейтрализация физического "стола" и старых абсолютных позиций */
-.game--v2 .game-arena { background: none; border: 0; box-shadow: none; min-height: 0; border-radius: 0; padding: 6px clamp(6px, 1.6vw, 14px) 12px; }
+.game--v2 .game-arena { background: none; border: 0; box-shadow: none; min-height: 0; border-radius: 0; min-width: 0; }
 .game--v2 .game-arena::before,
 .game--v2 .game-arena::after { display: none !important; content: none; }
 
@@ -2007,7 +2007,7 @@ h1 {
     .invite-title { font-size: 20px; }
 }
 
-/* ======================== TABLE FOOTER: события + торги ======================== */
+/* ======================== TABLE FOOTER: торги ======================== */
 
 .game--v2 .game-table-footer {
     flex-shrink: 0;
@@ -2016,21 +2016,284 @@ h1 {
     align-items: center;
     gap: clamp(8px, 2vw, 11px);
     width: 100%;
-    padding: 6px clamp(10px, 2.4vw, 16px);
+    padding: 8px clamp(10px, 2.4vw, 16px);
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     margin-top: auto;
     box-sizing: border-box;
 }
 
-.game--v2 .game-status-panel {
-    width: min(560px, 100%);
+/*
+ * Журнал «События стола»: вне .game-arena, fixed-shell — не влияет на grid и высоту flex.
+ */
+.game--v2 #gameWaitingBanner {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.game--v2 .game-events-shell {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 16;
+}
+.game--v2 .game-events-shell > .game-events-fab,
+.game--v2 .game-events-shell > .game-events-dock,
+.game--v2 .game-events-shell > .game-events-toast {
+    pointer-events: auto;
+}
+
+.game--v2 .game-events-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 2, 4, 0.52);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease, visibility 0.22s linear;
+    backdrop-filter: blur(2px);
+}
+.game--v2 .game-events-shell.is-sheet-open .game-events-sheet-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.game--v2 .game-events-toast {
+    position: absolute;
+    left: 50%;
+    bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 76px));
+    transform: translateX(-50%) translateY(120%);
+    z-index: 46;
+    max-width: min(360px, calc(100% - 28px));
+    padding: 10px 16px;
     border-radius: 14px;
-    border: 1px solid rgba(216, 178, 76, 0.5);
-    background: linear-gradient(180deg, rgba(52, 14, 28, 0.96) 0%, rgba(14, 4, 10, 0.98) 100%);
+    background: rgba(14, 4, 10, 0.94);
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    color: rgba(247, 227, 165, 0.95);
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(13px, 3.8vw, 15px);
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 14px rgba(216, 140, 60, 0.12);
+    opacity: 0;
+    visibility: visible;
+    pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.game--v2 .game-events-toast.hidden { display: none !important; }
+.game--v2 .game-events-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.game--v2 .game-events-fab {
+    display: none;
+    position: absolute;
+    bottom: max(112px, calc(env(safe-area-inset-bottom, 0px) + 94px));
+    right: max(14px, calc(env(safe-area-inset-right, 0px) + 8px));
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    place-items: center;
+    padding: 0;
+    cursor: pointer;
+    color: #f7e3a5;
+    border: 1px solid rgba(247, 227, 165, 0.65);
+    background: linear-gradient(180deg, rgba(74, 22, 36, 0.95) 0%, rgba(30, 8, 16, 0.98) 100%);
     box-shadow:
-        0 4px 18px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 214, 130, 0.08);
+        0 6px 18px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 214, 130, 0.1);
+    z-index: 40;
+    transition: transform 0.15s ease, filter 0.18s ease;
+}
+.game--v2 .game-events-fab:active { transform: scale(0.96); }
+.game--v2 .game-events-shell.is-sheet-open .game-events-fab {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+.game-events-fab-badge {
+    position: absolute;
+    top: -4px;
+    left: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #c43b3b, #7a1420);
+    border: 1px solid rgba(255, 210, 150, 0.45);
+    color: #fff8f0;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: "Inter", system-ui, sans-serif;
+    display: grid;
+    place-items: center;
+}
+.game-events-fab-badge.hidden { display: none !important; }
+
+.game--v2 .game-events-dock.game-status-panel {
+    position: absolute;
+    bottom: max(14px, env(safe-area-inset-bottom, 0px));
+    right: max(11px, env(safe-area-inset-right, 0px));
+    left: auto;
+    top: auto;
+    width: min(244px, calc(100vw - 22px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+    max-height: min(240px, 38vh);
+    display: flex;
+    flex-direction: column;
+    margin: 0;
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(216, 178, 76, 0.5);
+    background: linear-gradient(180deg, rgba(52, 14, 28, 0.97) 0%, rgba(14, 4, 10, 0.99) 100%);
+    box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 214, 130, 0.08);
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.22s ease;
+}
+
+.game--v2 .game-events-dock .game-status-panel__head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-right: 8px;
+}
+.game-events-panel-toggle {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(247, 227, 165, 0.85);
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+    position: relative;
+}
+.game-events-panel-toggle:hover {
+    background: rgba(255, 214, 130, 0.06);
+    color: #f7e3a5;
+}
+
+@media (min-width: 701px) {
+    .game-events-panel-toggle.has-unread::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        right: 2px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #ff6b6b, #c42a2a);
+        box-shadow: 0 0 0 2px rgba(14, 4, 10, 0.95);
+        pointer-events: none;
+    }
+}
+
+.game-events-panel-toggle-icon {
+    display: block;
+    transition: transform 0.25s ease;
+}
+.game--v2 .game-events-shell.is-collapsed .game-events-panel-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.game--v2 .game-events-shell.is-collapsed .game-status-panel__feed-wrap {
+    display: none;
+}
+.game--v2 .game-events-shell.is-collapsed .game-events-dock {
+    max-height: none;
+}
+
+.game--v2 .game-events-dock .game-status-panel__feed-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.game--v2 .game-events-dock .game-status-panel__feed {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: min(154px, 28vh);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.38) transparent;
+    padding: 6px 10px;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    line-height: 1.42;
+    color: rgba(244, 214, 138, 0.9);
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 700px) {
+    .game--v2 .game-events-fab {
+        display: grid;
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .game--v2 .game-events-shell {
+        pointer-events: none;
+    }
+    .game--v2 .game-events-shell.is-sheet-open {
+        pointer-events: auto;
+    }
+
+    .game--v2 .game-events-shell:not(.is-sheet-open) .game-events-dock.game-status-panel {
+        pointer-events: none;
+    }
+    .game--v2 .game-events-shell.is-sheet-open .game-events-dock.game-status-panel {
+        pointer-events: auto;
+    }
+
+    /* Лист как bottom sheet на малых экранах */
+    .game--v2 .game-events-shell .game-events-dock.game-status-panel {
+        position: absolute;
+        left: max(0px, env(safe-area-inset-left, 0px));
+        right: max(0px, env(safe-area-inset-right, 0px));
+        bottom: 0;
+        width: auto;
+        max-width: none;
+        max-height: min(52vh, 420px);
+        border-radius: 18px 18px 0 0;
+        transform: translateY(108%);
+        opacity: 0.98;
+        z-index: 41;
+        border-bottom: none;
+    }
+    .game--v2 .game-events-shell.is-sheet-open .game-events-dock.game-status-panel {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .game--v2 .game-events-shell.is-sheet-open .game-events-panel-toggle-icon {
+        transform: rotate(180deg);
+    }
+    .game--v2 .game-events-dock .game-status-panel__feed {
+        max-height: min(calc(52vh - 52px), 320px);
+        font-size: 10.5px;
+        padding: 6px 10px;
+    }
+    /* На телефоне «свернуть» только закрывает лист; класс .is-collapsed не используется */
+    .game--v2 .game-events-shell:not(.is-sheet-open) .game-status-panel__feed-wrap {
+        display: flex;
+    }
+}
+
+@media (min-width: 701px) {
+    .game--v2 .game-events-dock .game-status-panel__feed {
+        max-height: min(168px, 30vh);
+        font-size: 11.5px;
+    }
 }
 
 .game-status-panel__head {
@@ -2075,44 +2338,6 @@ h1 {
     border-bottom-width: 0;
     padding-bottom: 2px;
 }
-
-@media (min-width: 701px) {
-    .game-status-panel__feed {
-        max-height: min(116px, 18vh);
-        font-size: 12px;
-    }
-}
-
-.game--v2 #result.game-status-panel__sticky {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    transform: none;
-    width: 100%;
-    min-height: 0;
-    margin: 0;
-    padding: 7px 10px;
-    pointer-events: none;
-    z-index: 5;
-    border-top: 1px solid rgba(216, 178, 76, 0.22);
-    background: rgba(10, 3, 8, 0.35);
-    box-sizing: border-box;
-}
-
-.game--v2 .game-status-panel .status-pill,
-.game--v2 .game-status-current.status-pill {
-    display: block;
-    width: 100%;
-    max-width: none;
-    text-align: center;
-    pointer-events: auto;
-    margin: 0 auto;
-    border-radius: 10px;
-    box-sizing: border-box;
-}
-
-
-
 
 .seat-tricks-strip {
     width: 100%;
@@ -2417,8 +2642,16 @@ h1 {
         auto
         auto;
     gap: clamp(6px, 1.6vw, 12px);
-    padding: clamp(6px, 1.8vw, 14px);
+    padding:
+        clamp(18px, 3.6vw, 34px)
+        clamp(8px, 2vw, 14px)
+        clamp(10px, 2.2vw, 18px)
+        clamp(8px, 2vw, 14px);
     align-items: start;
+}
+
+.game--v2 .game-seat--top {
+    margin-top: clamp(6px, 1.8vw, 14px);
 }
 
 .game-seat--top {
@@ -3101,6 +3334,46 @@ h1 {
 .game--v2 .game-act-icon svg { width: 100%; height: 100%; }
 .game--v2 .game-act-label { line-height: 1; }
 
+/* --------- Desktop: без layout shift при динамике торгов и лобби ---------- */
+@media (min-width: 701px) {
+    /* Топбар не «играет» по высоте при появлении кнопки «Пригласить». */
+    .game--v2 .game-topbar {
+        min-height: calc(54px + env(safe-area-inset-top, 0px));
+    }
+
+    /*
+     * Полоса «Готов»: резерв высоты + absolute — row 6 grid не дергается
+     * при скрытии/появлении (display:none у .game-human-lobby.hidden).
+     */
+    .game--v2 .game-you-stack {
+        position: relative;
+        padding-bottom: clamp(54px, 7.5vmin, 72px);
+    }
+    .game--v2 #gameLobbyReadyWrap {
+        position: absolute;
+        left: 50%;
+        bottom: clamp(4px, 1vw, 10px);
+        transform: translateX(-50%);
+        width: auto;
+        max-width: calc(100% - 14px);
+    }
+    .game--v2 .game-human-lobby-bar:not(.hidden) {
+        min-height: 48px;
+        box-sizing: border-box;
+        align-items: center;
+    }
+
+    /*
+     * Торги: .hidden только скрывает визуально — габарит остаётся,
+     * flex:1 арены не расширяется/сжимается между фазами.
+     */
+    .game--v2 #auctionBar.hidden,
+    .game--v2 .auction-bar.hidden {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
 /* Поджигаем акцент ключевой кнопке "Поднять" */
 .game--v2 .game-act--raise {
     background: linear-gradient(180deg, rgba(92, 28, 42, 0.85) 0%, rgba(42, 10, 18, 0.9) 100%);
@@ -3116,7 +3389,10 @@ h1 {
     .game--v2 .game-arena {
         grid-template-columns: minmax(68px, 1fr) minmax(146px, 2.72fr) minmax(68px, 1fr);
         gap: 4px;
-        padding: 4px clamp(5px, 1.8vw, 10px);
+        padding:
+            clamp(14px, 3.2vw, 24px)
+            clamp(5px, 1.8vw, 10px)
+            clamp(6px, 1.8vw, 12px);
         grid-template-rows:
             auto
             auto
@@ -3152,11 +3428,6 @@ h1 {
         padding-left: 8px;
         padding-right: 8px;
         gap: 8px;
-    }
-    .game-status-panel__feed {
-        max-height: 48px;
-        font-size: 10.5px;
-        padding: 5px 10px;
     }
 }
 
@@ -5653,10 +5924,31 @@ h1 {
                 <span class="game-human-ready-timer hidden" data-human-ready-timer aria-live="polite"></span>
             </div>
         </div>
+
     </div>
 
-    <!-- Баннер ожидания: показывается только в phase === "waiting" (только что
-         созданный приватный/открытый стол, игроки ещё не пришли). -->
+    <!-- Журнал событий: fixed вне арены; на мобиле — FAB + bottom sheet -->
+    <div class="game-events-shell" id="gameEventsShell">
+        <div class="game-events-toast hidden" id="gameEventsToast" aria-live="polite" role="status"></div>
+        <div class="game-events-sheet-backdrop" id="gameEventsSheetBackdrop" aria-hidden="true"></div>
+        <button type="button" class="game-events-fab" id="gameEventsFab" aria-label="События стола">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h14v2H4z" fill="currentColor"/></svg>
+            <span class="game-events-fab-badge hidden" id="gameEventsUnreadBadge" aria-live="polite"></span>
+        </button>
+        <aside class="game-events-dock game-status-panel" id="gameStatusPanel" aria-label="События и статус партии">
+            <div class="game-status-panel__head">
+                <span class="game-status-panel__title">События стола</span>
+                <button type="button" class="game-events-panel-toggle" id="gameEventsPanelToggle" aria-expanded="true" title="Свернуть журнал">
+                    <svg class="game-events-panel-toggle-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+            <div class="game-status-panel__feed-wrap" id="gameStatusFeedWrap">
+                <div class="game-status-panel__feed" id="gameStatusFeed" role="log" aria-relevant="additions"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Баннер ожидания (тексты перенесены в журнал «События стола»; блок не показывается). -->
     <div class="game-waiting-banner hidden" id="gameWaitingBanner" role="status" aria-live="polite">
         <span class="game-waiting-dot" aria-hidden="true"></span>
         <span class="game-waiting-text" data-game-waiting-text>Ждём игроков…</span>
@@ -5724,18 +6016,8 @@ h1 {
         </div>
     </div>
 
-    <!-- Нижняя зона: хронология/события + текущая строка + торги -->
+    <!-- Нижняя зона: торги -->
     <div class="game-table-footer" id="gameTableFooter">
-        <aside class="game-status-panel" id="gameStatusPanel" aria-label="События и статус партии">
-            <div class="game-status-panel__head">
-                <span class="game-status-panel__title">События стола</span>
-            </div>
-            <div class="game-status-panel__feed" id="gameStatusFeed" role="log"></div>
-            <div id="result" class="game-status-panel__sticky">
-                <div class="status-pill game-status-current" id="statusPill">Начинаются торги. Выбери действие.</div>
-            </div>
-        </aside>
-
     <!-- ========== ACTIONS (Сброс / Уровнять / Поднять) ========== -->
     <div class="auction-bar game-actions" id="auctionBar">
         <div class="auction-summary" id="auctionSummary">Ставка: 0 · Твой ход в торгах</div>
@@ -5810,9 +6092,209 @@ const fullDeckSize = 27;
 
 const playerCardEl = document.getElementById("playerCard");
 const botCardEl = document.getElementById("botCard");
-const statusPillEl = document.getElementById("statusPill");
 const gameStatusFeedEl = document.getElementById("gameStatusFeed");
 const GAME_STATUS_FEED_CAP = 40;
+
+let gameWaitingFeedSynced = null;
+let gameEventsUnreadCount = 0;
+let gameEventToastShowTimer = null;
+let gameEventToastHideTimer = null;
+
+function deriveGameWaitingBannerText(room, human, engine) {
+    if (!engine) return "";
+    const isPlayerWaiting = !!(human && human.status === "waiting");
+    if (isPlayerWaiting) {
+        return (UI_TEXT.seatWaiting && UI_TEXT.seatWaiting.statusMessage) || "";
+    }
+    const isTableWaiting = engine.phase === "waiting";
+    if (isTableWaiting && typeof tableIsPreGameLobby === "function" && tableIsPreGameLobby()) {
+        const L = UI_TEXT.lobby || {};
+        const seated = (engine.players || []).filter((p) => p.status === "seated");
+        const allReady = seated.length > 0 && seated.every((p) => !p.isHuman || p.lobbyReady === true);
+        if (seated.length < 2) {
+            return (room && room.type === "private")
+                ? (UI_TEXT.invite.waitingPrivate || "")
+                : (L.bannerNeedPlayers || UI_TEXT.invite.waitingText || "");
+        }
+        if (!allReady) {
+            if (human && human.isHuman && human.lobbyReady === true) {
+                return L.bannerYouReadyWait || UI_TEXT.invite.waitingText || "";
+            }
+            return L.bannerPressReady || UI_TEXT.invite.waitingText || "";
+        }
+        return L.bannerWaitAllReady || UI_TEXT.invite.waitingText || "";
+    }
+    if (room && room.type === "private") return UI_TEXT.invite.waitingPrivate || "";
+    return UI_TEXT.invite.waitingText || "";
+}
+
+function syncWaitingStatusToFeed(showBanner, label) {
+    if (!showBanner) {
+        gameWaitingFeedSynced = null;
+        return;
+    }
+    const t = (label != null && String(label).trim()) || "";
+    if (!t || t === gameWaitingFeedSynced) return;
+    gameWaitingFeedSynced = t;
+    pushGameStatusFeedLine(t);
+}
+
+function bumpGameEventsUnreadMaybe() {
+    const shell = document.getElementById("gameEventsShell");
+    if (!shell) return;
+    const narrow = window.matchMedia("(max-width: 700px)").matches;
+    if (narrow) {
+        if (!shell.classList.contains("is-sheet-open")) {
+            gameEventsUnreadCount++;
+            updateGameEventsUnreadBadge();
+        }
+    } else if (shell.classList.contains("is-collapsed")) {
+        gameEventsUnreadCount++;
+        updateGameEventsUnreadBadge();
+    }
+}
+
+function updateGameEventsUnreadBadge() {
+    const b = document.getElementById("gameEventsUnreadBadge");
+    const toggle = document.getElementById("gameEventsPanelToggle");
+    const shell = document.getElementById("gameEventsShell");
+    const narrow = window.matchMedia("(max-width: 700px)").matches;
+    if (toggle && shell && !narrow) {
+        toggle.classList.toggle("has-unread", gameEventsUnreadCount > 0 && shell.classList.contains("is-collapsed"));
+    } else if (toggle) {
+        toggle.classList.remove("has-unread");
+    }
+    if (!b) return;
+    if (gameEventsUnreadCount <= 0) {
+        b.textContent = "";
+        b.classList.add("hidden");
+        return;
+    }
+    b.textContent = gameEventsUnreadCount > 9 ? "9+" : String(gameEventsUnreadCount);
+    b.classList.remove("hidden");
+}
+
+function clearGameEventsUnreadBadge() {
+    gameEventsUnreadCount = 0;
+    updateGameEventsUnreadBadge();
+}
+
+function showGameEventToast(msg) {
+    const narrow = window.matchMedia("(max-width: 700px)").matches;
+    const el = document.getElementById("gameEventsToast");
+    if (!narrow || !el || msg == null) return;
+    const s = String(msg).trim();
+    if (!s) return;
+    el.textContent = s;
+    el.classList.remove("hidden");
+    window.requestAnimationFrame(() => el.classList.add("is-visible"));
+    if (gameEventToastShowTimer) clearTimeout(gameEventToastShowTimer);
+    if (gameEventToastHideTimer) clearTimeout(gameEventToastHideTimer);
+    gameEventToastShowTimer = setTimeout(() => {
+        el.classList.remove("is-visible");
+        gameEventToastHideTimer = setTimeout(() => {
+            el.classList.add("hidden");
+        }, 320);
+        gameEventToastShowTimer = null;
+    }, 2600);
+}
+
+function bindGameEventsHandlers() {
+    const shell = document.getElementById("gameEventsShell");
+    const fab = document.getElementById("gameEventsFab");
+    const backdrop = document.getElementById("gameEventsSheetBackdrop");
+    const toggle = document.getElementById("gameEventsPanelToggle");
+    if (!shell || !fab || !toggle) return;
+
+    const mqNarrow = () => window.matchMedia("(max-width: 700px)").matches;
+
+    function applyDesktopCollapsedFromStorage() {
+        if (mqNarrow()) return;
+        try {
+            if (sessionStorage.getItem("azi_game_events_collapsed") === "1") {
+                shell.classList.add("is-collapsed");
+            }
+        } catch (_) { /* приватный режим / запрет storage */ }
+    }
+
+    function updateToggleLabel() {
+        const narrow = mqNarrow();
+        if (narrow) {
+            const open = shell.classList.contains("is-sheet-open");
+            toggle.title = open ? "Закрыть" : "Открыть";
+            toggle.setAttribute("aria-label", open ? "Закрыть журнал событий" : "Открыть журнал событий");
+            toggle.setAttribute("aria-expanded", open ? "true" : "false");
+            if (backdrop) backdrop.setAttribute("aria-hidden", open ? "false" : "true");
+        } else {
+            const collapsed = shell.classList.contains("is-collapsed");
+            toggle.title = collapsed ? "Развернуть журнал" : "Свернуть журнал";
+            toggle.setAttribute("aria-label", collapsed ? "Развернуть журнал" : "Свернуть журнал");
+            toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
+    }
+
+    function openMobileSheet() {
+        if (!mqNarrow()) return;
+        shell.classList.add("is-sheet-open");
+        clearGameEventsUnreadBadge();
+        updateToggleLabel();
+    }
+
+    function closeMobileSheet() {
+        shell.classList.remove("is-sheet-open");
+        updateToggleLabel();
+    }
+
+    fab.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!mqNarrow()) return;
+        openMobileSheet();
+    });
+
+    if (backdrop) {
+        backdrop.addEventListener("click", () => {
+            if (mqNarrow() && shell.classList.contains("is-sheet-open")) closeMobileSheet();
+        });
+    }
+
+    toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (mqNarrow()) {
+            if (shell.classList.contains("is-sheet-open")) closeMobileSheet();
+            else openMobileSheet();
+        } else {
+            shell.classList.toggle("is-collapsed");
+            try {
+                sessionStorage.setItem("azi_game_events_collapsed",
+                    shell.classList.contains("is-collapsed") ? "1" : "0");
+            } catch (_) { /* ignore */ }
+            if (!shell.classList.contains("is-collapsed")) clearGameEventsUnreadBadge();
+            updateToggleLabel();
+        }
+    });
+
+    let resizeT = null;
+    window.addEventListener("resize", () => {
+        window.clearTimeout(resizeT);
+        resizeT = window.setTimeout(() => {
+            if (!mqNarrow()) {
+                closeMobileSheet();
+                applyDesktopCollapsedFromStorage();
+            } else {
+                shell.classList.remove("is-collapsed");
+                closeMobileSheet();
+            }
+            updateToggleLabel();
+        }, 140);
+    });
+
+    applyDesktopCollapsedFromStorage();
+    if (mqNarrow()) {
+        shell.classList.remove("is-collapsed");
+        closeMobileSheet();
+    }
+    updateToggleLabel();
+}
 const trumpSlotEl = document.getElementById("trumpSlot");
 const deckCountEl = document.getElementById("deckCount");
 const deckStackEl = document.getElementById("deckStack");
@@ -5876,10 +6358,16 @@ function pushGameStatusFeedLine(text) {
     while (gameStatusFeedEl.children.length > GAME_STATUS_FEED_CAP)
         gameStatusFeedEl.removeChild(gameStatusFeedEl.firstChild);
     gameStatusFeedEl.scrollTop = gameStatusFeedEl.scrollHeight;
+    bumpGameEventsUnreadMaybe();
+    const shell = document.getElementById("gameEventsShell");
+    const narrow = window.matchMedia("(max-width: 700px)").matches;
+    if (narrow && shell && !shell.classList.contains("is-sheet-open")) {
+        showGameEventToast(t);
+    }
 }
 
 function setMessage(text) {
-    if (statusPillEl) statusPillEl.innerText = text;
+    /* Один канал: только журнал в углу стола (без дублирующей плашки по центру). */
     pushGameStatusFeedLine(text);
 }
 
@@ -6850,7 +7338,15 @@ function resetGame() {
 function animatePlayerFoldToCenter(callback) {
     actionLock = true;
     const cards = Array.from(playerHandEl.querySelectorAll(".card"));
-    const targetRect = statusPillEl.getBoundingClientRect();
+    let targetRect = playedAreaEl && playedAreaEl.getBoundingClientRect
+        ? playedAreaEl.getBoundingClientRect()
+        : null;
+    if (!targetRect || targetRect.width < 4 || targetRect.height < 4) {
+        targetRect =
+            typeof tableZoneEl !== "undefined" && tableZoneEl && tableZoneEl.getBoundingClientRect
+                ? tableZoneEl.getBoundingClientRect()
+                : { left: 0, top: 120, width: 320, height: 96 };
+    }
 
     if (!cards.length) {
         playerCards = [];
@@ -7675,11 +8171,7 @@ function renderGameTopbar() {
         }
     }
 
-    /* Баннер поверх арены имеет два сценария:
-       1. Table-waiting (engine.phase === "waiting") — стол ещё не начат,
-          создатель ждёт игроков / приглашённых.
-       2. Player-waiting (human.status === "waiting") — партия идёт без
-          человека, он подсел в середине и ждёт следующую раздачу. */
+    /* Статусы ожидания — только журнал событий; верхний баннер отключён. */
     const room = (engine && engine.currentTable) || appState.currentRoom || null;
     const isTableWaiting = engine && engine.phase === "waiting";
     const human = engine && engine.players && engine.players[engine.humanIdx];
@@ -7690,37 +8182,11 @@ function renderGameTopbar() {
     if (inviteBtn) inviteBtn.classList.toggle("hidden", !(isTableWaiting && isOwner));
 
     const banner = document.getElementById("gameWaitingBanner");
-    if (banner) {
-        const showBanner = isTableWaiting || isPlayerWaiting;
-        banner.classList.toggle("hidden", !showBanner);
-        const textEl = banner.querySelector("[data-game-waiting-text]");
-        if (textEl) {
-            if (isPlayerWaiting) {
-                textEl.textContent = UI_TEXT.seatWaiting.statusMessage;
-            } else if (isTableWaiting && typeof tableIsPreGameLobby === "function" && tableIsPreGameLobby()) {
-                const L = UI_TEXT.lobby || {};
-                const seated = (engine.players || []).filter((p) => p.status === "seated");
-                const allReady = seated.length > 0 && seated.every((p) => !p.isHuman || p.lobbyReady === true);
-                if (seated.length < 2) {
-                    textEl.textContent = (room && room.type === "private")
-                        ? UI_TEXT.invite.waitingPrivate
-                        : (L.bannerNeedPlayers || UI_TEXT.invite.waitingText);
-                } else if (!allReady) {
-                    if (human && human.isHuman && human.lobbyReady === true) {
-                        textEl.textContent = L.bannerYouReadyWait || UI_TEXT.invite.waitingText;
-                    } else {
-                        textEl.textContent = L.bannerPressReady || UI_TEXT.invite.waitingText;
-                    }
-                } else {
-                    textEl.textContent = L.bannerWaitAllReady || UI_TEXT.invite.waitingText;
-                }
-            } else if (room && room.type === "private") {
-                textEl.textContent = UI_TEXT.invite.waitingPrivate;
-            } else {
-                textEl.textContent = UI_TEXT.invite.waitingText;
-            }
-        }
-    }
+    if (banner) banner.classList.add("hidden");
+
+    const showWaitingBannerScenario = isTableWaiting || isPlayerWaiting;
+    const waitingLabel = deriveGameWaitingBannerText(room, human, engine);
+    syncWaitingStatusToFeed(showWaitingBannerScenario, waitingLabel);
     updateLobbyReadyUI();
 }
 
@@ -9621,17 +10087,57 @@ function engineActivePlayersInPlay() {
     return engine.players.filter((p) => p.active);
 }
 
+/**
+ * Если в коне остался ровно один активный участник (все остальные сошли / away),
+ * немедленно завершаем партию без розыгрыша в одного. Срабатывает только если
+ * после раздачи в коне было минимум два участника с картами (_dealParticipantsAtStartCount).
+ */
+function engineTryFinishPartySoloWinner() {
+    if (engine._soloPartyEnding) return false;
+    const ph = engine.phase;
+    if (ph !== "auction" && ph !== "play") return false;
+    if (!engine._dealParticipantsAtStartCount || engine._dealParticipantsAtStartCount < 2) return false;
+
+    const survivors = engineActivePlayersInPlay();
+    if (survivors.length !== 1) return false;
+
+    const solo = survivors[0];
+    engine._soloPartyEnding = true;
+    solo.scoreTricks = Math.max(solo.scoreTricks, ENGINE_TRICKS_TO_WIN_PARTY);
+    engine.phase = "gameover";
+    engine.actionLock = true;
+
+    if (auctionBarEl) auctionBarEl.classList.add("hidden");
+
+    const line = solo.isHuman
+        ? "Все соперники сбросили карты. Вы выиграли кон."
+        : solo.name + " выиграл кон — все противники сошли с раздачи.";
+    setMessage(line);
+    engineRenderSeats();
+    engineUpdateActiveTurnClass();
+    if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+
+    showPartyVictoryOverlay(line, () => {
+        engine._soloPartyEnding = false;
+        engineFinishGame({ skipPartySummaryMessage: true });
+    });
+    return true;
+}
+
 /* ---------- DEAL ---------- */
 
 function engineDeal() {
     const deck = shuffleDeck(buildDeck());
     let i = 0;
+    let nDeal = 0;
     engine.players.forEach((p) => {
         if (!p.active) return;
         p.hand = deck.slice(i, i + 3);
         i += 3;
+        nDeal++;
     });
     engine.trumpCard = deck[i];
+    engine._dealParticipantsAtStartCount = nDeal;
     engineCaptureAuctionHandsBackup();
 }
 
@@ -9646,6 +10152,7 @@ function engineDealSequentialAnimated(onDone) {
 
     if (!n) {
         engine.trumpCard = deck[0] || null;
+        engine._dealParticipantsAtStartCount = 0;
         engine._auctionHandsBackup = engine.players.map(() => []);
         engineRenderHands();
         engineRenderTrump();
@@ -9673,6 +10180,7 @@ function engineDealSequentialAnimated(onDone) {
 
     function finalizeDeal() {
         engine.trumpCard = deck[n * 3];
+        engine._dealParticipantsAtStartCount = n;
         engineCaptureAuctionHandsBackup();
         engineRenderHands();
         engineRenderTrump();
@@ -9781,6 +10289,7 @@ function engineRunAuctionTurn() {
         return;
     }
     if (remaining.length <= 1 && engine.lastBidderIdx !== null) {
+        if (engineTryFinishPartySoloWinner()) return;
         engineResolveAuction();
         return;
     }
@@ -9803,29 +10312,106 @@ function engineRunAuctionTurn() {
 function engineBotAuctionDecision(p) {
     if (engine.phase !== "auction" || engine.players[engine.currentTurn] !== p) return;
 
-    // Сила руки бота
     const trumpSuit = getSuit(engine.trumpCard);
-    let score = 0;
+    let sumPower = 0;
+    let trumpCnt = 0;
+    let highHonors = 0; /* J,Q,K,A по таблице power >= 6 */
     for (const c of p.hand) {
-        score += power[getRank(c)];
-        if (getSuit(c) === trumpSuit) score += 2;
+        const rk = getRank(c);
+        const pw = power[rk] || 0;
+        sumPower += pw;
+        if (getSuit(c) === trumpSuit) trumpCnt++;
+        if (pw >= 6) highHonors++;
     }
-    const maxBid = score >= 24 ? 3 : score >= 17 ? 2 : score >= 11 ? 1 : 0;
+    /* Сила для торгов (MVP): козырь дороже, пара козырей усиливает. */
+    const strength = sumPower + trumpCnt * 2.4 + (trumpCnt >= 2 ? 2.5 : 0) + (highHonors >= 2 ? 1.5 : 0);
 
-    if (engine.currentBid === 0) {
-        if (maxBid === 0) { engineDoAuctionPass(p.id); return; }
-        engineDoAuctionRaise(p.id, Math.min(maxBid, 2));
+    /* До какой ставки бот охотно остаётся в коне без сброса (не жёстко к макс. возможному рейзу). */
+    let comfort = 0;
+    if (strength >= 22) comfort = 3;
+    else if (strength >= 16) comfort = 2;
+    else if (strength >= 10) comfort = 1;
+    else if (strength >= 6) comfort = 1; /* средняя/слабая — всё же часто тянем уровнем 1 */
+
+    const rnd = Math.random();
+    const bid = engine.currentBid;
+
+    /* ---------- открытие (ставка ещё 0) ---------- */
+    if (bid === 0) {
+        /* Сброс только на совсем худших руках и не в большинстве случаев. */
+        const trashFold = strength < 5 ? 0.12 : strength < 7 ? 0.06 : 0.02;
+        if (rnd < trashFold) {
+            engineDoAuctionPass(p.id);
+            return;
+        }
+        /* Чаще открываем с 1; сильной рукой иногда сразу 2 для разнообразия. */
+        if (comfort >= 2 && strength >= 18 && rnd > 0.68) {
+            engineDoAuctionRaise(p.id, 2);
+        } else {
+            engineDoAuctionRaise(p.id, 1);
+        }
         return;
     }
-    if (engine.currentBid >= maxBid) {
-        if (engine.currentBid === maxBid && Math.random() < 0.45) {
+
+    /* ---------- ответ на чужую ставку ---------- */
+    if (bid <= comfort) {
+        /* Готов «платить» по комфорту: чаще уровниваем, иногда давим повышением. */
+        let raiseChance = 0;
+        if (bid === 1 && comfort >= 2) raiseChance = 0.22;
+        else if (bid === 1 && comfort === 1) raiseChance = 0.08;
+        else if (bid === 2 && comfort >= 3) raiseChance = 0.38;
+        else if (bid === 2 && comfort >= 2) raiseChance = 0.14;
+
+        if (bid < 3 && rnd < raiseChance) {
+            engineDoAuctionRaise(p.id, Math.min(bid + 1, 3));
+            return;
+        }
+        engineDoAuctionCall(p.id);
+        return;
+    }
+
+    /* Ставка выше «комфорта» — сброс не по умолчанию, особенно на 1-й ступени. */
+    if (bid === 1) {
+        /* На низкой ставке почти всегда остаёмся в раздаче через уровень. */
+        if (rnd < 0.88 || strength >= 7) {
+            engineDoAuctionCall(p.id);
+            return;
+        }
+        if (rnd < 0.93 && strength >= 5) {
+            engineDoAuctionRaise(p.id, 2);
+            return;
+        }
+        engineDoAuctionPass(p.id);
+        return;
+    }
+
+    if (bid === 2) {
+        if (comfort >= 2 && rnd < 0.55) {
+            engineDoAuctionCall(p.id);
+            return;
+        }
+        if (comfort >= 2 && rnd < 0.72) {
+            engineDoAuctionRaise(p.id, 3);
+            return;
+        }
+        if (comfort >= 1 && rnd < 0.42) {
+            engineDoAuctionCall(p.id);
+            return;
+        }
+        if (rnd < 0.2 && strength >= 12) {
             engineDoAuctionCall(p.id);
             return;
         }
         engineDoAuctionPass(p.id);
         return;
     }
-    engineDoAuctionRaise(p.id, Math.min(engine.currentBid + 1, 3));
+
+    /* bid === 3 */
+    if (comfort >= 3 || (comfort >= 2 && rnd < 0.45) || rnd < 0.15) {
+        engineDoAuctionCall(p.id);
+        return;
+    }
+    engineDoAuctionPass(p.id);
 }
 
 function engineDoAuctionPass(playerIdx) {
@@ -9840,6 +10426,7 @@ function engineDoAuctionPass(playerIdx) {
     setMessage(p.isHuman ? "Ты сошёл с раздачи" : (p.name + " сошёл с раздачи"));
     engineRenderSeats();
     if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
+    if (engineTryFinishPartySoloWinner()) return;
     engineAfterAuctionAction();
 }
 
@@ -9885,6 +10472,9 @@ function engineAfterAuctionAction() {
 }
 
 function engineResolveAuction() {
+    if (engine.phase !== "auction") return;
+    if (engineTryFinishPartySoloWinner()) return;
+
     engine.phase = "play";
     let winIdx = engine.lastBidderIdx != null ? engine.lastBidderIdx : engine.humanIdx;
     const w0 = engine.players[winIdx];
@@ -10201,6 +10791,7 @@ function engineRenderTrickCard(trickEntry) {
 /** Лидер взятки: 1-я — победитель торгов, далее — победитель предыдущей взятки. Ход по кругу — engineAdvanceTurn. */
 function engineStartTrick() {
     if (engine.phase !== "play") return;
+    if (engineTryFinishPartySoloWinner()) return;
     engineClearPlayed();
     engineSetPlayedAreaSize();
     engine.currentTurn = engine.leaderIdx;
@@ -10210,6 +10801,7 @@ function engineStartTrick() {
 
 function engineRunPlayTurn() {
     if (engine.phase !== "play") return;
+    if (engineTryFinishPartySoloWinner()) return;
     const p = engine.players[engine.currentTurn];
     if (!p.active) {
         engineAdvanceTurn();
@@ -10391,7 +10983,10 @@ function enginePlayCardCommit(playerIdx, card, idxInHand) {
         setTimeout(engineEndTrick, 420);
     } else {
         engineAdvanceTurn();
-        setTimeout(engineRunPlayTurn, 280);
+        setTimeout(() => {
+            if (engineTryFinishPartySoloWinner()) return;
+            engineRunPlayTurn();
+        }, 280);
     }
 }
 
@@ -10411,6 +11006,7 @@ function engineMarkLiveLeader() {
 
 function engineEndTrick() {
     if (engine.phase !== "play") return;
+    if (engineTryFinishPartySoloWinner()) return;
     engine.actionLock = true;
 
     const winnerLocal = engineComputeTrickWinner(engine.trickCards, engine.trumpCard);
@@ -10599,15 +11195,11 @@ function engineFinishGame(opts) {
 
     if (typeof enginePersistCurrentTableSession === "function") enginePersistCurrentTableSession();
 
-    /* Между раздачами даём паузу на показ итогов, затем автоматически
-       запускаем следующую раздачу — с промоутом всех waiting → active.
-       Для waiting-игрока на время паузы меняем текст баннера. */
+    /* Между раздачами даём паузу на показ итогов; waiting-игроку — строка в журнале событий. */
     engine.betweenHands = true;
-    const waitingBanner = document.getElementById("gameWaitingBanner");
     const human = engine.players[engine.humanIdx];
-    if (waitingBanner && human && human.status === "waiting") {
-        const textEl = waitingBanner.querySelector("[data-game-waiting-text]");
-        if (textEl) textEl.textContent = UI_TEXT.seatWaiting.nextHandSoon;
+    if (human && human.status === "waiting") {
+        pushGameStatusFeedLine(UI_TEXT.seatWaiting.nextHandSoon);
     }
 
     const pauseMs =
@@ -10648,6 +11240,7 @@ function engineFinishGame(opts) {
 function engineStartNextHand() {
     clearHumanLobbyReadyWatch();
     engine._auctionHandsBackup = null;
+    engine._soloPartyEnding = false;
     /* Сбор состава новой раздачи: seated + waiting → active.
        away/spectator/removed остаются вне партии. */
     engine.players.forEach((p) => {
@@ -10909,27 +11502,27 @@ function engineLeaveSeat() {
         else if (engine.phase === "play") setTimeout(engineRunPlayTurn, 150);
     }
 
-    /* Перерисовываем seat (теперь с away-плашкой), не освобождая место. */
-    engineRenderSeats();
-
-    if (auctionBarEl) auctionBarEl.classList.add("hidden");
-
-    const overlay = document.getElementById("spectatorOverlay");
-    if (overlay) {
-        overlay.classList.remove("hidden");
-        overlay.dataset.mode = "away";
-        const titleEl = overlay.querySelector("[data-spectator-title]");
-        const hintEl  = overlay.querySelector("[data-spectator-hint]");
-        const timerEl = overlay.querySelector("[data-spectator-timer]");
-        const sitBtn  = overlay.querySelector("[data-spectator-sit]");
-        const lobbyBtn= overlay.querySelector("[data-spectator-lobby]");
-        if (titleEl) titleEl.textContent = UI_TEXT.seatAway.overlayTitle;
-        if (hintEl)  hintEl.textContent  = UI_TEXT.seatAway.overlayHintTime;
-        if (timerEl) timerEl.classList.remove("hidden");
-        if (sitBtn)  sitBtn.textContent  = UI_TEXT.seatAway.btnReturn;
-        if (lobbyBtn) lobbyBtn.textContent = UI_TEXT.seatAway.btnLobby;
+    if (engineTryFinishPartySoloWinner()) {
+        renderGameTopbar();
+    } else {
+        const overlay = document.getElementById("spectatorOverlay");
+        if (overlay) {
+            overlay.classList.remove("hidden");
+            overlay.dataset.mode = "away";
+            const titleEl = overlay.querySelector("[data-spectator-title]");
+            const hintEl  = overlay.querySelector("[data-spectator-hint]");
+            const timerEl = overlay.querySelector("[data-spectator-timer]");
+            const sitBtn  = overlay.querySelector("[data-spectator-sit]");
+            const lobbyBtn= overlay.querySelector("[data-spectator-lobby]");
+            if (titleEl) titleEl.textContent = UI_TEXT.seatAway.overlayTitle;
+            if (hintEl)  hintEl.textContent  = UI_TEXT.seatAway.overlayHintTime;
+            if (timerEl) timerEl.classList.remove("hidden");
+            if (sitBtn)  sitBtn.textContent  = UI_TEXT.seatAway.btnReturn;
+            if (lobbyBtn) lobbyBtn.textContent = UI_TEXT.seatAway.btnLobby;
+        }
     }
 
+    engineRenderSeats();
     const leaveBtn = document.querySelector("[data-game-leave]");
     if (leaveBtn) leaveBtn.hidden = true;
 
@@ -11150,6 +11743,7 @@ async function bootstrap() {
     bindFindTableHandlers();
     bindCreateTableHandlers();
     bindGameTopbarHandlers();
+    bindGameEventsHandlers();
     bindGameLeaveHandlers();
     bindInviteHandlers();
 
