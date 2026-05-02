@@ -4154,15 +4154,98 @@ h1 {
     filter: none !important;
     transform: none !important;
 }
+/* Компактное удаление из друзей — слабее основной кнопки */
+.friends-btn--remove-friend {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 !important;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(10, 4, 8, 0.35) !important;
+    border: 1px solid rgba(216, 178, 76, 0.22) !important;
+    color: rgba(216, 178, 76, 0.48) !important;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    filter: none !important;
+}
+.friends-btn--remove-friend:hover {
+    border-color: rgba(200, 100, 110, 0.45) !important;
+    color: rgba(230, 140, 130, 0.88) !important;
+    background: rgba(40, 12, 18, 0.5) !important;
+}
+.friends-btn--remove-friend:active {
+    transform: scale(0.96);
+}
+.friends-btn-remove-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+.friends-btn--danger {
+    background: linear-gradient(180deg, rgba(140, 52, 52, 0.95) 0%, rgba(90, 28, 32, 0.98) 100%) !important;
+    border: 1px solid rgba(220, 140, 140, 0.45) !important;
+    color: #f7e0dc !important;
+}
+.friends-btn--danger:hover {
+    filter: brightness(1.06);
+}
+
+/* Подтверждение удаления друга */
+.friends-remove-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    pointer-events: auto;
+}
+.friends-remove-overlay.hidden {
+    display: none !important;
+}
+.friends-remove-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 2, 6, 0.72);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.friends-remove-card {
+    position: relative;
+    width: min(360px, 94vw);
+    padding: clamp(18px, 4vw, 22px);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(46, 10, 18, 0.96) 0%, rgba(20, 4, 10, 0.98) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 214, 130, 0.06);
+}
+.friends-remove-msg {
+    margin: 0 0 18px;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: clamp(17px, 4vw, 19px);
+    line-height: 1.35;
+    color: #f7e3a5;
+    text-align: center;
+}
+.friends-remove-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.friends-remove-actions .friends-btn {
+    min-width: 112px;
+    justify-content: center;
+}
 .friends-request-row .friends-actions {
     flex-direction: column;
     align-items: stretch;
-}
-.friends-request-out-status {
-    font-family: "Inter", system-ui, sans-serif;
-    font-size: 11px;
-    color: rgba(216, 178, 76, 0.55);
-    text-align: right;
 }
 .friends-section-head.hidden {
     display: none !important;
@@ -4808,6 +4891,19 @@ h1 {
         0 0 18px rgba(216, 178, 76, 0.18) inset;
 }
 .menu-primary-btn:active { transform: translateY(0); }
+/* Новая входящая заявка во дружбу — зелёный индикатор на пункте меню «Друзья» */
+.menu-primary-btn.menu-primary-btn--friends-attention::after {
+    content: "";
+    position: absolute;
+    top: clamp(10px, 3vmin, 14px);
+    right: clamp(14px, 4vw, 22px);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #8cff8c 0%, #2e9d42 72%, #1b5f28 100%);
+    box-shadow: 0 0 10px rgba(80, 220, 120, 0.75), 0 0 3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
 
 .menu-primary-btn-icon {
     flex: 0 0 auto;
@@ -6998,6 +7094,17 @@ h1 {
             </div>
         </div>
 
+        <div class="friends-remove-overlay hidden" data-friends-remove-confirm aria-hidden="true">
+            <div class="friends-remove-backdrop" data-friends-remove-confirm-close tabindex="-1" aria-hidden="true"></div>
+            <div class="friends-remove-card" role="dialog" aria-modal="true" aria-labelledby="friendsRemoveDialogLabel">
+                <p class="friends-remove-msg" id="friendsRemoveDialogLabel" data-friends-remove-confirm-msg></p>
+                <div class="friends-remove-actions">
+                    <button type="button" class="friends-btn friends-btn--ghost" data-friends-remove-confirm-cancel></button>
+                    <button type="button" class="friends-btn friends-btn--danger" data-friends-remove-confirm-ok></button>
+                </div>
+            </div>
+        </div>
+
         <div class="menu-toast" data-friends-toast aria-live="polite"></div>
     </div>
 </div>
@@ -8790,7 +8897,10 @@ const UI_TEXT = Object.freeze({
         outboundStatus:    "Запрос отправлен",
         btnCancelRequest:  "Отменить",
         inFriends:         "В друзьях",
+        btnCallToTable:    "Позвать",
+        btnInviteToTable:  "Пригласить в стол",
         isYou:             "Это вы",
+        requestIncomingSubtitle: "{name} хочет добавить вас в друзья",
         sectionInbound:    "Входящие",
         sectionOutbound:   "Исходящие",
         emptyFriends:      "У вас пока нет друзей — найдите игроков по нику или в разделе «Недавно».",
@@ -8802,6 +8912,14 @@ const UI_TEXT = Object.freeze({
         toastAccepted:     "Вы добавили игрока в друзья",
         toastDeclined:     "Заявка отклонена",
         toastCanceled:     "Запрос отменён",
+        toastFriendRemoved: "Пользователь удалён из списка друзей",
+        confirmRemoveFriend: "Удалить пользователя из друзей?",
+        btnConfirmRemoveFriend: "Удалить",
+        btnCancelRemoveFriend: "Отмена",
+        ariaRemoveFriend: "Удалить из друзей",
+        requestAcceptedForSenderNotice: "{name} принял вашу заявку в друзья",
+        notifFriendRequestAcceptedForSenderTitle: "Запрос принят",
+        notifTitleFriendRequestIn:       "Запрос в друзья",
     },
     invite: {
         title:          "Пригласить друзей",
@@ -8809,6 +8927,7 @@ const UI_TEXT = Object.freeze({
         subtitlePublic:  "Позовите друзей — стол уже в списке «Найти стол»",
         searchPlaceholder: "Поиск по нику",
         btnInvite:      "Позвать",
+        btnInviteToTable: "Пригласить в стол",
         btnInvited:     "Отправлено",
         shareBtn:       "Поделиться ссылкой",
         emptyNotFound:  "Ничего не найдено",
@@ -8909,13 +9028,8 @@ const appState = {
     ],
     /* Заявки во дружбу (mock). */
     friendRequests: {
-        inbound: [
-            { id: "rq_in_1", from: { id: "u_artem", name: "Артём", level: 8 } },
-            { id: "rq_in_2", from: { id: "u_liza", name: "Лиза", level: 16 } },
-        ],
-        outbound: [
-            { id: "rq_out_1", to: { id: "u_kira", name: "Кира", level: 15 } },
-        ],
+        inbound: [],
+        outbound: [],
     },
     /* Игроки с общих столов (mock). */
     recentlyPlayed: [
@@ -9010,10 +9124,22 @@ function _mockToken() {
 function _nameFromEmail(email) {
     return String(email || "").split("@")[0] || "Игрок";
 }
+function _stableUserIdFromEmail(email) {
+    const s = String(email || "").trim().toLowerCase();
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    const hex = (h >>> 0).toString(16).padStart(8, "0");
+    return "usr_" + hex;
+}
 function _buildUser(email, name) {
+    const e = String(email || "");
+    const stableId = _stableUserIdFromEmail(e);
     return {
-        id: "local-" + Math.random().toString(36).slice(2),
-        email: String(email || ""),
+        id: stableId,
+        email: e,
         name: name || _nameFromEmail(email),
         createdAt: new Date().toISOString(),
     };
@@ -9210,6 +9336,7 @@ function bindAuthHandlers() {
                 appState.isAuthenticated = true;
                 appState.user = res.user;
                 appState.pendingAuthData = null;
+                friendsPrepareSessionFriendStateAfterLogin();
                 setScreen(SCREENS.MAIN_MENU);
             } finally {
                 submitBtn.disabled = false;
@@ -9257,6 +9384,7 @@ function bindAuthHandlers() {
                 appState.isAuthenticated = true;
                 appState.user = res.user;
                 appState.pendingAuthData = null;
+                friendsPrepareSessionFriendStateAfterLogin();
                 setScreen(SCREENS.MAIN_MENU);
             } finally {
                 submitBtn.disabled = false;
@@ -9534,19 +9662,26 @@ function notificationHasInviteActions(n) {
     return !!(n.actions && String(n.actions.kind) === "private_table_invite");
 }
 
-function syncInboundFriendRequestsToNotificationsOnce() {
+function syncInboundFriendRequestsToBell() {
     const store = getNotificationsStore();
+    if (!Array.isArray(store.seenInboundFriendRequestIds)) store.seenInboundFriendRequestIds = [];
     const seen = store.seenInboundFriendRequestIds;
     const inbound = (appState.friendRequests && appState.friendRequests.inbound) || [];
+    const T = UI_TEXT.friends || {};
+    const sub = T.requestIncomingSubtitle || "{name} хочет добавить вас в друзья";
+    const title = T.notifTitleFriendRequestIn || "Запрос в друзья";
     inbound.forEach((row) => {
-        if (!row || !row.from || seen.indexOf(row.id) !== -1) return;
+        if (!row || !row.from) return;
+        const rid = String(row.id);
+        if (seen.some((x) => String(x) === rid)) return;
         seen.push(row.id);
+        const nm = row.from.name || "Игрок";
         pushAppNotification({
-            id: `fr_${row.id}`,
-            dedupeKey: `inbound_fr:${row.id}`,
+            id: `fr_${rid}`,
+            dedupeKey: `inbound_fr:${rid}`,
             type: NOTIFICATION_TYPES.FRIEND_REQUEST_IN,
-            title: "Запрос в друзья",
-            message: `${row.from.name} хочет добавить вас в друзья`,
+            title: title,
+            message: sub.replace(/\{name\}/g, nm),
             payload: { friendRequestId: row.id, fromUserId: row.from.id },
         });
     });
@@ -9589,7 +9724,7 @@ function notificationsPostMenuSignalsOnce() {
             message: "Добро пожаловать в Azi by Bobby. Расскажите друзьям о приватных столах.",
         });
     }
-    syncInboundFriendRequestsToNotificationsOnce();
+    syncInboundFriendRequestsToBell();
 }
 
 function notifyMockIncomingPrivateInviteAfterCreate(tableId) {
@@ -10109,6 +10244,9 @@ function renderMainMenu() {
 
     if (typeof notificationsPostMenuSignalsOnce === "function") {
         notificationsPostMenuSignalsOnce();
+    }
+    if (typeof friendsUpdateFriendsMenuAttentionDot === "function") {
+        friendsUpdateFriendsMenuAttentionDot();
     }
 }
 
@@ -10702,13 +10840,399 @@ function friendPresenceMeta(fr) {
 
 function friendsIsRegisteredFriendId(id) {
     return !!(id != null && Array.isArray(appState.friends)
-        && appState.friends.some((f) => f && f.id === id));
+        && appState.friends.some((f) => f && String(f.id) === String(id)));
 }
 
 function friendsOutboundToId(toId) {
     const rq = appState.friendRequests && appState.friendRequests.outbound;
     if (!Array.isArray(rq) || toId == null) return false;
-    return rq.some((o) => o && o.to && o.to.id === toId);
+    return rq.some((o) => o && o.to != null && String(o.to.id) === String(toId));
+}
+
+/* ======================================================================
+ * Заявки в друзья — mock локального «сервера» (localStorage) по user id.
+ * В проде: POST /friends/requests, GET pending, удаление при accept|decline;
+ * здесь очередь доставки и снимки inbound/outbound на пользователя.
+ * ====================================================================== */
+const MOCK_FRIEND_SYNC_KEY = "azi_friend_relation_sync_v1";
+
+function mockFriendRelationDefaultDisk() {
+    return {
+        inboundPendingByRecipient: {},
+        inboundByUserId: {},
+        outboundByUserId: {},
+        outboundRemovals: [],
+        symmetricAddsByUserId: {},
+        notificationQueueForUserId: {},
+        friendsListByUserId: {},
+    };
+}
+function mockReadFriendRelationsDisk() {
+    try {
+        const raw = localStorage.getItem(MOCK_FRIEND_SYNC_KEY);
+        if (!raw) return mockFriendRelationDefaultDisk();
+        const o = JSON.parse(raw);
+        if (!o || typeof o !== "object") return mockFriendRelationDefaultDisk();
+        if (!o.inboundPendingByRecipient) o.inboundPendingByRecipient = {};
+        if (!o.inboundByUserId) o.inboundByUserId = {};
+        if (!o.outboundByUserId) o.outboundByUserId = {};
+        if (!Array.isArray(o.outboundRemovals)) o.outboundRemovals = [];
+        if (!o.symmetricAddsByUserId) o.symmetricAddsByUserId = {};
+        if (!o.notificationQueueForUserId) o.notificationQueueForUserId = {};
+        if (!o.friendsListByUserId) o.friendsListByUserId = {};
+        return o;
+    } catch (e1) {
+        return mockFriendRelationDefaultDisk();
+    }
+}
+function mockWriteFriendRelationsDisk(data) {
+    try {
+        localStorage.setItem(MOCK_FRIEND_SYNC_KEY, JSON.stringify(data));
+    } catch (e2) { /* ignore */ }
+}
+function friendsRelationsPersistSlicesForActiveUser() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    d.inboundByUserId[sid] = JSON.parse(JSON.stringify(((appState.friendRequests || {}).inbound) || []));
+    d.outboundByUserId[sid] = JSON.parse(JSON.stringify(((appState.friendRequests || {}).outbound) || []));
+    mockWriteFriendRelationsDisk(d);
+}
+
+/** Mock: сохранить список друзей текущего пользователя для перезагрузки и вкладки. */
+function friendsPersistFriendsListMock() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    if (!d.friendsListByUserId || typeof d.friendsListByUserId !== "object") d.friendsListByUserId = {};
+    d.friendsListByUserId[sid] = JSON.parse(JSON.stringify(Array.isArray(appState.friends) ? appState.friends : []));
+    mockWriteFriendRelationsDisk(d);
+}
+
+function friendsHydrateFriendsListFromMockDisk() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    if (!d.friendsListByUserId || typeof d.friendsListByUserId !== "object") return;
+    if (!Object.prototype.hasOwnProperty.call(d.friendsListByUserId, sid)) return;
+    const saved = d.friendsListByUserId[sid];
+    if (!Array.isArray(saved)) return;
+    appState.friends = JSON.parse(JSON.stringify(saved));
+}
+
+function friendsInboundMergeUndup(row) {
+    if (!appState.friendRequests) appState.friendRequests = { inbound: [], outbound: [] };
+    if (!Array.isArray(appState.friendRequests.inbound)) appState.friendRequests.inbound = [];
+    const ib = appState.friendRequests.inbound;
+    const dupFrom = ib.some((r) => r && r.from && row && row.from
+        && String(r.from.id) === String(row.from.id));
+    if (dupFrom) return;
+    const dupId = ib.some((r) => r && row && String(r.id) === String(row.id));
+    if (dupId) return;
+    ib.unshift(Object.assign({}, row, { clientSeenRequestsTab: !!row.clientSeenRequestsTab }));
+}
+
+function mockRemoveInboundPendingEntry(recipientKey, reqId) {
+    const rk = String(recipientKey);
+    const d = mockReadFriendRelationsDisk();
+    const arr = d.inboundPendingByRecipient[rk];
+    if (!arr || !arr.length) return;
+    const filtered = arr.filter((x) => x && String(x.id) !== String(reqId));
+    if (filtered.length) d.inboundPendingByRecipient[rk] = filtered;
+    else delete d.inboundPendingByRecipient[rk];
+    mockWriteFriendRelationsDisk(d);
+}
+
+/** Доставить входящую заявку адресату: очередь + при необходимости сразу в текущую сессию (тот же id). */
+function mockDeliverInboundFriendRequestToRecipient(rec, inboundRow) {
+    const rk = String(rec.id);
+    const d = mockReadFriendRelationsDisk();
+    if (!d.inboundPendingByRecipient[rk]) d.inboundPendingByRecipient[rk] = [];
+    const list = (d.inboundPendingByRecipient[rk] || []).filter((existing) =>
+        !(existing && inboundRow && existing.from && inboundRow.from &&
+            String(existing.from.id) === String(inboundRow.from.id)));
+    list.push(inboundRow);
+    d.inboundPendingByRecipient[rk] = list;
+    mockWriteFriendRelationsDisk(d);
+
+    const me = appState.user && appState.user.id;
+    if (me != null && String(me) === String(rec.id)) {
+        mockRemoveInboundPendingEntry(rk, inboundRow.id);
+        friendsInboundMergeUndup(Object.assign({}, inboundRow, { clientSeenRequestsTab: false }));
+    }
+}
+
+function mockDrainOutboundRemovalQueueForSender() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    const rem = d.outboundRemovals || [];
+    if (!rem.length) return;
+    const keep = [];
+    let changedOb = false;
+    rem.forEach((entry) => {
+        if (entry && String(entry.senderUserId) === sid && entry.targetUserId != null) {
+            const bef = ((appState.friendRequests || {}).outbound || []).length;
+            appState.friendRequests.outbound = ((appState.friendRequests || {}).outbound || []).filter((o) => {
+                if (!o || !o.to) return true;
+                return String(o.to.id) !== String(entry.targetUserId);
+            });
+            if (bef !== (((appState.friendRequests || {}).outbound || []).length)) changedOb = true;
+        } else {
+            keep.push(entry);
+        }
+    });
+    if (keep.length !== rem.length) {
+        d.outboundRemovals = keep;
+        mockWriteFriendRelationsDisk(d);
+    }
+    if (changedOb) friendsRelationsPersistSlicesForActiveUser();
+}
+
+function mockQueueOutboundRemoval(senderUserId, targetUserId) {
+    const d = mockReadFriendRelationsDisk();
+    if (!Array.isArray(d.outboundRemovals)) d.outboundRemovals = [];
+    d.outboundRemovals.push({
+        senderUserId: String(senderUserId),
+        targetUserId: String(targetUserId),
+    });
+    mockWriteFriendRelationsDisk(d);
+}
+
+function mockDrainSymmetricAddsForRecipient() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    const adds = d.symmetricAddsByUserId[sid];
+    if (!adds || !adds.length) return;
+    if (!Array.isArray(appState.friends)) appState.friends = [];
+    adds.forEach((mini) => {
+        if (mini && !friendsIsRegisteredFriendId(mini.id)) {
+            appState.friends.push({
+                id: mini.id,
+                name: mini.name || "?",
+                level: Number(mini.level) || 1,
+                online: !!mini.online,
+                activity: mini.activity != null ? mini.activity : null,
+            });
+        }
+    });
+    delete d.symmetricAddsByUserId[sid];
+    mockWriteFriendRelationsDisk(d);
+}
+
+function mockQueueSymmetricFriendAppend(forUserId, snapshot) {
+    const d = mockReadFriendRelationsDisk();
+    const k = String(forUserId);
+    if (!d.symmetricAddsByUserId[k]) d.symmetricAddsByUserId[k] = [];
+    d.symmetricAddsByUserId[k].push(snapshot);
+    mockWriteFriendRelationsDisk(d);
+}
+
+function mockEnqueueNotificationMockForUser(userId, notifPartial) {
+    const d = mockReadFriendRelationsDisk();
+    const k = String(userId);
+    if (!d.notificationQueueForUserId[k]) d.notificationQueueForUserId[k] = [];
+    d.notificationQueueForUserId[k].push(notifPartial);
+    mockWriteFriendRelationsDisk(d);
+}
+
+function mockDrainNotificationMockQueueForActor() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const k = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    const queue = d.notificationQueueForUserId[k];
+    if (!queue || !queue.length) return;
+    queue.forEach((raw) => {
+        if (raw && typeof raw === "object") pushAppNotification(raw);
+    });
+    delete d.notificationQueueForUserId[k];
+    mockWriteFriendRelationsDisk(d);
+}
+
+/** Подтягивает сохранённые снимки текущего пользователя, очереди доставки и пост-эффекты. */
+function hydrateFriendMockSyncForSession() {
+    const uid = appState.user && appState.user.id;
+    if (!uid) return;
+    const sid = String(uid);
+    const d = mockReadFriendRelationsDisk();
+    appState.friendRequests = appState.friendRequests || { inbound: [], outbound: [] };
+    appState.friendRequests.inbound = JSON.parse(JSON.stringify(Array.isArray(d.inboundByUserId[sid]) ? d.inboundByUserId[sid] : []));
+    appState.friendRequests.outbound = JSON.parse(JSON.stringify(Array.isArray(d.outboundByUserId[sid]) ? d.outboundByUserId[sid] : []));
+
+    mockDrainOutboundRemovalQueueForSender();
+
+    let pendingIncoming = [].concat(d.inboundPendingByRecipient[sid] || []);
+    if (pendingIncoming.length) {
+        pendingIncoming.forEach((row) => {
+            if (!row || !row.from) return;
+            mockRemoveInboundPendingEntry(sid, row.id);
+            friendsInboundMergeUndup(Object.assign({}, row, { clientSeenRequestsTab: false }));
+        });
+    }
+
+    mockDrainSymmetricAddsForRecipient();
+    mockDrainNotificationMockQueueForActor();
+
+    friendsRelationsPersistSlicesForActiveUser();
+    friendsPersistFriendsListMock();
+    syncInboundFriendRequestsToBell();
+    friendsUpdateFriendsMenuAttentionDot();
+}
+
+function friendsPrepareSessionFriendStateAfterLogin() {
+    if (!appState.user || appState.user.id == null) return;
+    appState.friendRequests = { inbound: [], outbound: [] };
+    friendsHydrateFriendsListFromMockDisk();
+    hydrateFriendMockSyncForSession();
+}
+
+function removeBellNotificationForFriendRequestId(requestRowId) {
+    const dk = `inbound_fr:${String(requestRowId)}`;
+    const store = getNotificationsStore();
+    store.items = (store.items || []).filter((x) => x && String(x.dedupeKey) !== dk);
+    if (Array.isArray(store.seenInboundFriendRequestIds)) {
+        store.seenInboundFriendRequestIds = store.seenInboundFriendRequestIds.filter(
+            (x) => String(x) !== String(requestRowId));
+    }
+    notifyNotificationsDatasetChanged();
+}
+
+function friendsUpdateFriendsMenuAttentionDot() {
+    const btn = mainMenuScreenEl && mainMenuScreenEl.querySelector('[data-menu-action="friends"]');
+    if (!btn) return;
+    const inbound = ((appState.friendRequests || {}).inbound || []);
+    const show = inbound.some((r) => r && !r.clientSeenRequestsTab);
+    btn.classList.toggle("menu-primary-btn--friends-attention", show);
+}
+
+function friendsMarkAllInboundSeenForRequestsUi() {
+    const ib = ((appState.friendRequests || {}).inbound) || [];
+    let ch = false;
+    ib.forEach((r) => {
+        if (r && !r.clientSeenRequestsTab) {
+            r.clientSeenRequestsTab = true;
+            ch = true;
+        }
+    });
+    if (ch) {
+        friendsRelationsPersistSlicesForActiveUser();
+        friendsUpdateFriendsMenuAttentionDot();
+    }
+}
+
+function friendsInviteSenderSnapshot() {
+    const u = appState.user || {};
+    return {
+        id: u.id,
+        name: friendsGetDisplayName() || UI_TEXT.menu.fallbackName,
+        level: Number((appState.profile && appState.profile.level) || 12),
+    };
+}
+
+/**
+ * Приватный стол пользователя — лобби (waiting), владелец.
+ * Работает и вне экрана GAME (напр. экран «Друзья»: engine может держать текущую комнату).
+ */
+function friendsPrivateTableInviteLobbyContext() {
+    if (!engine || engine.phase !== "waiting" || !engine.currentTable || engine.currentTable.id == null) {
+        return null;
+    }
+    const row = typeof getTableById === "function" ? getTableById(engine.currentTable.id) : null;
+    const room = row || engine.currentTable;
+    if (!room || room.type !== "private") return null;
+    const uid = (appState.user && appState.user.id) != null ? appState.user.id : "me";
+    const own = !!(
+        room.isOwner ||
+        room.ownerId === uid ||
+        (room.ownerId != null && uid != null && String(room.ownerId) === String(uid))
+    );
+    return own ? room : null;
+}
+
+function friendsSvgTrashIconFriends() {
+    return '<svg class="friends-btn-remove-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v7M14 11v7M9 7V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M8 7l1.2 13a1.2 1.2 0 0 0 1.2 1.08h9.2a1.2 1.2 0 0 0 1.2-1.08L16 7"/></svg>';
+}
+
+function friendsHtmlFriendCompactRemoveButton(friendIdRaw) {
+    const T = UI_TEXT.friends;
+    const idEsc = escapeFriendsHtml(friendIdRaw);
+    const label = escapeFriendsHtml(T.ariaRemoveFriend || "Удалить из друзей");
+    return `<button type="button" class="friends-btn friends-btn--remove-friend" data-friends-remove="${idEsc}" aria-label="${label}" title="${label}">${friendsSvgTrashIconFriends()}</button>`;
+}
+
+function friendsRemoveFriendOverlaySyncLabels() {
+    if (!friendsScreenEl) return;
+    const ov = friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+    if (!ov) return;
+    const T = UI_TEXT.friends || {};
+    const msgEl = ov.querySelector("[data-friends-remove-confirm-msg]");
+    if (msgEl) msgEl.textContent = T.confirmRemoveFriend || "Удалить пользователя из друзей?";
+    const c = ov.querySelector("[data-friends-remove-confirm-cancel]");
+    const o = ov.querySelector("[data-friends-remove-confirm-ok]");
+    if (c) c.textContent = T.btnCancelRemoveFriend || "Отмена";
+    if (o) o.textContent = T.btnConfirmRemoveFriend || "Удалить";
+}
+
+function friendsOpenRemoveFriendDialog(friendId) {
+    if (!friendsScreenEl || friendId == null) return;
+    friendsRemoveFriendOverlaySyncLabels();
+    const ov = friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+    if (!ov) return;
+    ov.dataset.friendsRemovePendingId = String(friendId);
+    ov.classList.remove("hidden");
+    ov.setAttribute("aria-hidden", "false");
+    const c = ov.querySelector("[data-friends-remove-confirm-cancel]");
+    if (c) c.focus();
+}
+
+function friendsCloseRemoveFriendDialog() {
+    if (!friendsScreenEl) return;
+    const ov = friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+    if (!ov) return;
+    delete ov.dataset.friendsRemovePendingId;
+    ov.classList.add("hidden");
+    ov.setAttribute("aria-hidden", "true");
+}
+
+function friendsExecutePendingRemoveFriend() {
+    const ov = friendsScreenEl && friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+    const pid = ov && ov.dataset.friendsRemovePendingId;
+    friendsCloseRemoveFriendDialog();
+    if (pid == null || pid === "") return;
+    if (!Array.isArray(appState.friends)) appState.friends = [];
+    const before = appState.friends.length;
+    appState.friends = appState.friends.filter((f) => f && String(f.id) !== String(pid));
+    if (appState.friends.length === before) return;
+    friendsPersistFriendsListMock();
+    renderFriendsLists();
+    const T = UI_TEXT.friends || {};
+    if (typeof showMenuToast === "function") showMenuToast(T.toastFriendRemoved || "");
+}
+
+function friendsHtmlListedFriendPrimaryAction(f) {
+    const T = UI_TEXT.friends;
+    const idEsc = escapeFriendsHtml(f.id);
+    const removeBtn = friendsHtmlFriendCompactRemoveButton(f.id);
+    const room = friendsPrivateTableInviteLobbyContext();
+    if (room) {
+        const invited = Array.isArray(room.invitedPlayers) ? room.invitedPlayers : [];
+        const isInv =
+            invited.some((pid) => pid != null && String(pid) === String(f.id));
+        if (isInv) {
+            const lbl = (UI_TEXT.invite && UI_TEXT.invite.btnInvited) ? UI_TEXT.invite.btnInvited : "Отправлено";
+            return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(lbl)}</span>${removeBtn}`;
+        }
+        const tableLbl = T.btnInviteToTable || (UI_TEXT.invite && UI_TEXT.invite.btnInviteToTable) || T.btnCallToTable;
+        return `<button type="button" class="friends-btn" data-friends-invite-table="${idEsc}">${escapeFriendsHtml(tableLbl)}</button>${removeBtn}`;
+    }
+    return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.inFriends)}</span>${removeBtn}`;
 }
 
 function friendsAvatarLetter(name) {
@@ -10766,11 +11290,11 @@ function collectFriendSearchHits(termNorm) {
 function friendsHtmlSearchActions(rec) {
     const T = UI_TEXT.friends;
     const u = appState.user;
-    if (rec.isSelfHit || (u && rec.id === u.id)) {
+    if (rec.isSelfHit || (u != null && rec.id != null && String(rec.id) === String(u.id))) {
         return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.isYou)}</span>`;
     }
     if (rec.isFriend || friendsIsRegisteredFriendId(rec.id)) {
-        return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.inFriends)}</span>`;
+        return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.inFriends)}</span>${friendsHtmlFriendCompactRemoveButton(rec.id)}`;
     }
     if (friendsOutboundToId(rec.id)) {
         return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.outboundStatus)}</span>`;
@@ -10784,25 +11308,44 @@ function friendsSendRequestTo(rec) {
     if (!appState.friendRequests) appState.friendRequests = { inbound: [], outbound: [] };
     if (!Array.isArray(appState.friendRequests.outbound)) appState.friendRequests.outbound = [];
     const T = UI_TEXT.friends;
+    const meSnap = friendsInviteSenderSnapshot();
+    if (!meSnap.id) return;
+    if (String(meSnap.id) === String(rec.id)) return;
     if (friendsIsRegisteredFriendId(rec.id)) return;
     if (friendsOutboundToId(rec.id)) {
         showMenuToast(T.outboundStatus);
         return;
     }
+    const requestId = "fr_" + Math.random().toString(36).slice(2, 12);
     appState.friendRequests.outbound.push({
-        id: "rq_" + Math.random().toString(36).slice(2, 10),
+        id: requestId,
         to: {
             id: rec.id,
             name: rec.name,
             level: Number(rec.level) || 1,
         },
     });
+
+    mockDeliverInboundFriendRequestToRecipient(rec, {
+        id: requestId,
+        from: {
+            id: meSnap.id,
+            name: meSnap.name,
+            level: Number(meSnap.level) || 1,
+        },
+    });
+
+    friendsRelationsPersistSlicesForActiveUser();
+    hydrateFriendMockSyncForSession();
     showMenuToast(T.toastRequestSent);
     renderFriendsLists();
 }
 
 function renderFriendsScreen() {
     if (!friendsScreenEl) return;
+    if (appState.isAuthenticated && appState.user && typeof hydrateFriendMockSyncForSession === "function") {
+        hydrateFriendMockSyncForSession();
+    }
     const T = UI_TEXT.friends || {};
     if (!appState.friendsScreen || typeof appState.friendsScreen !== "object") {
         appState.friendsScreen = { tab: "friends", search: "" };
@@ -10869,6 +11412,8 @@ function renderFriendsLists() {
     const listRecentEl = friendsScreenEl.querySelector("[data-friends-list-recent]");
     const emptyRecent = friendsScreenEl.querySelector("[data-friends-empty-recent]");
     const tab = (appState.friendsScreen && appState.friendsScreen.tab) || "friends";
+
+    if (tab === "requests") friendsMarkAllInboundSeenForRequestsUi();
 
     if (termNorm.length > 0) {
         if (searchPanel) searchPanel.classList.remove("hidden");
@@ -10946,9 +11491,7 @@ function renderFriendsLists() {
                                 <span>${escapeFriendsHtml(pm.label)}</span>
                             </div>
                         </div>
-                        <div class="friends-actions">
-                            <button type="button" class="friends-btn" data-friends-invite="${idEsc}">${escapeFriendsHtml(T.btnInvite)}</button>
-                        </div>
+                        <div class="friends-actions">${friendsHtmlListedFriendPrimaryAction(f)}</div>
                     </div>`;
             }).join("");
         }
@@ -10967,12 +11510,18 @@ function renderFriendsLists() {
                 const initials = escapeFriendsHtml(friendsAvatarLetter(from.name));
                 const nm = escapeFriendsHtml(from.name);
                 const rid = escapeFriendsHtml(row.id);
+                const inboundHint = escapeFriendsHtml(
+                    (T.requestIncomingSubtitle || "{name} хочет добавить вас в друзья").replace(
+                        /\{name\}/g,
+                        String(from.name || "Игрок")
+                    )
+                );
                 return `
                     <div class="friends-request-row" role="listitem">
                         <span class="friends-avatar" aria-hidden="true">${initials}</span>
                         <div class="friends-meta">
                             <div class="friends-name">${nm}</div>
-                            <div class="friends-sub">Ур.&nbsp;${Number(from.level) || 1}</div>
+                            <div class="friends-sub">${inboundHint}</div>
                         </div>
                         <div class="friends-actions">
                             <button type="button" class="friends-btn" data-friends-accept="${rid}">${escapeFriendsHtml(T.btnAccept)}</button>
@@ -10998,9 +11547,10 @@ function renderFriendsLists() {
                         <span class="friends-avatar" aria-hidden="true">${initials}</span>
                         <div class="friends-meta">
                             <div class="friends-name">${nm}</div>
-                            <div class="friends-request-out-status">${escapeFriendsHtml(T.outboundStatus)}</div>
+                            <div class="friends-sub">Ур.&nbsp;${Number(to.level) || 1}</div>
                         </div>
                         <div class="friends-actions">
+                            <span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.outboundStatus)}</span>
                             <button type="button" class="friends-btn friends-btn--ghost" data-friends-cancel-out="${oid}">${escapeFriendsHtml(T.btnCancelRequest)}</button>
                         </div>
                     </div>`;
@@ -11063,7 +11613,7 @@ function renderFriendsLists() {
                 const pend = friendsOutboundToId(p.id);
                 let right = "";
                 if (isFr) {
-                    right = `<span class="friends-btn friends-pill-muted">${escapeFriendsHtml(T.inFriends)}</span>`;
+                    right = `<span class="friends-btn friends-pill-muted">${escapeFriendsHtml(T.inFriends)}</span>${friendsHtmlFriendCompactRemoveButton(p.id)}`;
                 } else if (pend) {
                     right = `<span class="friends-btn friends-pill-muted">${escapeFriendsHtml(T.outboundStatus)}</span>`;
                 } else {
@@ -11127,6 +11677,16 @@ function bindFriendsHandlers() {
         });
     });
 
+    const removeOv = friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+    if (removeOv) {
+        friendsRemoveFriendOverlaySyncLabels();
+        removeOv.querySelectorAll("[data-friends-remove-confirm-close], [data-friends-remove-confirm-cancel]").forEach((el) => {
+            el.addEventListener("click", () => friendsCloseRemoveFriendDialog());
+        });
+        const okRm = removeOv.querySelector("[data-friends-remove-confirm-ok]");
+        if (okRm) okRm.addEventListener("click", () => friendsExecutePendingRemoveFriend());
+    }
+
     const scrollEl = friendsScreenEl.querySelector("[data-friends-scroll]");
     if (scrollEl) scrollEl.addEventListener("click", (e) => {
         const T = UI_TEXT.friends;
@@ -11140,21 +11700,59 @@ function bindFriendsHandlers() {
             return;
         }
 
-        if (e.target.closest("[data-friends-invite]")) {
-            showMenuToast(T.toastInvite || UI_TEXT.menu.toastSoon);
+        const remBtn = e.target.closest("[data-friends-remove]");
+        if (remBtn) {
+            e.preventDefault();
+            const idRaw = remBtn.getAttribute("data-friends-remove");
+            if (idRaw != null) friendsOpenRemoveFriendDialog(idRaw);
             return;
         }
+
+        if (e.target.closest("[data-friends-invite-table]")) {
+            const btn = e.target.closest("[data-friends-invite-table]");
+            const friendIdRaw = btn && btn.getAttribute("data-friends-invite-table");
+            if (friendIdRaw != null && typeof inviteFriend === "function") {
+                inviteFriend(friendIdRaw);
+                renderFriendsLists();
+            }
+            return;
+        }
+
+
 
         const acc = e.target.closest("[data-friends-accept]");
         if (acc) {
             const rid = acc.getAttribute("data-friends-accept");
             const rq = appState.friendRequests && appState.friendRequests.inbound;
             if (!Array.isArray(rq)) return;
-            const ix = rq.findIndex((r) => r && r.id === rid);
+            const ix = rq.findIndex((r) => r && String(r.id) === String(rid));
             if (ix === -1) return;
             const row = rq[ix];
             rq.splice(ix, 1);
             const from = row.from;
+            removeBellNotificationForFriendRequestId(row.id);
+            const meSnap = friendsInviteSenderSnapshot();
+            if (from && from.id != null && meSnap.id != null) {
+                mockQueueOutboundRemoval(from.id, meSnap.id);
+                mockQueueSymmetricFriendAppend(from.id, {
+                    id: meSnap.id,
+                    name: meSnap.name,
+                    level: Number(meSnap.level) || 12,
+                    online: true,
+                    activity: null,
+                });
+                const sub = (T.requestAcceptedForSenderNotice || "{name} принял вашу заявку в друзья").replace(
+                    /\{name\}/g,
+                    meSnap.name || ""
+                );
+                mockEnqueueNotificationMockForUser(from.id, {
+                    dedupeKey: `fr_sender_accept:${String(row.id)}:${String(meSnap.id)}`,
+                    type: NOTIFICATION_TYPES.FRIEND_REQUEST_ACCEPTED,
+                    title: T.notifFriendRequestAcceptedForSenderTitle || "Запрос принят",
+                    message: sub,
+                    payload: { fromUserId: meSnap.id, friendRequestSettledId: row.id },
+                });
+            }
             if (from && !friendsIsRegisteredFriendId(from.id)) {
                 if (!Array.isArray(appState.friends)) appState.friends = [];
                 appState.friends.push({
@@ -11179,6 +11777,8 @@ function bindFriendsHandlers() {
                 title: "Бонус",
                 message: "Новый контакт в клубе — небольшой бонус (mock). В проде синхронизируется с балансом.",
             });
+            friendsRelationsPersistSlicesForActiveUser();
+            hydrateFriendMockSyncForSession();
             renderFriendsLists();
             return;
         }
@@ -11188,9 +11788,18 @@ function bindFriendsHandlers() {
             const rid = dec.getAttribute("data-friends-decline");
             const rq = appState.friendRequests && appState.friendRequests.inbound;
             if (!Array.isArray(rq)) return;
-            const ix = rq.findIndex((r) => r && r.id === rid);
-            if (ix !== -1) rq.splice(ix, 1);
+            const ix = rq.findIndex((r) => r && String(r.id) === String(rid));
+            if (ix === -1) return;
+            const row = rq[ix];
+            removeBellNotificationForFriendRequestId(row.id);
+            rq.splice(ix, 1);
+            const meSnap2 = friendsInviteSenderSnapshot();
+            if (row.from && row.from.id != null && meSnap2.id != null) {
+                mockQueueOutboundRemoval(row.from.id, meSnap2.id);
+            }
             showMenuToast(T.toastDeclined || "");
+            friendsRelationsPersistSlicesForActiveUser();
+            hydrateFriendMockSyncForSession();
             renderFriendsLists();
             return;
         }
@@ -11198,11 +11807,13 @@ function bindFriendsHandlers() {
         const cx = e.target.closest("[data-friends-cancel-out]");
         if (cx) {
             const oid = cx.getAttribute("data-friends-cancel-out");
-            const rq = appState.friendRequests && appState.friendRequests.outbound;
-            if (!Array.isArray(rq)) return;
-            const ix = rq.findIndex((r) => r && r.id === oid);
-            if (ix !== -1) rq.splice(ix, 1);
+            const rqout = appState.friendRequests && appState.friendRequests.outbound;
+            if (!Array.isArray(rqout)) return;
+            const ix = rqout.findIndex((r) => r && String(r.id) === String(oid));
+            if (ix !== -1) rqout.splice(ix, 1);
             showMenuToast(T.toastCanceled || "");
+            friendsRelationsPersistSlicesForActiveUser();
+            hydrateFriendMockSyncForSession();
             renderFriendsLists();
             return;
         }
@@ -11218,6 +11829,12 @@ function bindFriendsHandlers() {
     document.addEventListener("keydown", (e) => {
         if (appState.currentScreen !== SCREENS.FRIENDS) return;
         if (e.key !== "Escape") return;
+        const rmOv = friendsScreenEl && friendsScreenEl.querySelector("[data-friends-remove-confirm]");
+        if (rmOv && !rmOv.classList.contains("hidden")) {
+            e.preventDefault();
+            friendsCloseRemoveFriendDialog();
+            return;
+        }
         const active = document.activeElement;
         if (active && active.matches("[data-friends-search]") && active.value) {
             active.value = "";
@@ -11488,9 +12105,14 @@ function renderInviteList() {
     if (emptyEl) emptyEl.classList.add("hidden");
 
     listEl.innerHTML = filtered.map((f) => {
-        const isInvited = invited.indexOf(f.id) !== -1;
+        const isInvited = invited.some((pid) => pid != null && String(pid) === String(f.id));
         const initials = (f.name || "?").trim().charAt(0).toUpperCase();
         const statusText = f.online ? "в сети" : "не в сети";
+        const inviteLbl = isInvited
+            ? UI_TEXT.invite.btnInvited
+            : (room && room.type === "private"
+                ? (UI_TEXT.invite.btnInviteToTable || UI_TEXT.invite.btnInvite)
+                : UI_TEXT.invite.btnInvite);
         return `
             <div class="invite-friend-row" role="listitem" data-friend-id="${f.id}">
                 <span class="invite-friend-avatar" aria-hidden="true">${initials}</span>
@@ -11500,7 +12122,7 @@ function renderInviteList() {
                 </div>
                 <button class="invite-friend-btn${isInvited ? ' is-sent' : ''}" type="button"
                         data-invite-friend="${f.id}" ${isInvited ? 'disabled' : ''}>
-                    ${isInvited ? UI_TEXT.invite.btnInvited : UI_TEXT.invite.btnInvite}
+                    ${inviteLbl}
                 </button>
             </div>
         `;
@@ -11511,7 +12133,8 @@ function inviteFriend(friendId) {
     const room = getCurrentRoom();
     if (!room) return;
     if (!Array.isArray(room.invitedPlayers)) room.invitedPlayers = [];
-    if (room.invitedPlayers.indexOf(friendId) !== -1) return;
+    const already = room.invitedPlayers.some((pid) => pid != null && String(pid) === String(friendId));
+    if (already) return;
     room.invitedPlayers.push(friendId);
     renderInviteList();
     showMenuToast(UI_TEXT.invite.toastInvited);
@@ -14362,8 +14985,17 @@ async function bootstrap() {
         if (res.ok) {
             appState.isAuthenticated = true;
             appState.user = res.user;
+            friendsPrepareSessionFriendStateAfterLogin();
         }
     } catch (e) { /* fail silent — просто пойдём на auth */ }
+
+    try {
+        window.addEventListener("storage", (ev) => {
+            if (!ev.key || ev.key !== MOCK_FRIEND_SYNC_KEY) return;
+            if (!(appState.isAuthenticated && appState.user)) return;
+            if (typeof hydrateFriendMockSyncForSession === "function") hydrateFriendMockSyncForSession();
+        });
+    } catch (eLs) { /* ignore */ }
 
     setScreen(SCREENS.SPLASH);
     startSplashFlow();
