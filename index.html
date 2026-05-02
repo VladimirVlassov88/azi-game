@@ -1321,6 +1321,10 @@ h1 {
     padding-right: env(safe-area-inset-right, 0px);
     min-height: 100vh;
     min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
     display: flex;
     flex-direction: column;
     color: #f4d68a;
@@ -1329,11 +1333,26 @@ h1 {
         radial-gradient(ellipse at 50% 100%, rgba(140, 30, 60, 0.25) 0%, transparent 55%),
         linear-gradient(180deg, #2e0a12 0%, #1c0610 55%, #0f0308 100%);
     overflow-x: hidden;
+    overflow-y: hidden;
     box-sizing: border-box;
 }
 
 /* Старый заголовок "Azi by Bobby" больше не используется */
 .game--v2 h1 { display: none; }
+
+/* Средний столбец: занимает ровно остаток viewport под шапкой;
+   нижний «футер-поток» убран — панель торгов в .game-auction-dock (absolute).
+   Стабильный padding снизу, чтобы рука не уезжала под оверлей и layout не прыгал. */
+.game--v2 .game-play-shell {
+    flex: 1 1 0%;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    padding-bottom: clamp(112px, 22vmin, 200px);
+}
 
 /* Нейтрализация физического "стола" и старых абсолютных позиций */
 .game--v2 .game-arena { background: none; border: 0; box-shadow: none; min-height: 0; border-radius: 0; min-width: 0; }
@@ -1784,7 +1803,7 @@ h1 {
     width: min(440px, 96vw);
     max-height: min(86vh, 720px);
     overflow-y: auto;
-    padding: 18px 18px 16px;
+    padding: 18px 18px 22px;
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(46, 10, 18, 0.96) 0%, rgba(20, 4, 10, 0.98) 100%);
     border: 1px solid rgba(216, 178, 76, 0.65);
@@ -1873,7 +1892,7 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 260px;
+    max-height: 300px;
     overflow-y: auto;
     padding-right: 2px;
     scrollbar-width: thin;
@@ -2007,23 +2026,26 @@ h1 {
     .invite-title { font-size: 20px; }
 }
 
-/* ======================== TABLE FOOTER: торги ======================== */
+/* ======================== AUCTION DOCK (оверлей, не поток документа) ======================== */
 
-.game--v2 .game-table-footer {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(8px, 2vw, 11px);
-    width: 100%;
-    padding: 8px clamp(10px, 2.4vw, 16px);
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-    margin-top: auto;
+.game--v2 .game-auction-dock {
+    position: absolute;
+    left: 50%;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    width: min(480px, calc(100% - 20px));
+    max-width: 100%;
+    z-index: 27;
     box-sizing: border-box;
+    pointer-events: none;
+}
+.game--v2 .game-auction-dock .auction-bar {
+    pointer-events: auto;
 }
 
 /*
- * Журнал «События стола»: вне .game-arena, fixed-shell — не влияет на grid и высоту flex.
+ * Журнал «События стола»: `#gameEventsShell` вне #gameRoot — не в flex-колонке игры;
+ * панель и FAB — position:fixed к viewport, без reflow стола.
  */
 .game--v2 #gameWaitingBanner {
     display: none !important;
@@ -2031,21 +2053,23 @@ h1 {
     pointer-events: none !important;
 }
 
-.game--v2 .game-events-shell {
+#gameEventsShell {
     pointer-events: none;
     position: fixed;
     inset: 0;
-    z-index: 16;
+    z-index: 24;
+    visibility: visible;
 }
-.game--v2 .game-events-shell > .game-events-fab,
-.game--v2 .game-events-shell > .game-events-dock,
-.game--v2 .game-events-shell > .game-events-toast {
+#gameEventsShell > .game-events-fab,
+#gameEventsShell > .game-events-dock,
+#gameEventsShell > .game-events-toast {
     pointer-events: auto;
 }
 
-.game--v2 .game-events-sheet-backdrop {
-    position: absolute;
+#gameEventsSheetBackdrop {
+    position: fixed;
     inset: 0;
+    z-index: 22;
     background: rgba(6, 2, 4, 0.52);
     opacity: 0;
     visibility: hidden;
@@ -2053,18 +2077,18 @@ h1 {
     transition: opacity 0.22s ease, visibility 0.22s linear;
     backdrop-filter: blur(2px);
 }
-.game--v2 .game-events-shell.is-sheet-open .game-events-sheet-backdrop {
+#gameEventsShell.is-sheet-open #gameEventsSheetBackdrop {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
 }
 
-.game--v2 .game-events-toast {
-    position: absolute;
+#gameEventsToast.game-events-toast {
+    position: fixed;
     left: 50%;
     bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 76px));
     transform: translateX(-50%) translateY(120%);
-    z-index: 46;
+    z-index: 28;
     max-width: min(360px, calc(100% - 28px));
     padding: 10px 16px;
     border-radius: 14px;
@@ -2078,19 +2102,25 @@ h1 {
     text-align: center;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 14px rgba(216, 140, 60, 0.12);
     opacity: 0;
-    visibility: visible;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), visibility 0.28s linear;
 }
-.game--v2 .game-events-toast.hidden { display: none !important; }
-.game--v2 .game-events-toast.is-visible {
+#gameEventsToast.game-events-toast.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(120%);
+    pointer-events: none;
+}
+#gameEventsToast.game-events-toast.is-visible {
     opacity: 1;
+    visibility: visible;
     transform: translateX(-50%) translateY(0);
 }
 
-.game--v2 .game-events-fab {
-    display: none;
-    position: absolute;
+#gameEventsFab.game-events-fab {
+    display: grid;
+    position: fixed;
     bottom: max(112px, calc(env(safe-area-inset-bottom, 0px) + 94px));
     right: max(14px, calc(env(safe-area-inset-right, 0px) + 8px));
     width: 50px;
@@ -2105,11 +2135,11 @@ h1 {
     box-shadow:
         0 6px 18px rgba(0, 0, 0, 0.45),
         inset 0 1px 0 rgba(255, 214, 130, 0.1);
-    z-index: 40;
-    transition: transform 0.15s ease, filter 0.18s ease;
+    z-index: 25;
+    transition: transform 0.15s ease, filter 0.18s ease, opacity 0.2s ease, visibility 0.2s ease;
 }
-.game--v2 .game-events-fab:active { transform: scale(0.96); }
-.game--v2 .game-events-shell.is-sheet-open .game-events-fab {
+#gameEventsFab.game-events-fab:active { transform: scale(0.96); }
+#gameEventsShell.is-sheet-open #gameEventsFab.game-events-fab {
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
@@ -2133,14 +2163,14 @@ h1 {
 }
 .game-events-fab-badge.hidden { display: none !important; }
 
-.game--v2 .game-events-dock.game-status-panel {
-    position: absolute;
+#gameStatusPanel.game-events-dock.game-status-panel {
+    position: fixed;
     bottom: max(14px, env(safe-area-inset-bottom, 0px));
     right: max(11px, env(safe-area-inset-right, 0px));
     left: auto;
     top: auto;
-    width: min(244px, calc(100vw - 22px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-    max-height: min(240px, 38vh);
+    width: clamp(304px, 32vw, 360px);
+    max-height: clamp(220px, 32vh, 260px);
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -2151,10 +2181,11 @@ h1 {
     box-shadow:
         0 6px 22px rgba(0, 0, 0, 0.45),
         inset 0 1px 0 rgba(255, 214, 130, 0.08);
-    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.22s ease;
+    transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.24s ease;
+    z-index: 26;
 }
 
-.game--v2 .game-events-dock .game-status-panel__head {
+#gameStatusPanel .game-status-panel__head {
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -2183,6 +2214,11 @@ h1 {
     color: #f7e3a5;
 }
 
+.game-events-panel-toggle-icon {
+    display: block;
+    transition: transform 0.25s ease;
+}
+
 @media (min-width: 701px) {
     .game-events-panel-toggle.has-unread::after {
         content: "";
@@ -2196,34 +2232,55 @@ h1 {
         box-shadow: 0 0 0 2px rgba(14, 4, 10, 0.95);
         pointer-events: none;
     }
+
+    #gameEventsFab.game-events-fab {
+        visibility: hidden !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        position: fixed !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        clip-path: inset(50%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-width: 0 !important;
+        box-shadow: none !important;
+    }
+
+    #gameStatusPanel .game-status-panel__feed {
+        font-size: 11.5px;
+    }
 }
 
-.game-events-panel-toggle-icon {
-    display: block;
-    transition: transform 0.25s ease;
-}
-.game--v2 .game-events-shell.is-collapsed .game-events-panel-toggle-icon {
+#gameEventsShell.is-collapsed .game-events-panel-toggle-icon {
     transform: rotate(180deg);
 }
 
-.game--v2 .game-events-shell.is-collapsed .game-status-panel__feed-wrap {
-    display: none;
+#gameEventsShell.is-collapsed #gameStatusPanel .game-status-panel__feed-wrap {
+    flex: 0 0 auto;
+    max-height: 0 !important;
+    min-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
 }
-.game--v2 .game-events-shell.is-collapsed .game-events-dock {
+#gameEventsShell.is-collapsed #gameStatusPanel.game-events-dock {
     max-height: none;
 }
 
-.game--v2 .game-events-dock .game-status-panel__feed-wrap {
+#gameStatusPanel .game-status-panel__feed-wrap {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-.game--v2 .game-events-dock .game-status-panel__feed {
+#gameStatusPanel .game-status-panel__feed {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: min(154px, 28vh);
+    max-height: none;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(216, 178, 76, 0.38) transparent;
@@ -2236,63 +2293,65 @@ h1 {
 }
 
 @media (max-width: 700px) {
-    .game--v2 .game-events-fab {
+    #gameEventsFab.game-events-fab {
         display: grid;
-        visibility: visible;
-        opacity: 1;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 50px !important;
+        height: 50px !important;
+        overflow: visible !important;
+        clip-path: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-width: 1px !important;
+        box-shadow:
+            0 6px 18px rgba(0, 0, 0, 0.45),
+            inset 0 1px 0 rgba(255, 214, 130, 0.1);
     }
 
-    .game--v2 .game-events-shell {
+    #gameEventsShell {
         pointer-events: none;
     }
-    .game--v2 .game-events-shell.is-sheet-open {
+    #gameEventsShell.is-sheet-open {
         pointer-events: auto;
     }
 
-    .game--v2 .game-events-shell:not(.is-sheet-open) .game-events-dock.game-status-panel {
+    #gameEventsShell:not(.is-sheet-open) #gameStatusPanel.game-events-dock {
         pointer-events: none;
     }
-    .game--v2 .game-events-shell.is-sheet-open .game-events-dock.game-status-panel {
+    #gameEventsShell.is-sheet-open #gameStatusPanel.game-events-dock {
         pointer-events: auto;
     }
 
-    /* Лист как bottom sheet на малых экранах */
-    .game--v2 .game-events-shell .game-events-dock.game-status-panel {
-        position: absolute;
+    /* Лист как bottom sheet: fixed к viewport — не расширяет документ */
+    #gameStatusPanel.game-events-dock.game-status-panel {
         left: max(0px, env(safe-area-inset-left, 0px));
         right: max(0px, env(safe-area-inset-right, 0px));
         bottom: 0;
         width: auto;
         max-width: none;
-        max-height: min(52vh, 420px);
+        max-height: min(46vh, 360px);
         border-radius: 18px 18px 0 0;
-        transform: translateY(108%);
+        transform: translateY(calc(100% + 24px));
         opacity: 0.98;
-        z-index: 41;
+        z-index: 26;
         border-bottom: none;
     }
-    .game--v2 .game-events-shell.is-sheet-open .game-events-dock.game-status-panel {
+    #gameEventsShell.is-sheet-open #gameStatusPanel.game-events-dock {
         transform: translateY(0);
         opacity: 1;
     }
-    .game--v2 .game-events-shell.is-sheet-open .game-events-panel-toggle-icon {
+    #gameEventsShell.is-sheet-open .game-events-panel-toggle-icon {
         transform: rotate(180deg);
     }
-    .game--v2 .game-events-dock .game-status-panel__feed {
-        max-height: min(calc(52vh - 52px), 320px);
+    #gameStatusPanel .game-status-panel__feed {
+        max-height: min(calc(46vh - 52px), 288px);
         font-size: 10.5px;
         padding: 6px 10px;
     }
-    /* На телефоне «свернуть» только закрывает лист; класс .is-collapsed не используется */
-    .game--v2 .game-events-shell:not(.is-sheet-open) .game-status-panel__feed-wrap {
+    #gameEventsShell:not(.is-sheet-open) #gameStatusPanel .game-status-panel__feed-wrap {
         display: flex;
-    }
-}
-
-@media (min-width: 701px) {
-    .game--v2 .game-events-dock .game-status-panel__feed {
-        max-height: min(168px, 30vh);
-        font-size: 11.5px;
     }
 }
 
@@ -2460,6 +2519,7 @@ h1 {
     justify-content: center;
     width: 100%;
     min-height: 40px;
+    box-sizing: border-box;
     padding: 10px 14px;
     font-size: 12px;
     letter-spacing: 0.4px;
@@ -2468,6 +2528,10 @@ h1 {
     background: linear-gradient(180deg, rgba(40, 14, 22, 0.6), rgba(28, 10, 16, 0.7));
     border: 1px dashed rgba(218, 174, 98, 0.35);
     border-radius: 10px;
+}
+/* Та же зарезервированная высота, что у веера «Вы», чтобы не прыгал ряд под Центром */
+.game--v2 .game-seat--bottom .seat-hand-waiting {
+    min-height: calc(var(--card-h) + 12px);
 }
 @keyframes seatTurnPulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(247, 227, 165, 0.35), 0 6px 18px rgba(216, 140, 60, 0.4); }
@@ -2628,7 +2692,17 @@ h1 {
 
 .game--v2 .game-arena {
     position: relative;
-    flex: 1;
+    flex: 1 1 auto;
+    align-self: stretch;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
     display: grid;
     grid-template-columns:
         minmax(96px, 1.22fr)
@@ -2708,6 +2782,26 @@ h1 {
     min-width: 0;
     width: 100%;
     max-width: min(100%, 492px);
+}
+
+/* Полоса «Готов» / таймер вне потока строки — row 6 не меняет высоту grid. */
+.game--v2 .game-you-stack {
+    position: relative;
+    padding-bottom: clamp(48px, 8vmin, 72px);
+    box-sizing: border-box;
+}
+.game--v2 #gameLobbyReadyWrap {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(4px, 1.2vw, 10px);
+    transform: translateX(-50%);
+    width: auto;
+    max-width: calc(100% - 14px);
+}
+.game--v2 .game-human-lobby-bar:not(.hidden) {
+    min-height: 46px;
+    box-sizing: border-box;
+    align-items: center;
 }
 
 /* ======================== SEATS ======================== */
@@ -2806,6 +2900,35 @@ h1 {
 
 /* Hand-раскладка: общий веер у оппонентов; крупнее — у «Вы» */
 .seat-hand { display: flex; justify-content: center; align-items: center; }
+/*
+ * Игровой стол v2: зона руки не схлопывается при 0 картах — иначе grid-ряды и центр «прыгают».
+ * Высота привязана к --card-h места (уже задаётся для верх/бок/низ).
+ */
+.game--v2 .game-seat:not(.game-seat--bottom) .seat-hand {
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    flex-shrink: 0;
+    min-height: calc(var(--card-h) + 14px);
+    box-sizing: border-box;
+}
+.game--v2 .game-seat:not(.game-seat--bottom) .seat-hand .cards {
+    min-height: var(--card-h);
+    align-items: flex-end;
+}
+.game--v2 .game-seat--bottom .seat-hand {
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    flex-shrink: 0;
+    min-height: calc(var(--card-h) + 18px);
+    box-sizing: border-box;
+}
+.game--v2 .game-seat--bottom .seat-hand .cards {
+    min-height: var(--card-h);
+    align-items: flex-end;
+}
+
 .seat-hand .cards {
     display: flex;
     justify-content: center;
@@ -2978,6 +3101,15 @@ h1 {
     font-size: 10px;
     letter-spacing: 0.15em;
     color: rgba(216, 178, 76, 0.5);
+}
+
+/* Пустое место: тот же вертикальный каркас, что у занятого (взятки + слот руки), симметрия сетки v2 */
+.game--v2 .game-seat--empty .seat-tricks-strip--empty-slot {
+    opacity: 0.4;
+}
+.game--v2 .game-seat--empty .seat-trick-dots--empty-slot .trick-dot {
+    background: rgba(216, 178, 76, 0.14);
+    box-shadow: none;
 }
 
 /* Компактная "плашка взятки": маленький pile + подпись «Взято: N» */
@@ -3277,28 +3409,137 @@ h1 {
 .game--v2 .auction-bar {
     margin: 0 auto;
     width: min(480px, calc(100% - 20px));
-    padding: 10px 12px 12px;
+    padding: 12px 14px 14px;
     border-radius: 20px;
-    background: linear-gradient(180deg, rgba(30, 8, 14, 0.94) 0%, rgba(18, 4, 10, 0.96) 100%);
-    border: 1px solid rgba(216, 178, 76, 0.4);
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 214, 130, 0.06);
-    backdrop-filter: none;
+    position: relative;
+    opacity: 1;
+    /* Без backdrop-filter: при overflow:hidden на #gameRoot WebKit часто «обнуляет» слой с blur — панель пропадает. */
+    background:
+        radial-gradient(ellipse 118% 90% at 50% -8%, rgba(216, 178, 76, 0.14) 0%, transparent 52%),
+        linear-gradient(180deg, rgba(62, 18, 36, 1) 0%, rgba(22, 6, 12, 1) 52%, rgba(10, 2, 6, 1) 100%);
+    border: 2px solid rgba(247, 227, 165, 0.58);
+    box-shadow:
+        0 -2px 0 rgba(255, 214, 130, 0.05) inset,
+        0 1px 0 rgba(247, 227, 165, 0.12) inset,
+        0 12px 36px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(90, 22, 40, 0.65),
+        0 0 28px rgba(216, 140, 60, 0.14);
+}
+.game--v2 #auctionBar.hidden,
+.game--v2 .auction-bar.hidden {
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
 }
 .game--v2 .auction-summary {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 13.5px;
-    color: rgba(247, 227, 165, 0.88);
-    letter-spacing: 0.02em;
+    font-size: clamp(13px, 3.6vw, 14.5px);
+    font-weight: 600;
+    color: #faecc8;
+    letter-spacing: 0.025em;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.75),
+        0 0 12px rgba(216, 140, 60, 0.18);
+    margin-bottom: 8px;
+    line-height: 1.35;
 }
-.game--v2 .slider-label { color: rgba(216, 178, 76, 0.8); font-size: 12.5px; }
-.game--v2 .slider-label strong { color: #f7e3a5; }
-.game--v2 #bidSlider { accent-color: #d8b24c; }
+.game--v2 .slider-label {
+    color: rgba(247, 227, 165, 0.92);
+    font-size: 13px;
+    font-weight: 500;
+}
+.game--v2 .slider-label strong {
+    color: #fff7dc;
+    font-weight: 700;
+    font-size: 1.08em;
+    text-shadow: 0 0 12px rgba(247, 200, 100, 0.28);
+}
+
+.game--v2 #auctionBar .slider-row {
+    margin-top: 6px;
+    padding: 8px 10px 10px;
+    border-radius: 14px;
+    background: rgba(4, 1, 3, 0.55);
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.game--v2 #bidSlider {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: 28px;
+    margin: 2px 0 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    accent-color: #f0c860;
+}
+.game--v2 #bidSlider:focus {
+    outline: none;
+}
+.game--v2 #bidSlider:focus-visible {
+    outline: 2px solid rgba(247, 227, 165, 0.75);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+.game--v2 #bidSlider::-webkit-slider-runnable-track {
+    height: 11px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(18, 5, 10, 0.95) 0%, rgba(10, 3, 6, 1) 100%);
+    border: 1px solid rgba(247, 227, 165, 0.38);
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.65),
+        inset 0 0 0 1px rgba(216, 178, 76, 0.12);
+}
+
+.game--v2 #bidSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff9e8, #eccf6a 42%, #986a20 100%);
+    border: 2px solid rgba(46, 10, 18, 0.95);
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.5),
+        0 0 16px rgba(247, 200, 100, 0.48),
+        inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.game--v2 #bidSlider::-moz-range-track {
+    height: 11px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(18, 5, 10, 0.95) 0%, rgba(10, 3, 6, 1) 100%);
+    border: 1px solid rgba(247, 227, 165, 0.38);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65);
+}
+
+.game--v2 #bidSlider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(46, 10, 18, 0.95);
+    background: radial-gradient(circle at 35% 30%, #fff9e8, #eccf6a 42%, #986a20 100%);
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.5),
+        0 0 14px rgba(247, 200, 100, 0.42);
+}
+
+.game--v2 #bidSlider::-moz-range-progress {
+    height: 11px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(247, 227, 165, 0.45), rgba(216, 178, 76, 0.28));
+}
 
 .game--v2 .game-actions-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 .game--v2 .game-act {
     display: inline-flex;
@@ -3307,81 +3548,123 @@ h1 {
     justify-content: center;
     gap: 8px;
     padding: 12px 10px;
-    border: 1px solid rgba(247, 227, 165, 0.7);
+    border: 1px solid rgba(247, 227, 165, 0.78);
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(30, 8, 14, 0.9) 0%, rgba(60, 14, 24, 0.85) 100%);
-    color: #f7e3a5;
+    background: linear-gradient(180deg, rgba(74, 24, 40, 0.95) 0%, rgba(22, 6, 12, 0.98) 100%);
+    color: #ffefd0;
     font-family: 'Cormorant Garamond', serif;
     font-weight: 600;
     font-size: 15px;
     letter-spacing: 0.02em;
     cursor: pointer;
-    transition: transform 0.15s ease, filter 0.18s ease, box-shadow 0.18s ease, border-color 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 214, 130, 0.08);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+    transition:
+        transform 0.15s ease,
+        filter 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        opacity 0.2s ease;
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        inset 0 1px 0 rgba(255, 214, 130, 0.12);
 }
-.game--v2 .game-act:hover { transform: translateY(-1px); filter: brightness(1.06); border-color: rgba(247, 227, 165, 0.9); }
-.game--v2 .game-act:active { transform: translateY(0); }
-.game--v2 .game-act:disabled { opacity: 0.42; cursor: default; filter: none; transform: none; box-shadow: none; }
+.game--v2 .game-act:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.12);
+    border-color: rgba(255, 235, 180, 0.95);
+    box-shadow:
+        0 7px 20px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(216, 140, 60, 0.22),
+        inset 0 1px 0 rgba(255, 214, 130, 0.18);
+}
+.game--v2 .game-act:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.98);
+}
+.game--v2 .game-act:disabled {
+    opacity: 1;
+    cursor: not-allowed;
+    color: rgba(247, 227, 165, 0.48);
+    border-color: rgba(216, 178, 76, 0.22);
+    text-shadow: none;
+    transform: none;
+    filter: grayscale(0.12) brightness(0.88);
+    background: linear-gradient(180deg, rgba(38, 12, 20, 0.65) 0%, rgba(12, 3, 7, 0.85) 100%);
+    box-shadow:
+        inset 0 3px 12px rgba(0, 0, 0, 0.5),
+        0 1px 0 rgba(247, 227, 165, 0.04);
+}
 
 .game--v2 .game-act-icon {
     width: 22px;
     height: 22px;
     display: grid;
     place-items: center;
-    color: #d8b24c;
+    color: #f0cf72;
     flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+.game--v2 .game-act:disabled .game-act-icon {
+    color: rgba(240, 207, 114, 0.35);
+    filter: none;
 }
 .game--v2 .game-act-icon svg { width: 100%; height: 100%; }
 .game--v2 .game-act-label { line-height: 1; }
 
-/* --------- Desktop: без layout shift при динамике торгов и лобби ---------- */
+/* --------- Desktop: стабильная шапка ---------- */
 @media (min-width: 701px) {
-    /* Топбар не «играет» по высоте при появлении кнопки «Пригласить». */
     .game--v2 .game-topbar {
         min-height: calc(54px + env(safe-area-inset-top, 0px));
     }
-
-    /*
-     * Полоса «Готов»: резерв высоты + absolute — row 6 grid не дергается
-     * при скрытии/появлении (display:none у .game-human-lobby.hidden).
-     */
     .game--v2 .game-you-stack {
-        position: relative;
         padding-bottom: clamp(54px, 7.5vmin, 72px);
-    }
-    .game--v2 #gameLobbyReadyWrap {
-        position: absolute;
-        left: 50%;
-        bottom: clamp(4px, 1vw, 10px);
-        transform: translateX(-50%);
-        width: auto;
-        max-width: calc(100% - 14px);
     }
     .game--v2 .game-human-lobby-bar:not(.hidden) {
         min-height: 48px;
-        box-sizing: border-box;
-        align-items: center;
-    }
-
-    /*
-     * Торги: .hidden только скрывает визуально — габарит остаётся,
-     * flex:1 арены не расширяется/сжимается между фазами.
-     */
-    .game--v2 #auctionBar.hidden,
-    .game--v2 .auction-bar.hidden {
-        visibility: hidden !important;
-        pointer-events: none !important;
     }
 }
 
-/* Поджигаем акцент ключевой кнопке "Поднять" */
+/* Акценты кнопок торгов: «Сброс» прохладнее, «Уровнять» нейтральнее, «Поднять» — золото */
+.game--v2 .game-act--pass {
+    border-color: rgba(224, 130, 130, 0.45);
+    background: linear-gradient(180deg, rgba(58, 20, 30, 0.96) 0%, rgba(18, 5, 10, 0.98) 100%);
+}
+.game--v2 .game-act--call {
+    border-color: rgba(247, 227, 165, 0.62);
+    background: linear-gradient(180deg, rgba(48, 18, 36, 0.94) 0%, rgba(16, 5, 12, 0.98) 100%);
+}
+.game--v2 .game-act--call .game-act-icon {
+    color: #f5e6b8;
+}
 .game--v2 .game-act--raise {
-    background: linear-gradient(180deg, rgba(92, 28, 42, 0.85) 0%, rgba(42, 10, 18, 0.9) 100%);
-    border-color: rgba(247, 227, 165, 0.85);
-    box-shadow: 0 4px 12px rgba(216, 140, 60, 0.28), inset 0 1px 0 rgba(255, 214, 130, 0.12);
+    background: linear-gradient(180deg, rgba(118, 40, 58, 0.97) 0%, rgba(56, 16, 32, 0.99) 45%, rgba(26, 6, 14, 1) 100%);
+    border-color: rgba(255, 236, 190, 0.92);
+    box-shadow:
+        0 6px 20px rgba(216, 140, 60, 0.38),
+        0 0 26px rgba(247, 200, 100, 0.18),
+        inset 0 1px 0 rgba(255, 214, 130, 0.22);
 }
-.game--v2 .game-act--pass .game-act-icon { color: #c06060; }
-.game--v2 .game-act--raise .game-act-icon { color: #f7e3a5; }
+.game--v2 .game-act--raise:hover:not(:disabled) {
+    box-shadow:
+        0 8px 26px rgba(216, 140, 60, 0.45),
+        0 0 32px rgba(247, 200, 100, 0.24),
+        inset 0 1px 0 rgba(255, 214, 130, 0.28);
+}
+.game--v2 .game-act--pass .game-act-icon { color: #e87878; }
+.game--v2 .game-act--raise .game-act-icon { color: #fff4d8; filter: drop-shadow(0 0 6px rgba(247, 200, 100, 0.45)); }
+
+.game--v2 .game-act--pass:disabled .game-act-icon {
+    color: rgba(232, 120, 120, 0.38);
+}
+.game--v2 .game-act--call:disabled .game-act-icon {
+    color: rgba(245, 230, 184, 0.32);
+}
+.game--v2 .game-act--raise:disabled .game-act-icon {
+    color: rgba(255, 244, 216, 0.35);
+    filter: none;
+}
 
 /* ======================== RESPONSIVE ======================== */
 
@@ -3424,11 +3707,6 @@ h1 {
     .seat-empty-icon { width: 34px; height: 34px; }
     .seat-empty-icon svg { width: 22px; height: 22px; }
 
-    .game--v2 .game-table-footer {
-        padding-left: 8px;
-        padding-right: 8px;
-        gap: 8px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -3461,22 +3739,466 @@ h1 {
 }
 
 /* ===== Main Menu (premium private card club) ===== */
-#mainMenuScreen .splash-inner,
-#findTableScreen .splash-inner,
-#createTableScreen .splash-inner {
-    padding: 0;
-    padding-top: env(safe-area-inset-top, 0px);
+#mainMenuScreen .splash-inner {
+    padding-left: clamp(12px, 3vw, 20px);
+    padding-right: clamp(12px, 3vw, 20px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + clamp(24px, 5vmin, 40px));
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(18px, 4vmin, 36px));
     justify-content: flex-start;
     align-items: center;
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+/* Центральный блок сразу под рамкой; низ экрана остаётся пустым (margin-bottom:auto). */
+#mainMenuScreen .menu-panel--main {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0;
+    margin-bottom: auto;
+}
+
+/* Экран «Создать стол»: запас под золотую рамку (splash-frame ~ inset 14–28px + ornament),
+   безопасные зоны и комфортный зазор под шапкой; контент не упирается в верх экрана. */
+#createTableScreen {
+    --create-pad-top: calc(env(safe-area-inset-top, 0px) + clamp(28px, 5.5vmin, 48px));
+    --create-pad-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(16px, 3.5vmin, 28px));
+    --create-pad-x: clamp(10px, 2.8vw, 20px);
+}
+#createTableScreen .splash-inner {
+    padding: var(--create-pad-top) max(env(safe-area-inset-right, 0px), var(--create-pad-x))
+        var(--create-pad-bottom) max(env(safe-area-inset-left, 0px), var(--create-pad-x));
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+#createTableScreen .menu-panel--create {
+    max-width: min(560px, 100%);
+    width: 100%;
+    margin-top: 0;
+    max-height: min(
+        calc(100vh - var(--create-pad-top) - var(--create-pad-bottom) - 10px),
+        calc(100dvh - var(--create-pad-top) - var(--create-pad-bottom) - 10px),
+        calc(100svh - var(--create-pad-top) - var(--create-pad-bottom) - 10px)
+    );
+}
+#createTableScreen .menu-topbar {
+    margin-top: 0;
+    margin-bottom: clamp(16px, 3.8vw, 22px);
+}
+
+/* Экран «Найти стол»: отступы под рамку + safe-area; панель — колонка с внутренним скроллом списка. */
+#findTableScreen {
+    --find-pad-top: calc(env(safe-area-inset-top, 0px) + clamp(28px, 5.5vmin, 48px));
+    --find-pad-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(14px, 3.2vmin, 26px));
+    --find-pad-x: clamp(10px, 2.8vw, 20px);
+    --find-list-max-h: min(400px, 52vmin, 48svh);
+}
+#findTableScreen .splash-inner {
+    padding: var(--find-pad-top) max(env(safe-area-inset-right, 0px), var(--find-pad-x))
+        var(--find-pad-bottom) max(env(safe-area-inset-left, 0px), var(--find-pad-x));
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+#findTableScreen .menu-panel--find {
+    max-width: min(620px, 100%);
+    width: 100%;
+    margin-top: 0;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(
+        calc(100vh - var(--find-pad-top) - var(--find-pad-bottom) - 12px),
+        calc(100dvh - var(--find-pad-top) - var(--find-pad-bottom) - 12px),
+        calc(100svh - var(--find-pad-top) - var(--find-pad-bottom) - 12px)
+    );
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: clamp(14px, 3.4vw, 22px) clamp(14px, 3.2vw, 20px) clamp(12px, 2.8vw, 16px);
+}
+#findTableScreen .menu-topbar {
+    margin-top: 0;
+    margin-bottom: clamp(12px, 2.8vw, 18px);
+    flex-shrink: 0;
+}
+#findTableScreen .find-title {
+    margin: 2px 0 10px;
+    flex-shrink: 0;
+}
+#findTableScreen .find-searchbar {
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+#findTableScreen .find-filters {
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+#findTableScreen .find-tabs {
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+#findTableScreen .find-tab {
+    min-height: 92px;
+    padding: 10px 5px 8px;
+    gap: 6px;
+}
+#findTableScreen .find-tab-icon svg {
+    width: 20px;
+    height: 20px;
+}
+#findTableScreen .find-list-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: var(--find-list-max-h);
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 4px 8px;
+    margin-bottom: 4px;
+    border-radius: 14px;
+    border: 1px solid rgba(216, 178, 76, 0.22);
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.35) 0%, rgba(18, 6, 12, 0.25) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 214, 130, 0.06),
+        0 4px 14px rgba(0, 0, 0, 0.22);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+#findTableScreen .find-list-shell::-webkit-scrollbar {
+    width: 6px;
+}
+#findTableScreen .find-list-shell::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.45), rgba(139, 106, 42, 0.3));
+    border-radius: 4px;
+}
+#findTableScreen .find-list {
+    margin-bottom: 0;
+    flex: 0 0 auto;
+}
+#findTableScreen .find-empty {
+    margin: 8px 4px 10px;
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+}
+#findTableScreen .find-empty.hidden {
+    display: none !important;
+}
+#findTableScreen .find-brand {
+    margin-top: 4px;
+    padding-top: 8px;
+    flex-shrink: 0;
+}
+
+/* ---------- Экран «Друзья» (бордово-золотой стиль как «Найти стол») ---------- */
+#friendsScreen {
+    --friends-pad-top: calc(env(safe-area-inset-top, 0px) + clamp(28px, 5.5vmin, 48px));
+    --friends-pad-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(14px, 3.2vmin, 26px));
+    --friends-pad-x: clamp(10px, 2.8vw, 20px);
+    --friends-list-max-h: min(420px, 54vmin, 50svh);
+}
+#friendsScreen .splash-inner {
+    padding: var(--friends-pad-top) max(env(safe-area-inset-right, 0px), var(--friends-pad-x))
+        var(--friends-pad-bottom) max(env(safe-area-inset-left, 0px), var(--friends-pad-x));
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    box-sizing: border-box;
+}
+#friendsScreen .menu-panel--friends {
+    max-width: min(620px, 100%);
+    width: 100%;
+    margin-top: 0;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(
+        calc(100vh - var(--friends-pad-top) - var(--friends-pad-bottom) - 12px),
+        calc(100dvh - var(--friends-pad-top) - var(--friends-pad-bottom) - 12px),
+        calc(100svh - var(--friends-pad-top) - var(--friends-pad-bottom) - 12px)
+    );
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: clamp(14px, 3.4vw, 22px) clamp(14px, 3.2vw, 20px) clamp(12px, 2.8vw, 16px);
+    text-align: left;
+}
+#friendsScreen .menu-topbar {
+    margin-top: 0;
+    margin-bottom: clamp(12px, 2.8vw, 18px);
+    flex-shrink: 0;
+}
+#friendsScreen .find-title {
+    margin: 2px 0 10px;
+    flex-shrink: 0;
+}
+#friendsScreen .find-back {
+    position: absolute;
+    left: 0;
+    top: 4px;
+}
+.friends-searchbar {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+.friends-searchbar .find-search {
+    flex: 1;
+    width: 100%;
+}
+.friends-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+.friends-tab {
+    padding: 10px 6px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.72) 0%, rgba(18, 6, 12, 0.82) 100%);
+    border: 1px solid rgba(216, 178, 76, 0.28);
+    color: rgba(230, 200, 106, 0.88);
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: clamp(13px, 3.1vw, 15px);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.friends-tab:hover {
+    border-color: rgba(216, 178, 76, 0.5);
+}
+.friends-tab.is-active {
+    border-color: rgba(247, 227, 165, 0.65);
+    color: #f7e3a5;
+    background: linear-gradient(180deg, rgba(46, 14, 22, 0.9) 0%, rgba(28, 8, 14, 0.92) 100%);
+    box-shadow: 0 0 0 1px rgba(216, 178, 76, 0.12), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.friends-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+#friendsScreen .friends-list-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: var(--friends-list-max-h);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 8px 4px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(216, 178, 76, 0.22);
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.35) 0%, rgba(18, 6, 12, 0.25) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 214, 130, 0.06), 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+#friendsScreen .friends-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 2px 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+#friendsScreen .friends-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+#friendsScreen .friends-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.45), rgba(139, 106, 42, 0.3));
+    border-radius: 4px;
+}
+[data-friends-pane].hidden,
+.friends-search-panel.hidden {
+    display: none !important;
+}
+.friends-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.friends-row,
+.friends-request-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    background: rgba(10, 4, 8, 0.45);
+    border: 1px solid rgba(216, 178, 76, 0.28);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.friends-row:hover,
+.friends-request-row:hover {
+    border-color: rgba(247, 227, 165, 0.55);
+    background: rgba(10, 4, 8, 0.58);
+}
+.friends-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(247, 227, 165, 0.25), rgba(20, 4, 10, 0.75) 80%);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    color: #f7e3a5;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 15px;
+}
+.friends-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.friends-name {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 15.5px;
+    color: #f7e3a5;
+    line-height: 1.2;
+    word-break: break-word;
+}
+.friends-sub {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 11.5px;
+    color: rgba(216, 178, 76, 0.62);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.friends-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.friends-status-dot--offline {
+    background: rgba(120, 90, 90, 0.85);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.friends-status-dot--online {
+    background: #6ecf6e;
+    box-shadow: 0 0 6px rgba(110, 207, 110, 0.65);
+}
+.friends-status-dot--playing {
+    background: #6eb4ff;
+    box-shadow: 0 0 6px rgba(110, 180, 255, 0.55);
+}
+.friends-status-dot--table {
+    background: #f0c14d;
+    box-shadow: 0 0 6px rgba(240, 193, 77, 0.55);
+}
+.friends-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.friends-btn {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
+    border: 1px solid rgba(58, 26, 10, 0.4);
+    color: #3a1a0a;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+.friends-btn:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+.friends-btn:active {
+    transform: translateY(0);
+}
+.friends-btn--ghost {
+    background: transparent;
+    color: rgba(247, 227, 165, 0.88);
+    border-color: rgba(216, 178, 76, 0.45);
+}
+.friends-btn--ghost:hover {
+    border-color: rgba(247, 227, 165, 0.75);
+    background: rgba(10, 4, 8, 0.45);
+}
+.friends-btn[disabled],
+.friends-pill-muted {
+    background: transparent !important;
+    color: rgba(216, 178, 76, 0.55) !important;
+    border: 1px solid rgba(216, 178, 76, 0.32) !important;
+    cursor: default !important;
+    filter: none !important;
+    transform: none !important;
+}
+.friends-request-row .friends-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+.friends-request-out-status {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 11px;
+    color: rgba(216, 178, 76, 0.55);
+    text-align: right;
+}
+.friends-section-head.hidden {
+    display: none !important;
+}
+
+.friends-section-label {
+    margin: 4px 2px 8px;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(216, 178, 76, 0.55);
+}
+.friends-empty {
+    padding: 28px 14px;
+    text-align: center;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(216, 178, 76, 0.52);
+    margin: 0;
+}
+.friends-empty.hidden {
+    display: none !important;
+}
+@media (max-width: 520px) {
+    #friendsScreen {
+        --friends-list-max-h: min(360px, 50vmin, 48svh);
+    }
 }
 
 .menu-panel--main {
     position: relative;
     width: min(520px, 100% - 40px);
     padding: clamp(18px, 4vw, 30px) clamp(14px, 3vw, 28px) clamp(14px, 3vw, 22px);
-    margin: auto;
     text-align: center;
     animation: splashRise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
@@ -3973,10 +4695,8 @@ h1 {
     box-shadow: 0 0 6px rgba(216, 178, 76, 0.55);
 }
 
+/* Кнопка «Назад» — эталон «Найти стол» (.find-back); та же разметка на «Создать стол». */
 .find-back {
-    position: absolute;
-    left: 0;
-    top: 4px;
     width: 34px;
     height: 34px;
     display: grid;
@@ -3987,6 +4707,7 @@ h1 {
     border: 1px solid rgba(216, 178, 76, 0.32);
     color: #e7c97a;
     cursor: pointer;
+    flex-shrink: 0;
     transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
 }
 .find-back:hover {
@@ -3994,7 +4715,17 @@ h1 {
     background: rgba(30, 10, 16, 0.7);
     border-color: rgba(216, 178, 76, 0.55);
 }
-.find-back svg { width: 16px; height: 16px; }
+.find-back svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+#findTableScreen .find-back,
+#createTableScreen .create-title .find-back {
+    position: absolute;
+    left: 0;
+    top: 4px;
+}
 
 /* ---------- Поиск + иконка фильтров ---------- */
 
@@ -4407,36 +5138,23 @@ h1 {
     border-radius: 3px;
 }
 
-.create-back-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: rgba(10, 4, 8, 0.55);
-    border: 1px solid rgba(216, 178, 76, 0.45);
-    color: #f4d68a;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
-    flex-shrink: 0;
-}
-.create-back-btn svg { width: 18px; height: 18px; }
-.create-back-btn:hover {
-    border-color: rgba(247, 227, 165, 0.9);
-    background: rgba(247, 227, 165, 0.08);
-    color: #f7e3a5;
-}
-
 .create-title {
-    margin: 10px 0 14px;
-    text-align: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0 10px;
+    padding: 0 42px;
+    box-sizing: border-box;
 }
 .create-title-text {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 600;
     font-size: clamp(28px, 5.4vw, 38px);
     letter-spacing: 0.01em;
-    margin: 0 0 8px;
+    margin: 0;
+    text-align: center;
     background: linear-gradient(180deg, #f7e3a5 0%, #d8b24c 55%, #9b7626 100%);
     -webkit-background-clip: text;
             background-clip: text;
@@ -4845,11 +5563,8 @@ h1 {
     .create-preview-icon svg { width: 48px; height: 48px; }
     .create-section-flourish-left,
     .create-section-flourish-right { max-width: 50px; }
-    /* На узких экранах прячем кольцевой колокольчик, чтобы 4 элемента
-       (баланс, колокольчик, назад) помещались и оставалось удобно нажать. */
+    /* На узких экранах — плотнее группа справа (баланс, колокольчик). */
     #createTableScreen .menu-topbar-right { gap: 6px; }
-    .create-back-btn { width: 32px; height: 32px; }
-    .create-back-btn svg { width: 16px; height: 16px; }
 }
 @media (max-width: 400px) {
     .create-section-title { font-size: 14px; }
@@ -4868,6 +5583,19 @@ h1 {
 /* ---------- Адаптив (find-table) ---------- */
 
 @media (max-width: 520px) {
+    #findTableScreen {
+        --find-list-max-h: min(340px, 46vmin, 44svh);
+    }
+    #findTableScreen .find-tab {
+        min-height: 82px;
+        padding: 8px 3px 6px;
+        gap: 5px;
+    }
+    #findTableScreen .find-tab-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
     .find-tabs { gap: 6px; }
     .find-tab { min-height: 96px; padding: 10px 4px 8px; }
     .find-tab-icon { width: 34px; height: 34px; }
@@ -5428,16 +6156,16 @@ h1 {
                         </svg>
                         <span class="menu-bell-badge" data-create-notifications>3</span>
                     </button>
-                    <button class="create-back-btn" type="button" data-create-back aria-label="Назад">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
             <!-- Page title -->
             <div class="create-title">
+                <button class="find-back" type="button" data-create-back aria-label="Назад">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
                 <h2 class="create-title-text">Создать стол</h2>
                 <div class="create-title-flourish" aria-hidden="true">
                     <span class="create-flourish-line"></span>
@@ -5776,13 +6504,13 @@ h1 {
                 </button>
             </div>
 
-            <!-- Tables list -->
-            <div class="find-list" data-find-list role="list">
-                <!-- строки добавляются в renderFindTable() -->
+            <!-- Tables list (внутренний скролл ~5 строк) -->
+            <div class="find-list-shell">
+                <div class="find-list" data-find-list role="list">
+                    <!-- строки добавляются в renderFindTable() -->
+                </div>
+                <p class="find-empty hidden" data-find-empty>Столы не найдены</p>
             </div>
-
-            <!-- Empty state -->
-            <p class="find-empty hidden" data-find-empty>Столы не найдены</p>
 
             <!-- Bottom brand -->
             <div class="find-brand" aria-hidden="true">
@@ -5794,6 +6522,133 @@ h1 {
 
         <!-- Toast живёт на уровне .splash-inner, чтобы не зависеть от transform анимации панели -->
         <div class="menu-toast" data-find-toast aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ============ FRIENDS ============ -->
+<div id="friendsScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="menu-panel menu-panel--friends">
+            <div class="menu-topbar">
+                <div class="menu-profile" aria-label="Профиль">
+                    <span class="menu-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                            <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                            <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                        </svg>
+                    </span>
+                    <span class="menu-user-info">
+                        <span class="menu-user-name" data-friends-name>Игрок</span>
+                        <span class="menu-user-level">
+                            <svg class="menu-level-crown" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                            </svg>
+                            <span>Уровень <strong data-friends-level>12</strong></span>
+                        </span>
+                        <span class="menu-level-bar" aria-hidden="true"><span data-friends-level-fill></span></span>
+                    </span>
+                </div>
+
+                <div class="menu-topbar-right">
+                    <div class="menu-balance">
+                        <span class="menu-balance-coin" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <defs>
+                                    <linearGradient id="friendsCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0" stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1" stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="10" cy="10" r="9" fill="url(#friendsCoinGrad)" />
+                                <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                                <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                                <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="menu-balance-value" data-friends-balance>5 420</span>
+                        <button class="menu-balance-plus" type="button" data-friends-topup aria-label="Пополнить баланс">+</button>
+                    </div>
+                    <button class="menu-bell" type="button" data-friends-bell aria-label="Уведомления">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                            <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+                        </svg>
+                        <span class="menu-bell-badge" data-friends-notifications>3</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="find-title">
+                <button class="find-back" type="button" data-friends-back aria-label="Назад">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <h2 class="find-title-text" data-friends-title>Друзья</h2>
+                <div class="find-title-flourish" aria-hidden="true">
+                    <span class="find-flourish-line"></span>
+                    <span class="find-flourish-diamond"></span>
+                    <span class="find-flourish-line"></span>
+                </div>
+            </div>
+
+            <div class="friends-searchbar">
+                <label class="find-search">
+                    <svg class="find-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M15.5 15.5 L 20 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                    <input type="search" class="find-search-input" data-friends-search placeholder="Поиск друга по никнейму" autocomplete="off" inputmode="search" />
+                </label>
+            </div>
+
+            <div class="friends-tabs" role="tablist" data-friends-tabs>
+                <button class="friends-tab is-active" type="button" role="tab" data-friends-tab="friends" aria-selected="true">Друзья</button>
+                <button class="friends-tab" type="button" role="tab" data-friends-tab="requests" aria-selected="false">Заявки</button>
+                <button class="friends-tab" type="button" role="tab" data-friends-tab="recent" aria-selected="false">Недавно</button>
+            </div>
+
+            <div class="friends-body">
+                <div class="friends-list-shell">
+                    <div class="friends-scroll" data-friends-scroll>
+                        <div class="friends-search-panel hidden" data-friends-panel-search>
+                            <div class="friends-rows" data-friends-search-list role="list"></div>
+                            <p class="friends-empty hidden" data-friends-empty-search></p>
+                        </div>
+
+                        <div data-friends-panel-browse>
+                            <div data-friends-pane="friends">
+                                <div class="friends-rows" data-friends-list-friends role="list"></div>
+                                <p class="friends-empty hidden" data-friends-empty-friends></p>
+                            </div>
+
+                            <div class="hidden" data-friends-pane="requests">
+                                <p class="friends-empty hidden" data-friends-empty-requests-both></p>
+                                <div class="friends-section-head" data-friends-inbound-head>
+                                    <div class="friends-section-label" data-friends-label-in>Входящие</div>
+                                    <div class="friends-rows" data-friends-list-inbound role="list"></div>
+                                    <p class="friends-empty hidden" data-friends-empty-inbound></p>
+                                </div>
+                                <div class="friends-section-head" data-friends-outbound-head>
+                                    <div class="friends-section-label" data-friends-label-out>Исходящие</div>
+                                    <div class="friends-rows" data-friends-list-outbound role="list"></div>
+                                    <p class="friends-empty hidden" data-friends-empty-outbound></p>
+                                </div>
+                            </div>
+
+                            <div class="hidden" data-friends-pane="recent">
+                                <div class="friends-rows" data-friends-list-recent role="list"></div>
+                                <p class="friends-empty hidden" data-friends-empty-recent></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-toast" data-friends-toast aria-live="polite"></div>
     </div>
 </div>
 
@@ -5863,7 +6718,8 @@ h1 {
         <button class="game-lobby-btn" type="button" data-game-lobby>Лобби</button>
     </div>
 
-    <!-- ========== ARENA ========== -->
+    <!-- ========== ARENA (стабильная высота столбца — см. .game-play-shell) ========== -->
+    <div class="game-play-shell" id="gamePlayShell">
     <div class="game-arena" id="tableZone">
         <div class="impact-layer" id="impactLayer"></div>
         <div class="party-victory-overlay hidden" id="partyVictoryOverlay" role="status" aria-live="polite">
@@ -5927,25 +6783,39 @@ h1 {
 
     </div>
 
-    <!-- Журнал событий: fixed вне арены; на мобиле — FAB + bottom sheet -->
-    <div class="game-events-shell" id="gameEventsShell">
-        <div class="game-events-toast hidden" id="gameEventsToast" aria-live="polite" role="status"></div>
-        <div class="game-events-sheet-backdrop" id="gameEventsSheetBackdrop" aria-hidden="true"></div>
-        <button type="button" class="game-events-fab" id="gameEventsFab" aria-label="События стола">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h14v2H4z" fill="currentColor"/></svg>
-            <span class="game-events-fab-badge hidden" id="gameEventsUnreadBadge" aria-live="polite"></span>
-        </button>
-        <aside class="game-events-dock game-status-panel" id="gameStatusPanel" aria-label="События и статус партии">
-            <div class="game-status-panel__head">
-                <span class="game-status-panel__title">События стола</span>
-                <button type="button" class="game-events-panel-toggle" id="gameEventsPanelToggle" aria-expanded="true" title="Свернуть журнал">
-                    <svg class="game-events-panel-toggle-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <!-- Торги: sibling .game-arena внутри #gamePlayShell — absolute-слой, не в grid стола -->
+    <div class="game-auction-dock" id="gameAuctionDock" aria-label="Торги">
+        <div class="auction-bar game-actions" id="auctionBar">
+            <div class="auction-summary" id="auctionSummary">Ставка: 0 · Твой ход в торгах</div>
+
+            <div class="slider-row">
+                <div class="slider-label">Поднять до: <strong id="sliderValue">1</strong></div>
+                <input type="range" id="bidSlider" min="1" max="3" value="1" />
+            </div>
+
+            <div class="auction-buttons game-actions-row">
+                <button class="auction-btn game-act game-act--pass" id="passBtn" type="button">
+                    <span class="game-act-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6 4 L 6 15 L 3 15 L 12 22 L 21 15 L 18 15 L 18 4 Z" fill="currentColor"/></svg>
+                    </span>
+                    <span class="game-act-label">Сброс</span>
+                </button>
+                <button class="auction-btn game-act game-act--call" id="callBtn" type="button">
+                    <span class="game-act-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 9 L 20 9 M 4 15 L 20 15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+                    </span>
+                    <span class="game-act-label">Уровнять</span>
+                </button>
+                <button class="auction-btn game-act game-act--raise" id="raiseBtn" type="button">
+                    <span class="game-act-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6 20 L 6 9 L 3 9 L 12 2 L 21 9 L 18 9 L 18 20 Z" fill="currentColor"/></svg>
+                    </span>
+                    <span class="game-act-label">Поднять</span>
                 </button>
             </div>
-            <div class="game-status-panel__feed-wrap" id="gameStatusFeedWrap">
-                <div class="game-status-panel__feed" id="gameStatusFeed" role="log" aria-relevant="additions"></div>
-            </div>
-        </aside>
+        </div>
+    </div>
+
     </div>
 
     <!-- Баннер ожидания (тексты перенесены в журнал «События стола»; блок не показывается). -->
@@ -5981,20 +6851,6 @@ h1 {
             </div>
 
             <div class="invite-empty hidden" data-invite-empty>Ничего не найдено</div>
-
-            <div class="invite-divider" aria-hidden="true">
-                <span></span><em>или</em><span></span>
-            </div>
-
-            <button class="invite-share-btn" type="button" data-invite-share>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M10 13 L 14 11 M 14 13 L 10 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                    <circle cx="7"  cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
-                    <circle cx="17" cy="6"  r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
-                    <circle cx="17" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
-                </svg>
-                <span>Поделиться ссылкой</span>
-            </button>
         </div>
     </div>
 
@@ -6016,39 +6872,27 @@ h1 {
         </div>
     </div>
 
-    <!-- Нижняя зона: торги -->
-    <div class="game-table-footer" id="gameTableFooter">
-    <!-- ========== ACTIONS (Сброс / Уровнять / Поднять) ========== -->
-    <div class="auction-bar game-actions" id="auctionBar">
-        <div class="auction-summary" id="auctionSummary">Ставка: 0 · Твой ход в торгах</div>
+</div>
 
-        <div class="slider-row">
-            <div class="slider-label">Поднять до: <strong id="sliderValue">1</strong></div>
-            <input type="range" id="bidSlider" min="1" max="3" value="1" />
-        </div>
-
-        <div class="auction-buttons game-actions-row">
-            <button class="auction-btn game-act game-act--pass" id="passBtn" type="button">
-                <span class="game-act-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M6 4 L 6 15 L 3 15 L 12 22 L 21 15 L 18 15 L 18 4 Z" fill="currentColor"/></svg>
-                </span>
-                <span class="game-act-label">Сброс</span>
-            </button>
-            <button class="auction-btn game-act game-act--call" id="callBtn" type="button">
-                <span class="game-act-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M4 9 L 20 9 M 4 15 L 20 15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
-                </span>
-                <span class="game-act-label">Уровнять</span>
-            </button>
-            <button class="auction-btn game-act game-act--raise" id="raiseBtn" type="button">
-                <span class="game-act-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M6 20 L 6 9 L 3 9 L 12 2 L 21 9 L 18 9 L 18 20 Z" fill="currentColor"/></svg>
-                </span>
-                <span class="game-act-label">Поднять</span>
+<!-- «События стола»: overlay вне #gameRoot — не во flex-колонке экрана игры -->
+<div class="game-events-shell" id="gameEventsShell">
+    <div class="game-events-toast hidden" id="gameEventsToast" aria-live="polite" role="status"></div>
+    <div class="game-events-sheet-backdrop" id="gameEventsSheetBackdrop" aria-hidden="true"></div>
+    <button type="button" class="game-events-fab" id="gameEventsFab" aria-label="События стола">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h14v2H4z" fill="currentColor"/></svg>
+        <span class="game-events-fab-badge hidden" id="gameEventsUnreadBadge" aria-live="polite"></span>
+    </button>
+    <aside class="game-events-dock game-status-panel" id="gameStatusPanel" aria-label="События и статус партии">
+        <div class="game-status-panel__head">
+            <span class="game-status-panel__title">События стола</span>
+            <button type="button" class="game-events-panel-toggle" id="gameEventsPanelToggle" aria-expanded="true" title="Свернуть журнал">
+                <svg class="game-events-panel-toggle-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
         </div>
-    </div>
-    </div>
+        <div class="game-status-panel__feed-wrap" id="gameStatusFeedWrap">
+            <div class="game-status-panel__feed" id="gameStatusFeed" role="log" aria-relevant="additions"></div>
+        </div>
+    </aside>
 </div>
 
 <script>
@@ -7413,6 +8257,7 @@ const SCREENS = Object.freeze({
     FIND_TABLE: "findTable",
     CREATE_TABLE: "createTable",
     GAME: "game",
+    FRIENDS: "friends",
 });
 
 const AUTH_MODES = Object.freeze({
@@ -7523,6 +8368,37 @@ const UI_TEXT = Object.freeze({
         toastLowBalance:     "Недостаточно средств для такой ставки",
         lobbyBotJoined:      "{name} подключился к столу",
     },
+    friends: {
+        title:              "Друзья",
+        tabFriends:        "Друзья",
+        tabRequests:       "Заявки",
+        tabRecent:         "Недавно",
+        searchPlaceholder: "Поиск друга по никнейму",
+        btnBack:           "Назад",
+        statusOnline:      "В сети",
+        statusOffline:     "Не в сети",
+        statusPlaying:     "Играет",
+        statusAtTable:     "За столом",
+        btnInvite:         "Пригласить",
+        btnAdd:            "Добавить",
+        btnAccept:         "Принять",
+        btnDecline:        "Отклонить",
+        outboundStatus:    "Запрос отправлен",
+        btnCancelRequest:  "Отменить",
+        inFriends:         "В друзьях",
+        isYou:             "Это вы",
+        sectionInbound:    "Входящие",
+        sectionOutbound:   "Исходящие",
+        emptyFriends:      "У вас пока нет друзей — найдите игроков по нику или в разделе «Недавно».",
+        emptyRequests:     "Нет заявок во дружбу.",
+        emptyRecent:       "Здесь появятся игроки, с которыми вы недавно играли.",
+        emptySearch:       "Ничего не найдено",
+        toastInvite:       "Приглашение отправлено",
+        toastRequestSent:  "Запрос отправлен",
+        toastAccepted:     "Вы добавили игрока в друзья",
+        toastDeclined:     "Заявка отклонена",
+        toastCanceled:     "Запрос отменён",
+    },
     invite: {
         title:          "Пригласить друзей",
         subtitlePrivate: "Выберите, кого позвать за приватный стол",
@@ -7596,6 +8472,12 @@ const appState = {
         category: "low",   // low | mid | high | vip
         search: "",
         freeOnly: false,
+        /* Явный id при ручном «Сесть» из списка — приоритет над любым текущим currentTable */
+        manualJoinTableId: null,
+    },
+    friendsScreen: {
+        tab: "friends", // friends | requests | recent
+        search: "",
     },
     /* createTable — клиентское состояние экрана «Создать стол».
        При появлении бэкенда submit будет идти в POST /tables с этими значениями. */
@@ -7613,13 +8495,37 @@ const appState = {
        ляжет ответ GET /friends. Поле `online` клиентское, будет приходить
        через presence-канал. */
     friends: [
-        { id: "f1", name: "Михаил",    level: 14, online: true  },
-        { id: "f2", name: "Анна",      level: 9,  online: true  },
-        { id: "f3", name: "Дмитрий",   level: 22, online: false },
-        { id: "f4", name: "Екатерина", level: 7,  online: true  },
-        { id: "f5", name: "Игорь",     level: 18, online: false },
-        { id: "f6", name: "Софья",     level: 11, online: true  },
-        { id: "f7", name: "Павел",     level: 5,  online: false },
+        { id: "f1", name: "Михаил",    level: 14, online: true,  activity: null },
+        { id: "f2", name: "Анна",      level: 9,  online: true,  activity: "playing" },
+        { id: "f3", name: "Дмитрий",   level: 22, online: false, activity: null },
+        { id: "f4", name: "Екатерина", level: 7,  online: true,  activity: "at_table" },
+        { id: "f5", name: "Игорь",     level: 18, online: false, activity: null },
+        { id: "f6", name: "Софья",     level: 11, online: true,  activity: null },
+        { id: "f7", name: "Павел",     level: 5,  online: false, activity: null },
+    ],
+    /* Заявки во дружбу (mock). */
+    friendRequests: {
+        inbound: [
+            { id: "rq_in_1", from: { id: "u_artem", name: "Артём", level: 8 } },
+            { id: "rq_in_2", from: { id: "u_liza", name: "Лиза", level: 16 } },
+        ],
+        outbound: [
+            { id: "rq_out_1", to: { id: "u_kira", name: "Кира", level: 15 } },
+        ],
+    },
+    /* Игроки с общих столов (mock). */
+    recentlyPlayed: [
+        { id: "rp_1", name: "Глеб Столкер", level: 13, online: true },
+        { id: "rp_2", name: "NikaBluff", level: 20, online: false },
+        { id: "rp_3", name: "AceKing", level: 11, online: true },
+    ],
+    /* Каталог для поиска по нику (не обязательно в друзьях). */
+    playerDirectory: [
+        { id: "dir_1", name: "ShadowHunter", level: 17 },
+        { id: "dir_2", name: "RedQueen", level: 22 },
+        { id: "dir_3", name: "NikitaPro", level: 9 },
+        { id: "dir_4", name: "Bloom", level: 6 },
+        { id: "dir_5", name: "CrownClub", level: 31 },
     ],
     /* Существующие моки-столы — как будто партии за ними уже идут. Это важно
        для поведения «Сесть» в find-table: при status==="playing" пользователь
@@ -7746,6 +8652,7 @@ const authScreenEl = document.getElementById("authScreen");
 const mainMenuScreenEl = document.getElementById("mainMenuScreen");
 const findTableScreenEl = document.getElementById("findTableScreen");
 const createTableScreenEl = document.getElementById("createTableScreen");
+const friendsScreenEl = document.getElementById("friendsScreen");
 
 const screenEls = {
     [SCREENS.SPLASH]: splashScreenEl,
@@ -7753,6 +8660,7 @@ const screenEls = {
     [SCREENS.MAIN_MENU]: mainMenuScreenEl,
     [SCREENS.FIND_TABLE]: findTableScreenEl,
     [SCREENS.CREATE_TABLE]: createTableScreenEl,
+    [SCREENS.FRIENDS]: friendsScreenEl,
 };
 
 /* ---------- Screen manager ---------- */
@@ -7765,10 +8673,23 @@ function setScreen(screen) {
         el.classList.toggle("hidden", name !== screen);
     });
 
+    const gameEventsShellEl = document.getElementById("gameEventsShell");
+    if (gameEventsShellEl) {
+        const inGame = screen === SCREENS.GAME;
+        if (inGame) {
+            gameEventsShellEl.style.removeProperty("visibility");
+            gameEventsShellEl.style.removeProperty("pointer-events");
+        } else {
+            gameEventsShellEl.style.visibility = "hidden";
+            gameEventsShellEl.style.pointerEvents = "none";
+        }
+    }
+
     if (screen === SCREENS.AUTH) renderAuthScreen();
     if (screen === SCREENS.MAIN_MENU) renderMainMenu();
     if (screen === SCREENS.FIND_TABLE) renderFindTable();
     if (screen === SCREENS.CREATE_TABLE) renderCreateTable();
+    if (screen === SCREENS.FRIENDS) renderFriendsScreen();
     if (screen === SCREENS.GAME) renderGameTopbar();
 }
 
@@ -7956,6 +8877,8 @@ function showMenuToast(text) {
         toastEl = findTableScreenEl.querySelector("[data-find-toast]");
     } else if (appState.currentScreen === SCREENS.CREATE_TABLE && createTableScreenEl) {
         toastEl = createTableScreenEl.querySelector("[data-create-toast]");
+    } else if (appState.currentScreen === SCREENS.FRIENDS && friendsScreenEl) {
+        toastEl = friendsScreenEl.querySelector("[data-friends-toast]");
     } else if (mainMenuScreenEl) {
         toastEl = mainMenuScreenEl.querySelector("[data-menu-toast]");
     }
@@ -8007,7 +8930,7 @@ const MENU_ACTION_HANDLERS = {
         setScreen(SCREENS.FIND_TABLE);
     },
     create:   () => { setScreen(SCREENS.CREATE_TABLE); },
-    friends:  () => showMenuToast(UI_TEXT.menu.toastSoon),
+    friends:  () => { setScreen(SCREENS.FRIENDS); },
     share:    () => { handleMenuShare(); },
     rules:    () => showMenuToast(UI_TEXT.menu.toastSoon),
     faq:      () => showMenuToast(UI_TEXT.menu.toastSoon),
@@ -8172,7 +9095,7 @@ function renderGameTopbar() {
     }
 
     /* Статусы ожидания — только журнал событий; верхний баннер отключён. */
-    const room = (engine && engine.currentTable) || appState.currentRoom || null;
+    const room = (typeof getCurrentRoom === "function" && getCurrentRoom()) || null;
     const isTableWaiting = engine && engine.phase === "waiting";
     const human = engine && engine.players && engine.players[engine.humanIdx];
     const isPlayerWaiting = !!(human && human.status === "waiting");
@@ -8506,20 +9429,22 @@ function bindFindTableHandlers() {
         const btn = e.target.closest("[data-find-sit]");
         if (!btn || btn.disabled) return;
         const tableId = Number(btn.dataset.findSit);
-        const tbl = (appState.tables || []).find((x) => x.id === tableId);
+        const tbl = getTableById(tableId);
         if (!tbl || tbl.players >= tbl.capacity) return;
         /* Запоминаем стол, за который сели, чтобы движок знал сколько реально
            игроков за столом после посадки. При подключении бэка — здесь будет
            POST /tables/:id/sit. */
         if (!appState.findTable) appState.findTable = {};
+        appState.findTable.manualJoinTableId = tableId;
         /* Копируем строку стола из appState.tables — вместе с gameSession,
            чтобы при повторном входе поднять тот же матч, а не пустую комнату. */
         appState.findTable.currentTable = Object.assign({}, tbl, {
-            players: tbl.players + 1, // +1 = локальный игрок только что сел
+            players: Math.min(tbl.capacity, tbl.players + 1),
         });
         selectedPlayersCount = appState.findTable.currentTable.players;
         setScreen(SCREENS.GAME);
         resetGame();
+        syncAppCurrentRoomFromEngine();
     });
 
     /* Esc — назад в меню */
@@ -8688,6 +9613,547 @@ function bindCreateTableHandlers() {
     });
 }
 
+/* ======================================================================
+   FRIENDS — списки, заявки, недавно, поиск по нику (mock, готово под API).
+   ====================================================================== */
+
+function escapeFriendsHtml(raw) {
+    return String(raw == null ? "" : raw)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function friendsGetDisplayName() {
+    const u = appState.user;
+    return ((u && (u.name || u.email)) || UI_TEXT.menu.fallbackName || "").trim();
+}
+
+function friendPresenceMeta(fr) {
+    const T = UI_TEXT.friends;
+    if (!fr || !fr.online) {
+        return { label: T.statusOffline, dotClass: "friends-status-dot--offline" };
+    }
+    if (fr.activity === "playing") return { label: T.statusPlaying, dotClass: "friends-status-dot--playing" };
+    if (fr.activity === "at_table") return { label: T.statusAtTable, dotClass: "friends-status-dot--table" };
+    return { label: T.statusOnline, dotClass: "friends-status-dot--online" };
+}
+
+function friendsIsRegisteredFriendId(id) {
+    return !!(id != null && Array.isArray(appState.friends)
+        && appState.friends.some((f) => f && f.id === id));
+}
+
+function friendsOutboundToId(toId) {
+    const rq = appState.friendRequests && appState.friendRequests.outbound;
+    if (!Array.isArray(rq) || toId == null) return false;
+    return rq.some((o) => o && o.to && o.to.id === toId);
+}
+
+function friendsAvatarLetter(name) {
+    const ch = String(name || "?").trim().charAt(0);
+    return ch ? ch.toUpperCase() : "?";
+}
+
+function collectFriendSearchHits(termNorm) {
+    const hits = [];
+    const seen = new Set();
+    function push(hit) {
+        if (!hit || hit.id == null || seen.has(hit.id)) return;
+        hits.push(hit);
+        seen.add(hit.id);
+    }
+    const u = appState.user;
+    const disp = friendsGetDisplayName();
+    const dispN = disp.toLowerCase();
+    if (dispN && dispN.includes(termNorm) && u && u.id) {
+        push({
+            id: u.id,
+            name: disp,
+            level: Number((appState.profile && appState.profile.level) || 12),
+            isSelfHit: true,
+        });
+    }
+    (Array.isArray(appState.friends) ? appState.friends : []).forEach((f) => {
+        if (!(f && (f.name || "").toLowerCase().includes(termNorm))) return;
+        push(Object.assign({}, f, { isFriend: true }));
+    });
+    (Array.isArray(appState.playerDirectory) ? appState.playerDirectory : []).forEach((p) => {
+        if (!(p && (p.name || "").toLowerCase().includes(termNorm))) return;
+        if (friendsIsRegisteredFriendId(p.id)) return;
+        push(Object.assign({}, p, { isFriend: false }));
+    });
+    (Array.isArray(appState.recentlyPlayed) ? appState.recentlyPlayed : []).forEach((p) => {
+        if (!(p && (p.name || "").toLowerCase().includes(termNorm))) return;
+        if (friendsIsRegisteredFriendId(p.id)) return;
+        if (seen.has(p.id)) return;
+        push(Object.assign({}, p, { isFriend: false }));
+    });
+
+    const outq = appState.friendRequests && appState.friendRequests.outbound;
+    (Array.isArray(outq) ? outq : []).forEach((row) => {
+        const to = row && row.to;
+        if (!to || !(to.name || "").toLowerCase().includes(termNorm)) return;
+        if (friendsIsRegisteredFriendId(to.id)) return;
+        if (seen.has(to.id)) return;
+        push(Object.assign({}, to, { level: Number(to.level) || 1, isFriend: false }));
+    });
+
+    return hits;
+}
+
+function friendsHtmlSearchActions(rec) {
+    const T = UI_TEXT.friends;
+    const u = appState.user;
+    if (rec.isSelfHit || (u && rec.id === u.id)) {
+        return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.isYou)}</span>`;
+    }
+    if (rec.isFriend || friendsIsRegisteredFriendId(rec.id)) {
+        return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.inFriends)}</span>`;
+    }
+    if (friendsOutboundToId(rec.id)) {
+        return `<span class="friends-btn friends-pill-muted" tabindex="-1">${escapeFriendsHtml(T.outboundStatus)}</span>`;
+    }
+    const idEsc = escapeFriendsHtml(rec.id);
+    return `<button type="button" class="friends-btn" data-friends-search-add="${idEsc}">${escapeFriendsHtml(T.btnAdd)}</button>`;
+}
+
+function friendsSendRequestTo(rec) {
+    if (!rec || rec.id == null) return;
+    if (!appState.friendRequests) appState.friendRequests = { inbound: [], outbound: [] };
+    if (!Array.isArray(appState.friendRequests.outbound)) appState.friendRequests.outbound = [];
+    const T = UI_TEXT.friends;
+    if (friendsIsRegisteredFriendId(rec.id)) return;
+    if (friendsOutboundToId(rec.id)) {
+        showMenuToast(T.outboundStatus);
+        return;
+    }
+    appState.friendRequests.outbound.push({
+        id: "rq_" + Math.random().toString(36).slice(2, 10),
+        to: {
+            id: rec.id,
+            name: rec.name,
+            level: Number(rec.level) || 1,
+        },
+    });
+    showMenuToast(T.toastRequestSent);
+    renderFriendsLists();
+}
+
+function renderFriendsScreen() {
+    if (!friendsScreenEl) return;
+    const T = UI_TEXT.friends || {};
+    if (!appState.friendsScreen || typeof appState.friendsScreen !== "object") {
+        appState.friendsScreen = { tab: "friends", search: "" };
+    }
+    const profile = appState.profile || {};
+    const nameEl = friendsScreenEl.querySelector("[data-friends-name]");
+    if (nameEl) nameEl.textContent = friendsGetDisplayName() || UI_TEXT.menu.fallbackName;
+    const levelEl = friendsScreenEl.querySelector("[data-friends-level]");
+    if (levelEl) levelEl.textContent = String(profile.level != null ? profile.level : 12);
+    const levelFillEl = friendsScreenEl.querySelector("[data-friends-level-fill]");
+    if (levelFillEl) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        levelFillEl.style.width = (xp * 100).toFixed(1) + "%";
+    }
+    const balanceEl = friendsScreenEl.querySelector("[data-friends-balance]");
+    if (balanceEl && typeof formatBalance === "function") {
+        balanceEl.textContent = formatBalance(profile.balance);
+    }
+    const notifEl = friendsScreenEl.querySelector("[data-friends-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+    const titleEl = friendsScreenEl.querySelector("[data-friends-title]");
+    if (titleEl) titleEl.textContent = T.title || "Друзья";
+    const searchEl = friendsScreenEl.querySelector("[data-friends-search]");
+    if (searchEl) {
+        searchEl.placeholder = T.searchPlaceholder || "";
+        searchEl.value = appState.friendsScreen.search || "";
+    }
+    const lblIn = friendsScreenEl.querySelector("[data-friends-label-in]");
+    const lblOut = friendsScreenEl.querySelector("[data-friends-label-out]");
+    if (lblIn) lblIn.textContent = T.sectionInbound || "Входящие";
+    if (lblOut) lblOut.textContent = T.sectionOutbound || "Исходящие";
+    friendsScreenEl.querySelectorAll("[data-friends-tab]").forEach((btn) => {
+        const sel = appState.friendsScreen.tab === btn.dataset.friendsTab;
+        btn.classList.toggle("is-active", sel);
+        btn.setAttribute("aria-selected", sel ? "true" : "false");
+    });
+    renderFriendsLists();
+}
+
+function renderFriendsLists() {
+    if (!friendsScreenEl) return;
+    const T = UI_TEXT.friends || {};
+    const termNorm = (((appState.friendsScreen && appState.friendsScreen.search) || "").trim()).toLowerCase();
+
+    const browseEl = friendsScreenEl.querySelector("[data-friends-panel-browse]");
+    const searchPanel = friendsScreenEl.querySelector("[data-friends-panel-search]");
+    const searchList = friendsScreenEl.querySelector("[data-friends-search-list]");
+    const emptySearch = friendsScreenEl.querySelector("[data-friends-empty-search]");
+    const listFriendsEl = friendsScreenEl.querySelector("[data-friends-list-friends]");
+    const emptyFriends = friendsScreenEl.querySelector("[data-friends-empty-friends]");
+    const inboundList = friendsScreenEl.querySelector("[data-friends-list-inbound]");
+    const outboundList = friendsScreenEl.querySelector("[data-friends-list-outbound]");
+    const emptyIn = friendsScreenEl.querySelector("[data-friends-empty-inbound]");
+    const emptyOut = friendsScreenEl.querySelector("[data-friends-empty-outbound]");
+    const listRecentEl = friendsScreenEl.querySelector("[data-friends-list-recent]");
+    const emptyRecent = friendsScreenEl.querySelector("[data-friends-empty-recent]");
+    const tab = (appState.friendsScreen && appState.friendsScreen.tab) || "friends";
+
+    if (termNorm.length > 0) {
+        if (searchPanel) searchPanel.classList.remove("hidden");
+        if (browseEl) browseEl.classList.add("hidden");
+        const hits = collectFriendSearchHits(termNorm);
+        if (!searchList || !emptySearch) return;
+        if (!hits.length) {
+            searchList.innerHTML = "";
+            emptySearch.textContent = T.emptySearch || "";
+            emptySearch.classList.remove("hidden");
+        } else {
+            emptySearch.classList.add("hidden");
+            searchList.innerHTML = hits.map((rec) => {
+                const initials = escapeFriendsHtml(friendsAvatarLetter(rec.name));
+                const nm = escapeFriendsHtml(rec.name);
+                const fr = Array.isArray(appState.friends)
+                    ? appState.friends.find((f) => f && f.id === rec.id)
+                    : null;
+                let subLvl = Number(rec.level);
+                if (!Number.isFinite(subLvl)) subLvl = Number(fr && fr.level);
+                if (!Number.isFinite(subLvl)) subLvl = 1;
+                let subLine = `Ур.&nbsp;${subLvl}`;
+                if (!rec.isSelfHit && fr) {
+                    const pm = friendPresenceMeta(fr);
+                    subLine = `<span class="${escapeFriendsHtml(pm.dotClass)} friends-status-dot" aria-hidden="true"></span>`
+                        + `<span>${escapeFriendsHtml(pm.label)}</span> · Ур.&nbsp;${Number(fr.level) || 1}`;
+                }
+                const acts = friendsHtmlSearchActions({
+                    ...rec,
+                    isFriend: !!(rec.isFriend || friendsIsRegisteredFriendId(rec.id)),
+                });
+                return `
+                    <div class="friends-row" role="listitem">
+                        <span class="friends-avatar" aria-hidden="true">${initials}</span>
+                        <div class="friends-meta">
+                            <div class="friends-name">${nm}</div>
+                            <div class="friends-sub">${subLine}</div>
+                        </div>
+                        <div class="friends-actions">${acts}</div>
+                    </div>`;
+            }).join("");
+        }
+        return;
+    }
+
+    if (searchPanel) searchPanel.classList.add("hidden");
+    if (browseEl) browseEl.classList.remove("hidden");
+
+    friendsScreenEl.querySelectorAll("[data-friends-pane]").forEach((pane) => {
+        const show = pane.getAttribute("data-friends-pane") === tab;
+        pane.classList.toggle("hidden", !show);
+    });
+
+    const frs = Array.isArray(appState.friends) ? appState.friends : [];
+    if (listFriendsEl && emptyFriends) {
+        if (!frs.length) {
+            listFriendsEl.innerHTML = "";
+            emptyFriends.textContent = T.emptyFriends || "";
+            emptyFriends.classList.remove("hidden");
+        } else {
+            emptyFriends.classList.add("hidden");
+            listFriendsEl.innerHTML = frs.map((f) => {
+                if (!f) return "";
+                const pm = friendPresenceMeta(f);
+                const initials = escapeFriendsHtml(friendsAvatarLetter(f.name));
+                const nm = escapeFriendsHtml(f.name);
+                const idEsc = escapeFriendsHtml(f.id);
+                return `
+                    <div class="friends-row" role="listitem" data-friend-id="${idEsc}">
+                        <span class="friends-avatar" aria-hidden="true">${initials}</span>
+                        <div class="friends-meta">
+                            <div class="friends-name">${nm}</div>
+                            <div class="friends-sub">
+                                <span class="${escapeFriendsHtml(pm.dotClass)} friends-status-dot" aria-hidden="true"></span>
+                                <span>${escapeFriendsHtml(pm.label)}</span>
+                            </div>
+                        </div>
+                        <div class="friends-actions">
+                            <button type="button" class="friends-btn" data-friends-invite="${idEsc}">${escapeFriendsHtml(T.btnInvite)}</button>
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+    }
+
+    const inbound = (appState.friendRequests && appState.friendRequests.inbound) || [];
+    const outbound = (appState.friendRequests && appState.friendRequests.outbound) || [];
+
+    if (inboundList) {
+        if (!inbound.length) {
+            inboundList.innerHTML = "";
+        } else {
+            inboundList.innerHTML = inbound.map((row) => {
+                const from = row && row.from;
+                if (!from) return "";
+                const initials = escapeFriendsHtml(friendsAvatarLetter(from.name));
+                const nm = escapeFriendsHtml(from.name);
+                const rid = escapeFriendsHtml(row.id);
+                return `
+                    <div class="friends-request-row" role="listitem">
+                        <span class="friends-avatar" aria-hidden="true">${initials}</span>
+                        <div class="friends-meta">
+                            <div class="friends-name">${nm}</div>
+                            <div class="friends-sub">Ур.&nbsp;${Number(from.level) || 1}</div>
+                        </div>
+                        <div class="friends-actions">
+                            <button type="button" class="friends-btn" data-friends-accept="${rid}">${escapeFriendsHtml(T.btnAccept)}</button>
+                            <button type="button" class="friends-btn friends-btn--ghost" data-friends-decline="${rid}">${escapeFriendsHtml(T.btnDecline)}</button>
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+    }
+
+    if (outboundList) {
+        if (!outbound.length) {
+            outboundList.innerHTML = "";
+        } else {
+            outboundList.innerHTML = outbound.map((row) => {
+                const to = row && row.to;
+                if (!to) return "";
+                const initials = escapeFriendsHtml(friendsAvatarLetter(to.name));
+                const nm = escapeFriendsHtml(to.name);
+                const oid = escapeFriendsHtml(row.id);
+                return `
+                    <div class="friends-request-row" role="listitem">
+                        <span class="friends-avatar" aria-hidden="true">${initials}</span>
+                        <div class="friends-meta">
+                            <div class="friends-name">${nm}</div>
+                            <div class="friends-request-out-status">${escapeFriendsHtml(T.outboundStatus)}</div>
+                        </div>
+                        <div class="friends-actions">
+                            <button type="button" class="friends-btn friends-btn--ghost" data-friends-cancel-out="${oid}">${escapeFriendsHtml(T.btnCancelRequest)}</button>
+                        </div>
+                    </div>`;
+            }).join("");
+        }
+    }
+
+    const inboundHead = friendsScreenEl.querySelector("[data-friends-inbound-head]");
+    const outboundHead = friendsScreenEl.querySelector("[data-friends-outbound-head]");
+    const emptyRequestsBoth = friendsScreenEl.querySelector("[data-friends-empty-requests-both]");
+    if (tab === "requests") {
+        const bothEmpty = !inbound.length && !outbound.length;
+        if (bothEmpty) {
+            if (emptyRequestsBoth) {
+                emptyRequestsBoth.textContent = T.emptyRequests || "";
+                emptyRequestsBoth.classList.remove("hidden");
+            }
+            if (inboundHead) inboundHead.classList.add("hidden");
+            if (outboundHead) outboundHead.classList.add("hidden");
+            if (emptyIn) emptyIn.classList.add("hidden");
+            if (emptyOut) emptyOut.classList.add("hidden");
+        } else {
+            if (emptyRequestsBoth) emptyRequestsBoth.classList.add("hidden");
+            if (inboundHead) inboundHead.classList.remove("hidden");
+            if (outboundHead) outboundHead.classList.remove("hidden");
+            if (emptyIn) {
+                emptyIn.textContent = T.emptyRequests || "";
+                emptyIn.classList.toggle("hidden", inbound.length > 0);
+            }
+            if (emptyOut) {
+                emptyOut.textContent = T.emptyRequests || "";
+                emptyOut.classList.toggle("hidden", outbound.length > 0);
+            }
+        }
+    } else {
+        if (emptyRequestsBoth) emptyRequestsBoth.classList.add("hidden");
+        if (inboundHead) inboundHead.classList.remove("hidden");
+        if (outboundHead) outboundHead.classList.remove("hidden");
+        if (emptyIn) emptyIn.classList.add("hidden");
+        if (emptyOut) emptyOut.classList.add("hidden");
+    }
+
+    const recent = Array.isArray(appState.recentlyPlayed) ? appState.recentlyPlayed : [];
+    if (listRecentEl && emptyRecent) {
+        if (!recent.length) {
+            listRecentEl.innerHTML = "";
+            emptyRecent.textContent = T.emptyRecent || "";
+            emptyRecent.classList.remove("hidden");
+        } else {
+            emptyRecent.classList.add("hidden");
+            listRecentEl.innerHTML = recent.map((p) => {
+                if (!p) return "";
+                const on = !!p.online;
+                const pm = on
+                    ? { label: T.statusOnline, dotClass: "friends-status-dot--online" }
+                    : { label: T.statusOffline, dotClass: "friends-status-dot--offline" };
+                const initials = escapeFriendsHtml(friendsAvatarLetter(p.name));
+                const nm = escapeFriendsHtml(p.name);
+                const isFr = friendsIsRegisteredFriendId(p.id);
+                const pend = friendsOutboundToId(p.id);
+                let right = "";
+                if (isFr) {
+                    right = `<span class="friends-btn friends-pill-muted">${escapeFriendsHtml(T.inFriends)}</span>`;
+                } else if (pend) {
+                    right = `<span class="friends-btn friends-pill-muted">${escapeFriendsHtml(T.outboundStatus)}</span>`;
+                } else {
+                    right = `<button type="button" class="friends-btn" data-friends-recent-add="${escapeFriendsHtml(p.id)}">${escapeFriendsHtml(T.btnAdd)}</button>`;
+                }
+                return `
+                    <div class="friends-row" role="listitem">
+                        <span class="friends-avatar" aria-hidden="true">${initials}</span>
+                        <div class="friends-meta">
+                            <div class="friends-name">${nm}</div>
+                            <div class="friends-sub">
+                                <span class="${escapeFriendsHtml(pm.dotClass)} friends-status-dot" aria-hidden="true"></span>
+                                <span>${escapeFriendsHtml(pm.label)}</span> · Ур.&nbsp;${Number(p.level) || 1}
+                            </div>
+                        </div>
+                        <div class="friends-actions">${right}</div>
+                    </div>`;
+            }).join("");
+        }
+    }
+}
+
+function bindFriendsHandlers() {
+    if (!friendsScreenEl) return;
+    const backBtn = friendsScreenEl.querySelector("[data-friends-back]");
+    if (backBtn) backBtn.addEventListener("click", () => setScreen(SCREENS.MAIN_MENU));
+    const topupBtn = friendsScreenEl.querySelector("[data-friends-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+    const bellBtn = friendsScreenEl.querySelector("[data-friends-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", () => {
+        const n = (appState.profile && appState.profile.notifications) || 0;
+        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    });
+
+    const searchEl = friendsScreenEl.querySelector("[data-friends-search]");
+    if (searchEl) searchEl.addEventListener("input", (e) => {
+        if (!appState.friendsScreen) appState.friendsScreen = { tab: "friends", search: "" };
+        appState.friendsScreen.search = e.target.value || "";
+        renderFriendsLists();
+    });
+
+    friendsScreenEl.querySelectorAll("[data-friends-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            if (!appState.friendsScreen) appState.friendsScreen = { tab: "friends", search: "" };
+            appState.friendsScreen.tab = btn.dataset.friendsTab || "friends";
+            appState.friendsScreen.search = "";
+            const sEl = friendsScreenEl.querySelector("[data-friends-search]");
+            if (sEl) sEl.value = "";
+            friendsScreenEl.querySelectorAll("[data-friends-tab]").forEach((b) => {
+                const sel = b === btn;
+                b.classList.toggle("is-active", sel);
+                b.setAttribute("aria-selected", sel ? "true" : "false");
+            });
+            renderFriendsLists();
+        });
+    });
+
+    const scrollEl = friendsScreenEl.querySelector("[data-friends-scroll]");
+    if (scrollEl) scrollEl.addEventListener("click", (e) => {
+        const T = UI_TEXT.friends;
+
+        const addSearch = e.target.closest("[data-friends-search-add]");
+        if (addSearch) {
+            const idRaw = addSearch.getAttribute("data-friends-search-add");
+            const termNorm = (((appState.friendsScreen && appState.friendsScreen.search) || "").trim()).toLowerCase();
+            const hit = collectFriendSearchHits(termNorm).find((h) => h && String(h.id) === String(idRaw));
+            if (hit) friendsSendRequestTo(hit);
+            return;
+        }
+
+        if (e.target.closest("[data-friends-invite]")) {
+            showMenuToast(T.toastInvite || UI_TEXT.menu.toastSoon);
+            return;
+        }
+
+        const acc = e.target.closest("[data-friends-accept]");
+        if (acc) {
+            const rid = acc.getAttribute("data-friends-accept");
+            const rq = appState.friendRequests && appState.friendRequests.inbound;
+            if (!Array.isArray(rq)) return;
+            const ix = rq.findIndex((r) => r && r.id === rid);
+            if (ix === -1) return;
+            const row = rq[ix];
+            rq.splice(ix, 1);
+            const from = row.from;
+            if (from && !friendsIsRegisteredFriendId(from.id)) {
+                if (!Array.isArray(appState.friends)) appState.friends = [];
+                appState.friends.push({
+                    id: from.id,
+                    name: from.name,
+                    level: Number(from.level) || 1,
+                    online: true,
+                    activity: null,
+                });
+            }
+            showMenuToast(T.toastAccepted || "");
+            renderFriendsLists();
+            return;
+        }
+
+        const dec = e.target.closest("[data-friends-decline]");
+        if (dec) {
+            const rid = dec.getAttribute("data-friends-decline");
+            const rq = appState.friendRequests && appState.friendRequests.inbound;
+            if (!Array.isArray(rq)) return;
+            const ix = rq.findIndex((r) => r && r.id === rid);
+            if (ix !== -1) rq.splice(ix, 1);
+            showMenuToast(T.toastDeclined || "");
+            renderFriendsLists();
+            return;
+        }
+
+        const cx = e.target.closest("[data-friends-cancel-out]");
+        if (cx) {
+            const oid = cx.getAttribute("data-friends-cancel-out");
+            const rq = appState.friendRequests && appState.friendRequests.outbound;
+            if (!Array.isArray(rq)) return;
+            const ix = rq.findIndex((r) => r && r.id === oid);
+            if (ix !== -1) rq.splice(ix, 1);
+            showMenuToast(T.toastCanceled || "");
+            renderFriendsLists();
+            return;
+        }
+
+        const recAdd = e.target.closest("[data-friends-recent-add]");
+        if (recAdd) {
+            const pid = recAdd.getAttribute("data-friends-recent-add");
+            const p = (appState.recentlyPlayed || []).find((x) => x && String(x.id) === String(pid));
+            if (p) friendsSendRequestTo(p);
+        }
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (appState.currentScreen !== SCREENS.FRIENDS) return;
+        if (e.key !== "Escape") return;
+        const active = document.activeElement;
+        if (active && active.matches("[data-friends-search]") && active.value) {
+            active.value = "";
+            appState.friendsScreen.search = "";
+            renderFriendsLists();
+            return;
+        }
+        e.preventDefault();
+        setScreen(SCREENS.MAIN_MENU);
+    });
+}
+
 /* Генерация id стола + mock-подсаживание ботов в открытое лобби (MVP).
    id = max(tables)+1. Боты — только public, с задержками; старт партии —
    tableMaybeAutoStart() после минимума игроков и «Готов». Таймеры снимаются при старте раздачи или выходе. */
@@ -8835,6 +10301,7 @@ function handleCreateTableSubmit() {
     /* Запоминаем активную комнату — это источник правды о текущем столе. */
     appState.currentRoom = newTable;
     if (!appState.findTable) appState.findTable = {};
+    appState.findTable.manualJoinTableId = null;
     appState.findTable.currentTable = newTable;
 
     /* И для приватного, и для открытого стола пользователь попадает ВНУТРЬ
@@ -8870,6 +10337,12 @@ function handleCreateTableSubmit() {
 let inviteSearchState = "";
 
 function getCurrentRoom() {
+    /* На экране игры источник — движок; канонические поля строки берём из appState.tables. */
+    if (appState.currentScreen === SCREENS.GAME && engine && engine.currentTable && engine.currentTable.id != null) {
+        const row = getTableById(engine.currentTable.id);
+        if (row) return row;
+        return engine.currentTable;
+    }
     return appState.currentRoom
         || (engine && engine.currentTable)
         || (appState.findTable && appState.findTable.currentTable)
@@ -9006,9 +10479,6 @@ function bindInviteHandlers() {
         if (!btn || btn.disabled) return;
         inviteFriend(btn.dataset.inviteFriend);
     });
-
-    const shareBtn = overlay.querySelector("[data-invite-share]");
-    if (shareBtn) shareBtn.addEventListener("click", () => handleInviteShare());
 
     document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
@@ -9345,6 +10815,16 @@ function armHumanLobbyReadyWatch() {
 
 function getTableById(id) {
     return (appState.tables || []).find((t) => Number(t.id) === Number(id));
+}
+
+function syncAppCurrentRoomFromEngine() {
+    const t = engine && engine.currentTable;
+    if (!t || t.id == null) {
+        appState.currentRoom = null;
+        return;
+    }
+    const row = getTableById(t.id);
+    appState.currentRoom = row || t;
 }
 
 function mulberry32(a) {
@@ -9810,6 +11290,14 @@ function makeEmptySeatMarkup() {
             '</span>' +
             '<span class="seat-empty-label">Свободное<br>место</span>' +
             '<span class="seat-empty-dots" aria-hidden="true">• • •</span>' +
+        '</div>' +
+        '<div class="seat-tricks-strip seat-tricks-strip--empty-slot" aria-hidden="true">' +
+            '<div class="seat-trick-dots seat-trick-dots--empty-slot">' +
+                '<span class="trick-dot"></span><span class="trick-dot"></span><span class="trick-dot"></span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="seat-hand seat-hand--empty-slot" aria-hidden="true">' +
+            '<div class="cards"></div>' +
         '</div>'
     );
 }
@@ -11619,6 +13107,12 @@ function engineExitTable(options) {
     engine.currentTable = null;
     engine.phase = "idle";
 
+    appState.currentRoom = null;
+    if (appState.findTable) {
+        appState.findTable.currentTable = null;
+        appState.findTable.manualJoinTableId = null;
+    }
+
     if (options.navigateToLobby !== false) {
         setScreen(SCREENS.FIND_TABLE);
     }
@@ -11647,11 +13141,36 @@ function bindGameLeaveHandlers() {
 /* ---------- OVERRIDES: cтарые функции теперь делегируют в движок ---------- */
 
 function resetGame() {
-    /* Точка входа в стол. Источники данных:
-       1. appState.findTable.currentTable — если зашли через «Найти стол»
-          (status/type/ownerId/capacity/players заполнены в bindFindTableHandlers).
-       2. selectedPlayersCount — fallback, когда заходим без выбора стола. */
-    const table = (appState.findTable && appState.findTable.currentTable) || null;
+    /* Приоритет: ручное «Сесть» задаёт manualJoinTableId → всегда канонический ряд из appState.tables. */
+    let table = null;
+    const ft = appState.findTable;
+    const manualRaw = ft && ft.manualJoinTableId;
+    const manualId =
+        manualRaw != null && manualRaw !== "" ? Number(manualRaw) : NaN;
+
+    if (Number.isFinite(manualId)) {
+        const row = getTableById(manualId);
+        const overlay =
+            ft && ft.currentTable != null &&
+            ft.currentTable.id != null &&
+            Number(ft.currentTable.id) === Number(manualId)
+                ? ft.currentTable
+                : {};
+        if (row) {
+            table = Object.assign({}, row, overlay);
+        } else if (overlay && overlay.id != null) {
+            table = Object.assign({}, overlay);
+        }
+        if (ft) ft.manualJoinTableId = null;
+    }
+
+    if (!table && ft && ft.currentTable) {
+        const ref = ft.currentTable;
+        if (ref.id != null) {
+            const row = getTableById(ref.id);
+            table = row ? Object.assign({}, row, ref) : Object.assign({}, ref);
+        }
+    }
     const requested = Number(selectedPlayersCount) || 2;
 
     /* count = сколько игроков ФАКТИЧЕСКИ за столом после посадки.
@@ -11742,6 +13261,7 @@ async function bootstrap() {
     bindMainMenuHandlers();
     bindFindTableHandlers();
     bindCreateTableHandlers();
+    bindFriendsHandlers();
     bindGameTopbarHandlers();
     bindGameEventsHandlers();
     bindGameLeaveHandlers();
