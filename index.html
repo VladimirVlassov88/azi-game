@@ -4381,6 +4381,356 @@ h1 {
 }
 .menu-bell-badge[hidden] { display: none; }
 
+/* ----- Панель уведомлений (глобальный overlay от колокольчика) -----
+   Выше любого .ui-screen (z-index 12000), иначе панель под меню не видна и «клик не работает». */
+.notifications-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 13000;
+    transition: opacity 0.2s ease;
+}
+/* Закрыто: слой полностью вне документа для hit-testing (иначе fullscreen .notifications-backdrop
+   с pointer-events: auto может перехватывать клики над меню даже при pointer-events:none у родителя). */
+.notifications-overlay:not(.is-open) {
+    display: none !important;
+    pointer-events: none !important;
+}
+.notifications-overlay.is-open {
+    display: block;
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.notifications-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 3, 8, 0.42);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    z-index: 0;
+    pointer-events: auto;
+    cursor: pointer;
+}
+.notifications-popover {
+    --notif-arrow-x: calc(100% - 36px);
+    position: fixed;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    max-height: min(520px, calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px));
+    width: min(380px, calc(100vw - 20px));
+    padding: 0;
+    margin: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(216, 178, 76, 0.55);
+    background:
+        linear-gradient(165deg, rgba(247, 227, 165, 0.07) 0%, transparent 42%),
+        linear-gradient(180deg, rgba(46, 10, 18, 0.94) 0%, rgba(24, 6, 12, 0.96) 100%);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        0 20px 50px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(216, 178, 76, 0.12);
+    text-align: left;
+    overflow: visible;
+    box-sizing: border-box;
+}
+.notifications-popover-arrow {
+    position: absolute;
+    top: -6px;
+    left: var(--notif-arrow-x);
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, rgba(62, 16, 28, 0.98), rgba(32, 8, 16, 0.98));
+    border-top: 1px solid rgba(216, 178, 76, 0.5);
+    border-left: 1px solid rgba(216, 178, 76, 0.5);
+    box-shadow: -2px -2px 8px rgba(216, 178, 76, 0.12);
+    pointer-events: none;
+}
+.notifications-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 14px 40px 10px;
+    flex-shrink: 0;
+}
+.notifications-title {
+    margin: 0;
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.06em;
+    background: linear-gradient(180deg, #f7e3a5 0%, #c9a23a 70%, #8c6a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+.notifications-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #d8b24c;
+    cursor: pointer;
+    transition: color 0.15s ease, filter 0.15s ease;
+}
+.notifications-close svg { width: 18px; height: 18px; display: block; }
+.notifications-close:hover { color: #f7e3a5; filter: drop-shadow(0 0 6px rgba(216, 178, 76, 0.45)); }
+
+.notifications-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 10px 10px;
+    flex-shrink: 0;
+}
+.notifications-tab {
+    flex: 1 1 calc(33.33% - 6px);
+    position: relative;
+    min-width: 56px;
+    padding: 7px 4px 9px;
+    border-radius: 9px;
+    border: 1px solid rgba(201, 162, 58, 0.35);
+    background: rgba(10, 4, 8, 0.45);
+    color: rgba(247, 227, 165, 0.78);
+    font-family: "Cormorant Garamond", serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+.notifications-tab:hover {
+    border-color: rgba(216, 178, 76, 0.55);
+    color: #f7e3a5;
+}
+.notifications-tab.is-active {
+    border-color: rgba(247, 227, 165, 0.75);
+    color: #f7e3a5;
+    box-shadow: 0 0 12px rgba(216, 178, 76, 0.2), inset 0 1px 0 rgba(247, 227, 165, 0.08);
+}
+.notifications-tab-indicator {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f7e3a5, #9b7626);
+    box-shadow: 0 0 8px rgba(247, 227, 165, 0.75);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.notifications-tab.is-active .notifications-tab-indicator { opacity: 1; }
+
+.notifications-list-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 10px;
+}
+.notifications-list {
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px 2px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.notifications-list::-webkit-scrollbar { width: 5px; }
+.notifications-list::-webkit-scrollbar-thumb {
+    background: rgba(216, 178, 76, 0.28);
+    border-radius: 4px;
+}
+.notifications-empty {
+    margin: 18px 8px;
+    text-align: center;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 14px;
+    color: rgba(247, 227, 165, 0.45);
+}
+
+.notifications-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 10px 10px 8px;
+    border-radius: 11px;
+    border: 1px solid rgba(201, 162, 58, 0.38);
+    background: rgba(14, 5, 10, 0.55);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
+}
+.notifications-card.is-unread::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f7e3a5, #b8892a);
+    box-shadow: 0 0 10px rgba(247, 227, 165, 0.65);
+    pointer-events: none;
+}
+
+.notifications-card-icon-wrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(216, 178, 76, 0.45);
+    background: radial-gradient(circle at 35% 25%, rgba(247, 227, 165, 0.12), rgba(20, 6, 12, 0.85));
+    color: #d8b24c;
+    flex-shrink: 0;
+}
+.notifications-card-icon-wrap svg { width: 22px; height: 22px; display: block; }
+.notifications-card-icon-wrap--friend .notif-online-dot {
+    position: absolute;
+    right: 1px;
+    bottom: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2ebb5a;
+    border: 2px solid #240812;
+    box-shadow: 0 0 6px rgba(46, 187, 90, 0.55);
+}
+
+.notifications-card-body {
+    min-width: 0;
+    padding-right: 20px;
+}
+.notifications-card-headline {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #e8c76a;
+    line-height: 1.25;
+    margin-bottom: 3px;
+}
+.notifications-card-text {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: rgba(255, 246, 230, 0.72);
+}
+.notifications-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+.notifications-card-tag {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(201, 162, 58, 0.4);
+    font-family: "Cormorant Garamond", serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(247, 227, 165, 0.75);
+}
+.notifications-card-time {
+    margin-left: auto;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 11px;
+    color: rgba(216, 178, 76, 0.5);
+    white-space: nowrap;
+}
+.notifications-card-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.notifications-card-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.notifications-btn-open {
+    border: 1px solid rgba(247, 227, 165, 0.75);
+    background: linear-gradient(180deg, rgba(247, 227, 165, 0.15), rgba(155, 118, 38, 0.12));
+    color: #f7e3a5;
+    box-shadow: 0 0 12px rgba(216, 178, 76, 0.15);
+}
+.notifications-btn-open:hover { border-color: #f7e3a5; box-shadow: 0 0 16px rgba(216, 178, 76, 0.28); }
+.notifications-btn-later {
+    border: 1px solid rgba(201, 162, 58, 0.28);
+    background: rgba(10, 4, 8, 0.35);
+    color: rgba(247, 227, 165, 0.65);
+}
+.notifications-btn-later:hover {
+    border-color: rgba(216, 178, 76, 0.45);
+    color: #e8c76a;
+}
+
+.notifications-foot {
+    flex-shrink: 0;
+    padding: 8px 10px 12px;
+    border-top: 1px solid rgba(201, 162, 58, 0.2);
+}
+.notifications-clear-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(247, 227, 165, 0.72);
+    font-family: "Cormorant Garamond", serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: color 0.15s ease, filter 0.15s ease;
+}
+.notifications-clear-all svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.85; }
+.notifications-clear-all:hover {
+    color: #f7e3a5;
+    filter: drop-shadow(0 0 5px rgba(216, 178, 76, 0.35));
+}
+
+@media (max-width: 420px) {
+    .notifications-popover {
+        width: calc(100vw - 18px);
+        border-radius: 12px;
+    }
+    .notifications-tab {
+        font-size: 10.5px;
+        letter-spacing: 0;
+        padding-inline: 2px;
+    }
+}
+
 /* ----- Brand block ----- */
 .menu-brand-block { margin: 0 0 16px; }
 
@@ -6874,6 +7224,60 @@ h1 {
 
 </div>
 
+<!-- Панель уведомлений: фиксированный overlay, общий для всех экранов -->
+<div id="notificationsOverlay" class="notifications-overlay" aria-hidden="true">
+    <div class="notifications-backdrop" data-notifications-close tabindex="-1" aria-hidden="true"></div>
+    <div
+        class="notifications-popover"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notificationsPanelTitle"
+        data-notifications-popover>
+        <div class="notifications-popover-arrow" aria-hidden="true"></div>
+        <header class="notifications-head">
+            <h2 class="notifications-title" id="notificationsPanelTitle">Уведомления</h2>
+            <button type="button" class="notifications-close" data-notifications-close aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6 L 18 18 M 18 6 L 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            </button>
+        </header>
+        <div class="notifications-tabs" role="tablist" aria-label="Фильтр уведомлений">
+            <button type="button" class="notifications-tab is-active" role="tab" data-notif-tab="all" aria-selected="true">
+                Все
+                <span class="notifications-tab-indicator" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="notifications-tab" role="tab" data-notif-tab="friends" aria-selected="false">
+                Друзья
+                <span class="notifications-tab-indicator" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="notifications-tab" role="tab" data-notif-tab="rewards" aria-selected="false">
+                Награды
+                <span class="notifications-tab-indicator" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="notifications-tab" role="tab" data-notif-tab="updates" aria-selected="false">
+                Обновления
+                <span class="notifications-tab-indicator" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="notifications-tab" role="tab" data-notif-tab="game" aria-selected="false">
+                Игра
+                <span class="notifications-tab-indicator" aria-hidden="true"></span>
+            </button>
+        </div>
+        <div class="notifications-list-wrap">
+            <div class="notifications-list" data-notifications-list></div>
+        </div>
+        <footer class="notifications-foot">
+            <button type="button" class="notifications-clear-all" data-notifications-clear>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9H10V9zm4 0h2v9h-2V9zM6 9h2v9H6V9zm12 0h2v9h-2V9z" fill="currentColor" />
+                </svg>
+                Очистить все
+            </button>
+        </footer>
+    </div>
+</div>
+
 <!-- «События стола»: overlay вне #gameRoot — не во flex-колонке экрана игры -->
 <div class="game-events-shell" id="gameEventsShell">
     <div class="game-events-toast hidden" id="gameEventsToast" aria-live="polite" role="status"></div>
@@ -8462,7 +8866,7 @@ const appState = {
         level: 12,
         xp: 0.6,          // 0..1 прогресс текущего уровня
         balance: 5420,
-        notifications: 3,
+        notifications: 0, /* дублирует число непрочитанных из appState.notifications.items */
         avatarUrl: null,
     },
     /* findTable — UI-состояние экрана «Найти стол» (клиентское).
@@ -8552,6 +8956,20 @@ const appState = {
         { id: 91, stake: 10000, players: 3, capacity: 4, tier: "vip",  status: "playing", isListed: true },
         { id: 99, stake: 25000, players: 1, capacity: 4, tier: "vip",  status: "playing", isListed: true },
     ],
+    /*
+     * Единый локальный центр уведомлений (под замену на ответ GET /notifications + WS).
+     * items[]: см. normalizeNotificationRow() — id, type, category, title, message, timestamp, isRead, actions?, payload?, dedupeKey?
+     */
+    notifications: {
+        feedTab: "all",
+        items: [],
+        seenInboundFriendRequestIds: [],
+        flags: {
+            presenceSnapshotInit: false,
+            menuSignalsPosted: false,
+            mockAnnaInvitePostedForTableIds: [],
+        },
+    },
 };
 
 /* ---------- sessionStore ---------- */
@@ -8653,6 +9071,7 @@ const mainMenuScreenEl = document.getElementById("mainMenuScreen");
 const findTableScreenEl = document.getElementById("findTableScreen");
 const createTableScreenEl = document.getElementById("createTableScreen");
 const friendsScreenEl = document.getElementById("friendsScreen");
+const notificationsOverlayEl = document.getElementById("notificationsOverlay");
 
 const screenEls = {
     [SCREENS.SPLASH]: splashScreenEl,
@@ -8921,6 +9340,645 @@ async function handleMenuShare() {
     showMenuToast(UI_TEXT.menu.toastSoon);
 }
 
+/* ---------- Панель уведомлений: единый store + типы (клиент, готово под API /notifications) ---------- */
+
+const NOTIFICATION_TAB_ALL = "all";
+
+/** Серверная метка типа события — сохранять в каждой записи. */
+const NOTIFICATION_TYPES = Object.freeze({
+    FRIEND_ONLINE: "friend.online",
+    FRIEND_REQUEST_IN: "friend.request_in",
+    FRIEND_REQUEST_ACCEPTED: "friend.request_accepted",
+    FRIEND_PRIVATE_INVITE: "friend.private_invite",
+    REWARD_DAILY: "reward.daily_ready",
+    REWARD_BONUS: "reward.bonus",
+    REWARD_ACHIEVEMENT: "reward.achievement",
+    REWARD_STREAK: "reward.streak_bonus",
+    UPDATE_SYSTEM: "update.system",
+    UPDATE_FEATURE: "update.feature",
+    UPDATE_RULES: "update.rules",
+    GAME_INVITE_PRIVATE: "game.private_invite",
+    GAME_TABLE_READY: "game.table_ready",
+    GAME_FRIEND_WAITING: "game.friend_waiting",
+    GAME_MATCH_NOTE: "game.match_note",
+});
+
+const NOTIFICATION_TYPE_DEFAULTS = {
+    [NOTIFICATION_TYPES.FRIEND_ONLINE]:         { category: "friends",  tag: "Друзья",     icon: "friend",       titleDefault: "Друг онлайн" },
+    [NOTIFICATION_TYPES.FRIEND_REQUEST_IN]:   { category: "friends",  tag: "Друзья",     icon: "friend",       titleDefault: "Запрос в друзья" },
+    [NOTIFICATION_TYPES.FRIEND_REQUEST_ACCEPTED]: { category: "friends", tag: "Друзья", icon: "friend",    titleDefault: "В друзьях" },
+    [NOTIFICATION_TYPES.FRIEND_PRIVATE_INVITE]: { category: "friends",  tag: "Друзья",     icon: "invite",     titleDefault: "Приглашение" },
+    [NOTIFICATION_TYPES.REWARD_DAILY]:        { category: "rewards", tag: "Награды",    icon: "gift",        titleDefault: "Ежедневная награда" },
+    [NOTIFICATION_TYPES.REWARD_BONUS]:       { category: "rewards", tag: "Награды",    icon: "coin",        titleDefault: "Награда" },
+    [NOTIFICATION_TYPES.REWARD_ACHIEVEMENT]: { category: "rewards", tag: "Награды",    icon: "trophy",      titleDefault: "Достижение" },
+    [NOTIFICATION_TYPES.REWARD_STREAK]:      { category: "rewards", tag: "Награды",    icon: "flame",       titleDefault: "Бонус за серию" },
+    [NOTIFICATION_TYPES.UPDATE_SYSTEM]:      { category: "updates", tag: "Обновления", icon: "megaphone",   titleDefault: "Новость" },
+    [NOTIFICATION_TYPES.UPDATE_FEATURE]:     { category: "updates", tag: "Обновления", icon: "spark",     titleDefault: "Обновление" },
+    [NOTIFICATION_TYPES.UPDATE_RULES]:       { category: "updates", tag: "Обновления", icon: "megaphone",   titleDefault: "Правила игры" },
+    [NOTIFICATION_TYPES.GAME_INVITE_PRIVATE]: { category: "game",   tag: "Игра",       icon: "invite",       titleDefault: "Приглашение за стол" },
+    [NOTIFICATION_TYPES.GAME_TABLE_READY]:    { category: "game",   tag: "Игра",       icon: "table",       titleDefault: "Стол готов" },
+    [NOTIFICATION_TYPES.GAME_FRIEND_WAITING]: { category: "game",   tag: "Игра",       icon: "table",       titleDefault: "Ожидание" },
+    [NOTIFICATION_TYPES.GAME_MATCH_NOTE]:    { category: "game",   tag: "Игра",       icon: "megaphone",   titleDefault: "Партия" },
+};
+
+let notificationsLastAnchor = null;
+let notificationsOnResize = null;
+let notificationsOnKeydown = null;
+
+function getNotificationsStore() {
+    const n = appState.notifications;
+    if (!n || typeof n !== "object") {
+        appState.notifications = {
+            feedTab: "all",
+            items: [],
+            seenInboundFriendRequestIds: [],
+            flags: {
+                presenceSnapshotInit: false,
+                menuSignalsPosted: false,
+                mockAnnaInvitePostedForTableIds: [],
+            },
+        };
+        return appState.notifications;
+    }
+    if (!Array.isArray(n.items)) n.items = [];
+    if (!Array.isArray(n.seenInboundFriendRequestIds)) n.seenInboundFriendRequestIds = [];
+    if (!n.flags || typeof n.flags !== "object") {
+        n.flags = { presenceSnapshotInit: false, menuSignalsPosted: false, mockAnnaInvitePostedForTableIds: [] };
+    }
+    if (!Array.isArray(n.flags.mockAnnaInvitePostedForTableIds)) n.flags.mockAnnaInvitePostedForTableIds = [];
+    if (typeof n.feedTab !== "string") n.feedTab = NOTIFICATION_TAB_ALL;
+    /* Разово перенести старые ключи (если где-то остались). */
+    if (Array.isArray(appState.notificationItems) && appState.notificationItems.length && !n.items.length) {
+        n.items = appState.notificationItems.map(migrateLegacyNotificationRow);
+        try { delete appState.notificationItems; } catch (e2) { /* ignore */ }
+    }
+    if (typeof appState.notificationFeedTab === "string" && n.feedTab === NOTIFICATION_TAB_ALL) {
+        n.feedTab = appState.notificationFeedTab;
+        try { delete appState.notificationFeedTab; } catch (e3) { /* ignore */ }
+    }
+    return n;
+}
+
+function migrateLegacyNotificationRow(old) {
+    const ts = typeof old.timestamp === "number"
+        ? old.timestamp
+        : (Date.now() - Math.floor(Math.random() * 600000));
+    let isRead = !!old.isRead;
+    if (old.unread !== undefined) isRead = !old.unread;
+    const row = normalizeNotificationRow(Object.assign({}, old, {
+        message: old.message != null ? old.message : old.body,
+        timestamp: ts,
+        isRead,
+        type: old.type || guessLegacyNotificationType(old),
+    }));
+    if (old.kind === "private_table" && (!row.actions || !row.actions.kind)) {
+        row.actions = { kind: "private_table_invite", roomId: old.roomId != null ? Number(old.roomId) : undefined };
+    }
+    return row;
+}
+
+function guessLegacyNotificationType(old) {
+    const kind = old && old.kind;
+    const cat = (old && old.category) || "friends";
+    const icon = old && old.icon;
+    const body = ((old && old.body) || (old && old.message) || "").toLowerCase();
+    if (kind === "private_table") return NOTIFICATION_TYPES.GAME_INVITE_PRIVATE;
+    if (cat === "updates") return NOTIFICATION_TYPES.UPDATE_FEATURE;
+    if (cat === "rewards") {
+        return body.includes("ежедневн") ? NOTIFICATION_TYPES.REWARD_DAILY : NOTIFICATION_TYPES.REWARD_BONUS;
+    }
+    if (icon === "invite" || body.includes("пригл")) return NOTIFICATION_TYPES.GAME_INVITE_PRIVATE;
+    if (icon === "friend" || body.includes("сети") || body.includes("онлайн")) return NOTIFICATION_TYPES.FRIEND_ONLINE;
+    return NOTIFICATION_TYPES.FRIEND_REQUEST_IN;
+}
+
+function normalizeNotificationRow(partial) {
+    const type = partial.type || NOTIFICATION_TYPES.UPDATE_SYSTEM;
+    const defs = NOTIFICATION_TYPE_DEFAULTS[type] || {};
+    const category = partial.category || defs.category || "updates";
+    const title = partial.title != null ? String(partial.title) : String(defs.titleDefault || "");
+    const message = partial.message != null ? String(partial.message) : "";
+    let isRead = partial.isRead === true;
+    if (partial.unread !== undefined) isRead = !partial.unread;
+    const ts = typeof partial.timestamp === "number" ? partial.timestamp : Date.now();
+    const idBase = partial.id != null ? String(partial.id) : `n_${Math.random().toString(36).slice(2, 11)}`;
+    return Object.assign({}, partial, {
+        id: idBase,
+        type,
+        category,
+        title,
+        message,
+        timestamp: ts,
+        isRead,
+        tag: partial.tag != null ? partial.tag : defs.tag || "",
+        icon: partial.icon != null ? partial.icon : defs.icon || "megaphone",
+        payload: partial.payload && typeof partial.payload === "object" ? partial.payload : {},
+        actions: partial.actions && typeof partial.actions === "object" ? partial.actions : null,
+        dedupeKey: partial.dedupeKey != null ? partial.dedupeKey : undefined,
+        serverEventId: partial.serverEventId != null ? partial.serverEventId : undefined,
+        createdAtISO: typeof partial.createdAtISO === "string" ? partial.createdAtISO : new Date(ts).toISOString(),
+    });
+}
+
+/**
+ * Сервер позже может прислать пачку; слить можно так:
+ * merged.map(r => normalizeNotificationRow({ ...serverRow, timestamp: Date.parse(...) }))
+ */
+function applyNotificationPatchesFromApi(rows) {
+    if (!Array.isArray(rows)) return;
+    const store = getNotificationsStore();
+    rows.forEach((raw) => {
+        const nr = normalizeNotificationRow(raw);
+        const ix = store.items.findIndex((x) =>
+            String(x.serverEventId || x.id) === String(nr.serverEventId || nr.id));
+        if (ix === -1) store.items.unshift(nr);
+        else store.items[ix] = Object.assign(store.items[ix], nr);
+    });
+    notifyNotificationsDatasetChanged();
+}
+
+function pushAppNotification(input) {
+    const store = getNotificationsStore();
+    const dedupeKey = input && input.dedupeKey != null ? String(input.dedupeKey) : "";
+    if (dedupeKey && store.items.some((x) => x && String(x.dedupeKey) === dedupeKey)) {
+        return null;
+    }
+    const row = normalizeNotificationRow(input || {});
+    if (dedupeKey) row.dedupeKey = dedupeKey;
+    store.items.unshift(row);
+    notifyNotificationsDatasetChanged();
+    return row;
+}
+
+function notifyNotificationsDatasetChanged() {
+    updateAllNotificationBadgesInDom();
+    if (typeof isNotificationsOverlayOpen === "function" && isNotificationsOverlayOpen()) {
+        renderNotificationsList();
+    }
+}
+
+function notificationFormatTime(ts) {
+    const t = typeof ts === "number" ? ts : Date.now();
+    const dt = Math.max(0, (Date.now() - t) / 1000);
+    if (dt < 55) return "сейчас";
+    if (dt < 3600) return Math.max(1, Math.floor(dt / 60)) + " мин назад";
+    if (dt < 86400) return Math.floor(dt / 3600) + " ч назад";
+    try {
+        return new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+    } catch (e4) {
+        return "ранее";
+    }
+}
+
+function notificationHasInviteActions(n) {
+    return !!(n.actions && String(n.actions.kind) === "private_table_invite");
+}
+
+function syncInboundFriendRequestsToNotificationsOnce() {
+    const store = getNotificationsStore();
+    const seen = store.seenInboundFriendRequestIds;
+    const inbound = (appState.friendRequests && appState.friendRequests.inbound) || [];
+    inbound.forEach((row) => {
+        if (!row || !row.from || seen.indexOf(row.id) !== -1) return;
+        seen.push(row.id);
+        pushAppNotification({
+            id: `fr_${row.id}`,
+            dedupeKey: `inbound_fr:${row.id}`,
+            type: NOTIFICATION_TYPES.FRIEND_REQUEST_IN,
+            title: "Запрос в друзья",
+            message: `${row.from.name} хочет добавить вас в друзья`,
+            payload: { friendRequestId: row.id, fromUserId: row.from.id },
+        });
+    });
+}
+
+/** Вызывается из renderMainMenu: награды, новости клиента и входящие заявки. */
+function notificationsPostMenuSignalsOnce() {
+    getNotificationsStore();
+    const flags = appState.notifications.flags;
+    if (!flags.menuSignalsPosted) {
+        flags.menuSignalsPosted = true;
+        pushAppNotification({
+            dedupeKey: "session.reward_daily",
+            type: NOTIFICATION_TYPES.REWARD_DAILY,
+            title: "Ежедневная награда",
+            message: "Ежедневная награда доступна. Загляните во вкладку наград в игре.",
+        });
+        pushAppNotification({
+            dedupeKey: "session.reward_streak",
+            type: NOTIFICATION_TYPES.REWARD_STREAK,
+            title: "Серия входов",
+            message: "Серия входов дала вам бонус: +500 монет (mock).",
+        });
+        pushAppNotification({
+            dedupeKey: "session.achievement_demo",
+            type: NOTIFICATION_TYPES.REWARD_ACHIEVEMENT,
+            title: "Достижение",
+            message: "Открыто достижение «Первый заход в клуб».",
+        });
+        pushAppNotification({
+            dedupeKey: "session.update_features",
+            type: NOTIFICATION_TYPES.UPDATE_FEATURE,
+            title: "Новый раздел",
+            message: "Добавлен раздел «Достижения». Следите за обновлениями.",
+        });
+        pushAppNotification({
+            dedupeKey: "session.update_system",
+            type: NOTIFICATION_TYPES.UPDATE_SYSTEM,
+            title: "Системная новость",
+            message: "Добро пожаловать в Azi by Bobby. Расскажите друзьям о приватных столах.",
+        });
+    }
+    syncInboundFriendRequestsToNotificationsOnce();
+}
+
+function notifyMockIncomingPrivateInviteAfterCreate(tableId) {
+    const store = getNotificationsStore();
+    const flags = store.flags;
+    const tid = String(tableId);
+    if (flags.mockAnnaInvitePostedForTableIds.indexOf(tid) !== -1) return;
+    flags.mockAnnaInvitePostedForTableIds.push(tid);
+    const roomId = Number(tableId);
+    setTimeout(() => {
+        pushAppNotification({
+            dedupeKey: `mock_priv_inv:${tid}`,
+            type: NOTIFICATION_TYPES.GAME_INVITE_PRIVATE,
+            title: "Приглашение",
+            message: "Анна приглашает вас за приватный стол.",
+            actions: { kind: "private_table_invite", roomId },
+            payload: { fromUserId: "f2", fromName: "Анна", roomId },
+        });
+    }, 2600);
+}
+
+function notifyFriendInviteSent(friendName, friendId) {
+    pushAppNotification({
+        type: NOTIFICATION_TYPES.FRIEND_PRIVATE_INVITE,
+        title: "Приглашение отправлено",
+        message: `Вы пригласили ${friendName} за приватный стол.`,
+        payload: { targetUserId: friendId },
+    });
+    setTimeout(() => {
+        pushAppNotification({
+            dedupeKey: `wait_join:${friendId}`,
+            type: NOTIFICATION_TYPES.GAME_FRIEND_WAITING,
+            title: "Ожидание друга",
+            message: `${friendName} ещё не зашёл за стол — напомним, когда появится.`,
+            payload: { friendId },
+        });
+    }, 1200);
+}
+
+function pushGameTableReadyNotification() {
+    if (!engine || !engine.currentTable || engine.currentTable.id == null) return;
+    const tid = String(engine.currentTable.id);
+    const key = `table_ready:${tid}`;
+    if (engine.currentTable._notifTableReadySent) return;
+    engine.currentTable._notifTableReadySent = true;
+    pushAppNotification({
+        dedupeKey: key,
+        type: NOTIFICATION_TYPES.GAME_TABLE_READY,
+        title: "Стол готов",
+        message: "Все игроки нажали «Готов». Начинается раздача.",
+        payload: { roomId: engine.currentTable.id },
+    });
+}
+
+function notificationsTrackFriendsPresence() {
+    const friends = Array.isArray(appState.friends) ? appState.friends : [];
+    const store = getNotificationsStore();
+    const flags = store.flags;
+    const snap = {};
+    friends.forEach((f) => {
+        if (!f || f.id == null) return;
+        snap[f.id] = !!f.online;
+    });
+    if (!flags.presenceSnapshotInit) {
+        flags.presenceSnapshotInit = true;
+        flags._presenceSnap = snap;
+        return;
+    }
+    const prev = flags._presenceSnap || {};
+    friends.forEach((f) => {
+        if (!f || f.id == null) return;
+        const was = prev[f.id];
+        const now = snap[f.id];
+        if (was === false && now === true) {
+            pushAppNotification({
+                dedupeKey: `online:${f.id}:${Date.now()}`,
+                type: NOTIFICATION_TYPES.FRIEND_ONLINE,
+                title: "Друг онлайн",
+                message: `${f.name} сейчас в сети`,
+                payload: { friendId: f.id },
+            });
+        }
+    });
+    flags._presenceSnap = snap;
+}
+
+function getNotificationItems() {
+    return getNotificationsStore().items;
+}
+
+function getUnreadNotificationsCount() {
+    return getNotificationItems().filter((n) => n && n.isRead !== true).length;
+}
+
+function syncProfileNotificationCountFromItems() {
+    if (!appState.profile) appState.profile = {};
+    appState.profile.notifications = getUnreadNotificationsCount();
+}
+
+function updateAllNotificationBadgesInDom() {
+    syncProfileNotificationCountFromItems();
+    const c = Math.max(0, Number(appState.profile.notifications) || 0);
+    const text = c > 99 ? "99+" : String(c);
+    const sel = "[data-menu-notifications],[data-find-notifications],[data-create-notifications],[data-friends-notifications],[data-game-notifications]";
+    document.querySelectorAll(sel).forEach((el) => {
+        if (c > 0) {
+            el.textContent = text;
+            el.hidden = false;
+        } else {
+            el.textContent = "";
+            el.hidden = true;
+        }
+    });
+}
+
+function notificationsMatchesTab(item, tab) {
+    if (!item) return false;
+    if (tab === NOTIFICATION_TAB_ALL || !tab) return true;
+    if (tab === "friends") return item.category === "friends";
+    if (tab === "rewards") return item.category === "rewards";
+    if (tab === "updates") return item.category === "updates";
+    if (tab === "game") return item.category === "game";
+    return true;
+}
+
+function getNotificationIconMarkup(icon) {
+    const i = String(icon || "");
+    if (i === "megaphone") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4 L 6 7.5 V 15.5 L 14 19 V 4 Z" fill="currentColor" opacity="0.95"/><path d="M16 8 C 18.5 9.2 20 11.2 20 14 C 20 16.8 18.5 18.8 16 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 10 H 3 V 13 H 5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>`;
+    }
+    if (i === "coin") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/><text x="12" y="15.5" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="10" font-weight="700" fill="currentColor">A</text></svg>`;
+    }
+    if (i === "friend") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="10" r="3.5" fill="currentColor"/><path d="M4 20 C 5 15.5 17 15.5 18 20 Z" fill="currentColor"/></svg>`;
+    }
+    if (i === "invite") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><text x="12" y="17" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="currentColor">♠</text></svg>`;
+    }
+    if (i === "gift") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="1.5" fill="currentColor" opacity="0.9"/><path d="M12 7 C 10 7 9 8.2 9 9.5 C 9 8.2 7 7 6 7 C 7.5 7 8.5 8 9 9 C 9 8 10.2 7 12 7 Z" fill="currentColor"/><path d="M12 7 C 14 7 15 8.2 15 9.5 C 15 8.2 17 7 18 7 C 16.5 7 15.5 8 15 9 C 15 8 13.8 7 12 7 Z" fill="currentColor"/><rect x="11" y="7" width="2" height="14" fill="rgba(0,0,0,0.22)"/></svg>`;
+    }
+    if (i === "trophy") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v2h4v3c0 2.5-1.5 4.5-4 5-.6 2-2.2 3.5-4 4V19h6v2H10v4H8v-4H2v-2h6v-1c-1.8-.5-3.4-2-4-4-2.5-.5-4-2.5-4-5V6h4V4zm2 2v2H6v1c0 1.7 1 3 2.5 3.5V8h3.5c.3 1.4 1.2 2.5 2.5 3V8H10V6zm6 0h2v2h2v1c0 1.5-.8 2.8-2 3.3.3-1.5-.2-3-1.3-4.2L16 6z" fill="currentColor"/></svg>`;
+    }
+    if (i === "flame") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c0 4-4 5-4 10 0 2.5 1.5 4.5 4 5 2.5-.5 4-2.5 4-5 0-5-4-6-4-10 2 3 6 6 6 11 0 3.5-2.5 6-6 7-3.5-1-6-3.5-6-7 0-5 4-8 6-11z" fill="currentColor" opacity="0.92"/></svg>`;
+    }
+    if (i === "spark") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6L12 2z" fill="currentColor"/></svg>`;
+    }
+    if (i === "table") {
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="5" fill="none" stroke="currentColor" stroke-width="1.3"/><ellipse cx="12" cy="12" rx="5" ry="2.8" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/></svg>`;
+}
+
+function renderNotificationsList() {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    const listEl = overlay && overlay.querySelector("[data-notifications-list]");
+    if (!listEl) return;
+    const tab = getNotificationsStore().feedTab || NOTIFICATION_TAB_ALL;
+    const items = getNotificationItems().filter((n) => notificationsMatchesTab(n, tab));
+    if (!items.length) {
+        listEl.innerHTML = `<div class="notifications-empty">${escapeFriendsHtml(UI_TEXT.menu.toastNoNotifications)}</div>`;
+        return;
+    }
+    listEl.innerHTML = items.map((n) => {
+        const idEsc = escapeFriendsHtml(n.id);
+        const unread = n.isRead !== true;
+        const invite = notificationHasInviteActions(n);
+        const iconExtra = n.icon === "friend" ? " notifications-card-icon-wrap--friend" : "";
+        const friendDot = n.icon === "friend" ? '<span class="notif-online-dot" aria-hidden="true"></span>' : "";
+        const bodyText = (n.message != null ? String(n.message) : "");
+        const timeLabel = n.timeLabel != null ? String(n.timeLabel) : notificationFormatTime(n.timestamp);
+        const actions = invite
+            ? `<div class="notifications-card-actions">
+                <button type="button" class="notifications-btn-open" data-notif-open="${idEsc}">Открыть</button>
+                <button type="button" class="notifications-btn-later" data-notif-later="${idEsc}">Позже</button>
+            </div>`
+            : "";
+        return `
+            <article class="notifications-card${unread ? " is-unread" : ""}" data-notif-id="${idEsc}">
+                <div class="notifications-card-icon-wrap${iconExtra}">${getNotificationIconMarkup(n.icon)}${friendDot}</div>
+                <div class="notifications-card-body">
+                    <div class="notifications-card-headline">${escapeFriendsHtml(n.title)}</div>
+                    <p class="notifications-card-text">${escapeFriendsHtml(bodyText)}</p>
+                    <div class="notifications-card-meta">
+                        <span class="notifications-card-tag">${escapeFriendsHtml(n.tag || "")}</span>
+                        <span class="notifications-card-time">${escapeFriendsHtml(timeLabel)}</span>
+                    </div>
+                </div>
+                ${actions}
+            </article>`;
+    }).join("");
+}
+
+function positionNotificationsPopover(anchorEl) {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    const panel = overlay && overlay.querySelector("[data-notifications-popover]");
+    if (!overlay || !panel) return;
+    const pad = 10;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const maxW = Math.min(380, vw - pad * 2);
+    panel.style.width = maxW + "px";
+    panel.style.maxHeight = Math.min(520, vh - pad * 2) + "px";
+
+    if (!anchorEl || typeof anchorEl.getBoundingClientRect !== "function" || anchorEl === overlay) {
+        panel.style.top = Math.max(pad + (typeof visualViewport !== "undefined" && visualViewport.offsetTop ? visualViewport.offsetTop : 0), 52) + "px";
+        panel.style.right = pad + "px";
+        panel.style.left = "auto";
+        const pr = panel.getBoundingClientRect();
+        panel.style.setProperty("--notif-arrow-x", Math.min(pr.width - 36, Math.max(36, pr.width - 56)) + "px");
+        return;
+    }
+
+    const r = anchorEl.getBoundingClientRect();
+
+    let top = r.bottom + 10;
+    let right = vw - r.right;
+    const place = () => {
+        const h = panel.getBoundingClientRect().height;
+        let t = top;
+        if (t + h > vh - pad) t = Math.max(pad, r.top - h - 10);
+        if (t < pad) t = pad;
+        panel.style.top = t + "px";
+        let leftEdge = vw - right - maxW;
+        if (leftEdge < pad) right = vw - maxW - pad;
+        panel.style.right = Math.max(pad, right) + "px";
+        panel.style.left = "auto";
+    };
+    place();
+    requestAnimationFrame(() => {
+        place();
+        const pr = panel.getBoundingClientRect();
+        const bellCx = r.left + r.width / 2;
+        let ax = bellCx - pr.left;
+        ax = Math.max(28, Math.min(pr.width - 28, ax));
+        panel.style.setProperty("--notif-arrow-x", ax + "px");
+    });
+}
+
+function toggleNotificationsPanel(anchorEl) {
+    if (isNotificationsOverlayOpen()) closeNotificationsPanel();
+    else openNotificationsPanel(anchorEl);
+}
+
+function isNotificationsOverlayOpen() {
+    const el = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    return !!(el && el.classList.contains("is-open"));
+}
+
+function openNotificationsPanel(anchorEl) {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    if (!overlay) return;
+    notificationsLastAnchor = anchorEl || null;
+    overlay.classList.add("is-open");
+    overlay.removeAttribute("aria-hidden");
+    syncNotificationTabsUi();
+    renderNotificationsList();
+    positionNotificationsPopover(anchorEl || null);
+    if (!notificationsOnResize) {
+        notificationsOnResize = () => {
+            if (!isNotificationsOverlayOpen()) return;
+            if (notificationsLastAnchor) positionNotificationsPopover(notificationsLastAnchor);
+        };
+        window.addEventListener("resize", notificationsOnResize);
+    }
+    if (!notificationsOnKeydown) {
+        notificationsOnKeydown = (e) => {
+            if (e.key !== "Escape") return;
+            if (!isNotificationsOverlayOpen()) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeNotificationsPanel();
+        };
+        document.addEventListener("keydown", notificationsOnKeydown, true);
+    }
+}
+
+function closeNotificationsPanel() {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    if (!overlay) return;
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    notificationsLastAnchor = null;
+}
+
+function syncNotificationTabsUi() {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    if (!overlay) return;
+    const tab = getNotificationsStore().feedTab || NOTIFICATION_TAB_ALL;
+    overlay.querySelectorAll("[data-notif-tab]").forEach((btn) => {
+        const sel = btn.dataset.notifTab === tab;
+        btn.classList.toggle("is-active", sel);
+        btn.setAttribute("aria-selected", sel ? "true" : "false");
+    });
+}
+
+function markNotificationRead(id) {
+    const n = getNotificationItems().find((x) => x && String(x.id) === String(id));
+    if (n) n.isRead = true;
+}
+
+function handlePrivateInviteNotificationOpen(notifId) {
+    const row = getNotificationItems().find((x) => x && String(x.id) === String(notifId));
+    const rid = row && row.actions ? row.actions.roomId : null;
+    const roomId = rid != null ? Number(rid) : NaN;
+    closeNotificationsPanel();
+    if (!Number.isFinite(roomId)) {
+        showMenuToast(UI_TEXT.menu.toastSoon);
+        return;
+    }
+    if (typeof appState !== "undefined" && appState.currentScreen === SCREENS.GAME &&
+        typeof engine !== "undefined" && engine && engine.currentTable &&
+        Number(engine.currentTable.id) === roomId) {
+        showMenuToast("Вы уже за этим столом.");
+        return;
+    }
+    showMenuToast("Приглашение (mock): стол №" + roomId + ". В проде здесь будет переход по deep link.");
+}
+function bindNotificationsPanelHandlers() {
+    const overlay = notificationsOverlayEl || document.getElementById("notificationsOverlay");
+    if (!overlay) return;
+
+    overlay.querySelectorAll("[data-notifications-close]").forEach((el) => {
+        el.addEventListener("click", (e) => {
+            e.preventDefault();
+            closeNotificationsPanel();
+        });
+    });
+
+    overlay.addEventListener("click", (e) => {
+        if (e.target.closest("[data-notifications-popover]")) return;
+        closeNotificationsPanel();
+    });
+
+    overlay.querySelectorAll("[data-notif-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const t = btn.dataset.notifTab;
+            const storeTab = getNotificationsStore().feedTab || NOTIFICATION_TAB_ALL;
+            if (!t || t === storeTab) return;
+            getNotificationsStore().feedTab = t;
+            syncNotificationTabsUi();
+            renderNotificationsList();
+        });
+    });
+
+    const listHost = overlay.querySelector("[data-notifications-list]");
+    if (listHost) {
+        listHost.addEventListener("click", (e) => {
+            const openB = e.target.closest("[data-notif-open]");
+            if (openB) {
+                const id = openB.getAttribute("data-notif-open");
+                markNotificationRead(id);
+                updateAllNotificationBadgesInDom();
+                renderNotificationsList();
+                handlePrivateInviteNotificationOpen(id);
+                return;
+            }
+            const laterB = e.target.closest("[data-notif-later]");
+            if (laterB) {
+                const id = laterB.getAttribute("data-notif-later");
+                markNotificationRead(id);
+                updateAllNotificationBadgesInDom();
+                renderNotificationsList();
+                return;
+            }
+            const card = e.target.closest(".notifications-card[data-notif-id]");
+            if (card && !e.target.closest(".notifications-card-actions button")) {
+                const id = card.getAttribute("data-notif-id");
+                markNotificationRead(id);
+                updateAllNotificationBadgesInDom();
+                renderNotificationsList();
+            }
+        });
+    }
+
+    const clearBtn = overlay.querySelector("[data-notifications-clear]");
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            getNotificationsStore().items.length = 0;
+            notifyNotificationsDatasetChanged();
+            renderNotificationsList();
+        });
+    }
+}
+
 /* Словарь «действие меню → обработчик». Легко расширять: добавить экран
    создания стола — подменить `create` на переход в SCREENS.CREATE_TABLE и т.п. */
 const MENU_ACTION_HANDLERS = {
@@ -8957,9 +10015,9 @@ function bindMainMenuHandlers() {
     });
 
     const bellBtn = mainMenuScreenEl.querySelector("[data-menu-bell]");
-    if (bellBtn) bellBtn.addEventListener("click", () => {
-        const n = (appState.profile && appState.profile.notifications) || 0;
-        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
     });
 
     const profileBtn = mainMenuScreenEl.querySelector("[data-menu-profile]");
@@ -9048,6 +10106,10 @@ function renderMainMenu() {
 
     // Закрыть sheet при каждом входе в меню (на случай если остался открыт)
     closeMenuSheet();
+
+    if (typeof notificationsPostMenuSignalsOnce === "function") {
+        notificationsPostMenuSignalsOnce();
+    }
 }
 
 /* ==============================================================
@@ -9184,11 +10246,9 @@ function bindGameTopbarHandlers() {
     });
 
     const bellBtn = rootEl.querySelector("[data-game-bell]");
-    if (bellBtn) bellBtn.addEventListener("click", () => {
-        const n = (appState.profile && appState.profile.notifications) || 0;
-        if (typeof showMenuToast === "function") {
-            showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
-        }
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
     });
 
     const readyBtn = rootEl.querySelector("[data-game-ready]");
@@ -9418,9 +10478,9 @@ function bindFindTableHandlers() {
     });
 
     const bellBtn = findTableScreenEl.querySelector("[data-find-bell]");
-    if (bellBtn) bellBtn.addEventListener("click", () => {
-        const n = (appState.profile && appState.profile.notifications) || 0;
-        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
     });
 
     /* "Сесть" — делегирование. Клик на активную кнопку стартует игру. */
@@ -9595,9 +10655,9 @@ function bindCreateTableHandlers() {
         showMenuToast(UI_TEXT.menu.toastSoon);
     });
     const bellBtn = createTableScreenEl.querySelector("[data-create-bell]");
-    if (bellBtn) bellBtn.addEventListener("click", () => {
-        const n = (appState.profile && appState.profile.notifications) || 0;
-        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
     });
 
     /* Submit — создание стола */
@@ -10024,6 +11084,9 @@ function renderFriendsLists() {
             }).join("");
         }
     }
+    if (typeof notificationsTrackFriendsPresence === "function") {
+        notificationsTrackFriendsPresence();
+    }
 }
 
 function bindFriendsHandlers() {
@@ -10036,9 +11099,9 @@ function bindFriendsHandlers() {
         showMenuToast(UI_TEXT.menu.toastSoon);
     });
     const bellBtn = friendsScreenEl.querySelector("[data-friends-bell]");
-    if (bellBtn) bellBtn.addEventListener("click", () => {
-        const n = (appState.profile && appState.profile.notifications) || 0;
-        showMenuToast(n > 0 ? UI_TEXT.menu.toastSoon : UI_TEXT.menu.toastNoNotifications);
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
     });
 
     const searchEl = friendsScreenEl.querySelector("[data-friends-search]");
@@ -10103,6 +11166,19 @@ function bindFriendsHandlers() {
                 });
             }
             showMenuToast(T.toastAccepted || "");
+            pushAppNotification({
+                dedupeKey: `friend_added:${rid}`,
+                type: NOTIFICATION_TYPES.FRIEND_REQUEST_ACCEPTED,
+                title: "Новый друг",
+                message: `${from.name} теперь в вашем списке друзей.`,
+                payload: { friendId: from.id },
+            });
+            pushAppNotification({
+                dedupeKey: `reward_new_friend:${rid}`,
+                type: NOTIFICATION_TYPES.REWARD_BONUS,
+                title: "Бонус",
+                message: "Новый контакт в клубе — небольшой бонус (mock). В проде синхронизируется с балансом.",
+            });
             renderFriendsLists();
             return;
         }
@@ -10318,6 +11394,11 @@ function handleCreateTableSubmit() {
         ? UI_TEXT.createTable.toastCreatedPrivate
         : UI_TEXT.createTable.toastCreatedOpen);
 
+    /* Mock: входящее приглашение за приватный стол (имитация пуша от друга). */
+    if (isPriv && newTable.id != null && typeof notifyMockIncomingPrivateInviteAfterCreate === "function") {
+        notifyMockIncomingPrivateInviteAfterCreate(newTable.id);
+    }
+
     /* Для приватного стола сразу предлагаем пригласить друзей. */
     if (isPriv) setTimeout(() => openInviteModal(), 400);
 }
@@ -10434,6 +11515,10 @@ function inviteFriend(friendId) {
     room.invitedPlayers.push(friendId);
     renderInviteList();
     showMenuToast(UI_TEXT.invite.toastInvited);
+    const fr = (Array.isArray(appState.friends) ? appState.friends : []).find((f) => f && String(f.id) === String(friendId));
+    if (typeof notifyFriendInviteSent === "function") {
+        notifyFriendInviteSent(fr && fr.name ? fr.name : "Друг", friendId);
+    }
     /* В будущем: POST /rooms/:id/invite {friendId} */
 }
 
@@ -10735,6 +11820,9 @@ function tableStartRound() {
     if (engine.currentTable) {
         cancelOpenTableLobbyBots(engine.currentTable);
         engine.currentTable.status = "playing";
+    }
+    if (typeof pushGameTableReadyNotification === "function") {
+        pushGameTableReadyNotification();
     }
     engineStartNextHand();
     return true;
@@ -13266,6 +14354,8 @@ async function bootstrap() {
     bindGameEventsHandlers();
     bindGameLeaveHandlers();
     bindInviteHandlers();
+    bindNotificationsPanelHandlers();
+    updateAllNotificationBadgesInDom();
 
     try {
         const res = await authService.loadSession();
