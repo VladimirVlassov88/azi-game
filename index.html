@@ -4278,6 +4278,284 @@ h1 {
     }
 }
 
+/* ---------- Экран «Настройки» (те же отступы/рамка что «Найти стол» / «Друзья») ---------- */
+#settingsScreen {
+    --settings-pad-top: calc(env(safe-area-inset-top, 0px) + clamp(22px, 4.8vmin, 40px));
+    --settings-pad-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 2.8vmin, 22px));
+    --settings-pad-x: clamp(10px, 2.8vw, 20px);
+}
+#settingsScreen .splash-inner {
+    padding: var(--settings-pad-top) max(env(safe-area-inset-right, 0px), var(--settings-pad-x))
+        var(--settings-pad-bottom) max(env(safe-area-inset-left, 0px), var(--settings-pad-x));
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    box-sizing: border-box;
+}
+#settingsScreen .menu-panel--settings {
+    max-width: min(620px, 100%);
+    width: 100%;
+    margin-top: 0;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: min(
+        calc(100vh - var(--settings-pad-top) - var(--settings-pad-bottom) - 12px),
+        calc(100dvh - var(--settings-pad-top) - var(--settings-pad-bottom) - 12px),
+        calc(100svh - var(--settings-pad-top) - var(--settings-pad-bottom) - 12px)
+    );
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: clamp(10px, 2.6vw, 14px) clamp(12px, 3vw, 18px) clamp(10px, 2.5vw, 14px);
+    text-align: left;
+}
+#settingsScreen .menu-topbar {
+    margin-top: 0;
+    margin-bottom: clamp(6px, 1.8vw, 10px);
+    flex-shrink: 0;
+}
+#settingsScreen .find-title {
+    margin: 2px 0 10px;
+    flex-shrink: 0;
+}
+#settingsScreen .find-back {
+    position: absolute;
+    left: 0;
+    top: 4px;
+}
+#settingsScreen .find-title-text {
+    font-size: clamp(26px, 6.2vmin, 36px);
+}
+#settingsScreen .settings-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(216, 178, 76, 0.35) transparent;
+}
+#settingsScreen .settings-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+#settingsScreen .settings-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(216, 178, 76, 0.45), rgba(139, 106, 42, 0.3));
+    border-radius: 4px;
+}
+#settingsScreen .settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#settingsScreen .settings-card {
+    border-radius: 12px;
+    border: 1px solid rgba(216, 178, 76, 0.2);
+    background: linear-gradient(180deg, rgba(10, 4, 8, 0.38) 0%, rgba(18, 6, 12, 0.22) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 214, 130, 0.05), 0 2px 10px rgba(0, 0, 0, 0.18);
+    padding: 7px 9px;
+}
+#settingsScreen .settings-card-title {
+    margin: 0 0 5px;
+    padding: 0 2px;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(216, 178, 76, 0.52);
+}
+#settingsScreen .settings-card--game .settings-card-title {
+    margin-bottom: 4px;
+}
+#settingsScreen .settings-card--game .settings-rows {
+    gap: 3px;
+}
+#settingsScreen .settings-profile-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 0 6px;
+    border-bottom: 1px solid rgba(216, 178, 76, 0.12);
+    margin-bottom: 4px;
+}
+#settingsScreen .settings-profile-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(216, 178, 76, 0.4);
+    background: radial-gradient(circle at 35% 30%, rgba(247, 227, 165, 0.2), rgba(20, 4, 10, 0.9) 78%);
+    color: #f7e3a5;
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 15px;
+}
+#settingsScreen .settings-profile-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+#settingsScreen .settings-profile-name {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: #f7e3a5;
+    line-height: 1.2;
+    word-break: break-word;
+}
+#settingsScreen .settings-profile-level {
+    margin-top: 2px;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 11px;
+    color: rgba(216, 178, 76, 0.58);
+}
+#settingsScreen .settings-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#settingsScreen .settings-link-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(10, 4, 8, 0.45);
+    border: 1px solid rgba(216, 178, 76, 0.24);
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+#settingsScreen .settings-link-row:hover {
+    border-color: rgba(247, 227, 165, 0.42);
+    background: rgba(10, 4, 8, 0.55);
+}
+#settingsScreen .settings-link-row--plain {
+    background: transparent;
+    border-color: transparent;
+    padding-left: 2px;
+    padding-right: 4px;
+}
+#settingsScreen .settings-link-row--plain:hover {
+    background: rgba(10, 4, 8, 0.35);
+    border-color: rgba(216, 178, 76, 0.2);
+}
+#settingsScreen .settings-link-row .settings-link-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    color: #d8b24c;
+}
+#settingsScreen .settings-link-row .settings-link-icon svg {
+    width: 17px;
+    height: 17px;
+}
+#settingsScreen .settings-link-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 12.5px;
+    color: #e7c97a;
+}
+#settingsScreen .settings-link-value {
+    flex: 0 1 auto;
+    text-align: right;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 12px;
+    color: rgba(216, 178, 76, 0.52);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#settingsScreen .settings-link-chevron {
+    flex-shrink: 0;
+    color: rgba(216, 178, 76, 0.42);
+    font-size: 16px;
+    line-height: 1;
+}
+#settingsScreen .settings-toggle-row.create-private-row {
+    padding: 6px 10px;
+    gap: 8px;
+    border-radius: 10px;
+}
+#settingsScreen .settings-toggle-row .create-private-icon {
+    width: 22px;
+    height: 22px;
+}
+#settingsScreen .settings-toggle-row .create-private-icon svg {
+    width: 16px;
+    height: 16px;
+}
+#settingsScreen .settings-toggle-row .create-private-label {
+    font-size: 12.5px;
+}
+#settingsScreen .settings-toggle-row {
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+#settingsScreen .settings-toggle-row .create-private-icon {
+    color: rgba(247, 227, 165, 0.88);
+}
+#settingsScreen .settings-toggle-row .create-private-switch {
+    width: 44px;
+    height: 24px;
+}
+#settingsScreen .settings-toggle-row .create-private-switch::before {
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+}
+#settingsScreen .settings-toggle-row .create-private-input:checked ~ .create-private-switch::before {
+    transform: translateX(20px);
+}
+#settingsScreen .settings-logout {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(216, 178, 76, 0.32);
+    background: rgba(46, 10, 18, 0.45);
+    color: rgba(247, 200, 200, 0.9);
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: border-color 0.18s ease, background 0.18s ease;
+}
+#settingsScreen .settings-logout-icon svg {
+    width: 17px;
+    height: 17px;
+}
+#settingsScreen .settings-logout:hover {
+    border-color: rgba(240, 160, 160, 0.55);
+    background: rgba(58, 14, 22, 0.65);
+}
+#settingsScreen .settings-logout.settings-logout--solo {
+    margin-top: 0;
+}
+html.settings-compact-ui {
+    font-size: 93%;
+}
+@media (max-width: 520px) {
+    #settingsScreen .settings-link-value {
+        max-width: 40%;
+    }
+}
+
 .menu-panel--main {
     position: relative;
     width: min(520px, 100% - 40px);
@@ -7109,6 +7387,165 @@ h1 {
     </div>
 </div>
 
+<div id="settingsScreen" class="ui-screen hidden" data-frame="true">
+    <div class="splash-inner">
+        <div class="menu-panel menu-panel--settings">
+            <div class="menu-topbar">
+                <div class="menu-profile" aria-label="Профиль">
+                    <span class="menu-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="rgba(10,4,8,0.65)" />
+                            <circle cx="20" cy="16" r="6" fill="currentColor" opacity="0.88" />
+                            <path d="M6 36 C 8 26, 32 26, 34 36 Z" fill="currentColor" opacity="0.88" />
+                        </svg>
+                    </span>
+                    <span class="menu-user-info">
+                        <span class="menu-user-name" data-settings-top-name>Игрок</span>
+                        <span class="menu-user-level">
+                            <svg class="menu-level-crown" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M1 5 L4 9 L8 4 L12 9 L15 5 L14 12 L2 12 Z" fill="currentColor" />
+                            </svg>
+                            <span>Уровень <strong data-settings-top-level>12</strong></span>
+                        </span>
+                        <span class="menu-level-bar" aria-hidden="true"><span data-settings-top-fill></span></span>
+                    </span>
+                </div>
+                <div class="menu-topbar-right">
+                    <div class="menu-balance">
+                        <span class="menu-balance-coin" aria-hidden="true">
+                            <svg viewBox="0 0 20 20">
+                                <defs>
+                                    <linearGradient id="settingsCoinGrad" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0" stop-color="#f7e3a5" />
+                                        <stop offset="0.55" stop-color="#d8b24c" />
+                                        <stop offset="1" stop-color="#8c6a2a" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="10" cy="10" r="9" fill="url(#settingsCoinGrad)" />
+                                <circle cx="10" cy="10" r="9" fill="none" stroke="#5a3a0f" stroke-width="0.8" />
+                                <circle cx="10" cy="10" r="6.2" fill="none" stroke="#8c6a2a" stroke-width="0.6" opacity="0.8" />
+                                <text x="10" y="13.4" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" font-weight="700" fill="#5a3a0f">A</text>
+                            </svg>
+                        </span>
+                        <span class="menu-balance-value" data-settings-top-balance>5 420</span>
+                        <button class="menu-balance-plus" type="button" data-settings-topup aria-label="Пополнить баланс">+</button>
+                    </div>
+                    <button class="menu-bell" type="button" data-settings-bell aria-label="Уведомления">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 C 9 3, 7 5, 7 8 L 7 12 L 5 16 L 19 16 L 17 12 L 17 8 C 17 5, 15 3, 12 3 Z" fill="currentColor" />
+                            <path d="M10 18 C 10 19.1 10.9 20 12 20 C 13.1 20 14 19.1 14 18 Z" fill="currentColor" />
+                        </svg>
+                        <span class="menu-bell-badge" data-settings-notifications>3</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="find-title">
+                <button class="find-back" type="button" data-settings-back aria-label="Назад">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 5 L 7.5 12 L 14.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <h2 class="find-title-text" data-settings-page-title>Настройки</h2>
+                <div class="find-title-flourish" aria-hidden="true">
+                    <span class="find-flourish-line"></span>
+                    <span class="find-flourish-diamond"></span>
+                    <span class="find-flourish-line"></span>
+                </div>
+            </div>
+
+            <div class="settings-scroll" data-settings-scroll>
+                <div class="settings-stack">
+                    <section class="settings-card">
+                        <h3 class="settings-card-title" data-settings-lbl-profile>Профиль</h3>
+                        <div class="settings-profile-strip">
+                            <span class="settings-profile-avatar" data-settings-avatar-letter aria-hidden="true">?</span>
+                            <div class="settings-profile-meta">
+                                <div class="settings-profile-name" data-settings-card-name>Игрок</div>
+                                <div class="settings-profile-level" data-settings-card-level-line>Уровень 12</div>
+                            </div>
+                        </div>
+                        <button type="button" class="settings-link-row settings-link-row--plain" data-settings-edit-profile>
+                            <span class="settings-link-label" data-settings-lbl-edit-profile>Редактировать профиль</span>
+                            <span class="settings-link-chevron" aria-hidden="true">›</span>
+                        </button>
+                    </section>
+
+                    <section class="settings-card settings-card--game">
+                        <h3 class="settings-card-title" data-settings-lbl-game>Игра</h3>
+                        <div class="settings-rows">
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-sound>Звук</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="gameSound" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 10v4M12 8v8M16 6v12"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-vibration>Вибрация</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="vibration" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="settings-card">
+                        <h3 class="settings-card-title" data-settings-lbl-notif>Уведомления</h3>
+                        <div class="settings-rows">
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="9.5" r="3.2"/><path d="M3 20c.6-4.5 14.4-4.5 15 0z"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-nf>Друзья</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="notifFriends" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h6M7 11h10"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-nt>Приглашения в стол</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="notifTableInvites" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 8l2 4 4 .5-3 3 .8 4.5L12 17l-3.8 2.5.8-4.5-3-3 4-.5z"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-nr>Награды</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="notifRewards" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 11a8 8 0 0 1 16 0"/><path d="M8 11h8M8 15h5"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-nu>Обновления</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="notifUpdates" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="settings-card">
+                        <h3 class="settings-card-title" data-settings-lbl-privacy>Приватность</h3>
+                        <div class="settings-rows">
+                            <label class="create-private-row settings-toggle-row">
+                                <span class="create-private-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3"/><path d="M4 20c1.8-4 6-6 8-6s6.2 2 8 6"/></svg></span>
+                                <span class="create-private-label" data-settings-lbl-online>Показывать онлайн-статус</span>
+                                <input type="checkbox" class="create-private-input" data-settings-checkbox="privacyOnlineStatus" />
+                                <span class="create-private-switch" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <div class="settings-card settings-card--logout-only">
+                        <button type="button" class="settings-logout settings-logout--solo" data-settings-logout>
+                            <span class="settings-logout-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 17l-1 1H5V6h4l1 1"/><path d="M14 8l5 4-5 4"/><path d="M19 12H9"/></svg>
+                            </span>
+                            <span data-settings-lbl-logout>Выйти</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="menu-toast" data-settings-toast aria-live="polite"></div>
+    </div>
+</div>
+
 <div class="game game--v2" id="gameRoot">
 
     <!-- ========== TOP BAR (как в Main Menu / Find Table) ========== -->
@@ -8769,6 +9206,7 @@ const SCREENS = Object.freeze({
     CREATE_TABLE: "createTable",
     GAME: "game",
     FRIENDS: "friends",
+    SETTINGS: "settings",
 });
 
 const AUTH_MODES = Object.freeze({
@@ -8841,6 +9279,48 @@ const UI_TEXT = Object.freeze({
         shareText:           "Присоединяйся ко мне в Azi — private card club.",
         tableTypePublic:     "Публичный",
         tableTypePrivate:    "Приватный",
+    },
+    settingsScreen: {
+        title:                     "Настройки",
+        sectionProfile:           "Профиль",
+        sectionGame:               "Игра",
+        sectionNotifications:      "Уведомления",
+        gameSound:                 "Звук",
+        vibration:                 "Вибрация",
+        hints:                     "Подсказки",
+        confirmReset:              "Подтверждение «Сброс»",
+        confirmLobbyExit:          "Подтверждение выхода в лобби",
+        animSpeed:                 "Скорость анимации",
+        animNormal:                "Обычная",
+        animFast:                  "Быстрая",
+        notifFriends:              "Друзья",
+        notifTable:                "Приглашения в стол",
+        notifRewards:              "Награды",
+        notifUpdates:              "Обновления",
+        notifFriendRequests:       "Заявки в друзья",
+        language:                  "Язык",
+        langRu:                    "Русский",
+        langEn:                    "English",
+        density:                   "Плотность интерфейса",
+        compactMode:               "Компактный режим",
+        densityComfort:           "Обычная",
+        densityCompact:           "Компактная",
+        tableEvents:               "События стола",
+        tableEventsShow:           "Показывать",
+        tableEventsCompact:        "Компактно",
+        tableEventsHide:           "Скрыть",
+        privacyOnline:             "Показывать онлайн-статус",
+        whoCanFriendRequest:       "Кто может отправлять заявки в друзья",
+        whoCanPrivateInvite:       "Кто может приглашать в приватный стол",
+        privacyEveryone:           "Все игроки",
+        privacyFoF:               "Друзья друзей",
+        privacyFriendsOnly:        "Только друзья",
+        privacyNobody:             "Никто",
+        supportFaq:                "FAQ",
+        supportRules:              "Правила",
+        supportAbout:              "О приложении",
+        supportContact:           "Поддержка",
+        btnLogout:                 "Выйти",
     },
     findTable: {
         title:            "Найти стол",
@@ -9001,6 +9481,26 @@ const appState = {
     friendsScreen: {
         tab: "friends", // friends | requests | recent
         search: "",
+    },
+    /* Клиентские настройки — mock + localStorage (`azi_app_settings_v1`). */
+    settings: {
+        gameSound: true,
+        vibration: true,
+        hints: true,
+        confirmDiscardReset: true,
+        confirmLobbyExit: true,
+        animSpeed: "normal",
+        notifFriends: true,
+        notifTableInvites: true,
+        notifRewards: true,
+        notifUpdates: true,
+        notifFriendRequests: true,
+        language: "ru",
+        compactUi: false,
+        tableEvents: "show",
+        privacyOnlineStatus: true,
+        privacyFriendRequests: "friends_only",
+        privacyPrivateInvite: "friends",
     },
     /* createTable — клиентское состояние экрана «Создать стол».
        При появлении бэкенда submit будет идти в POST /tables с этими значениями. */
@@ -9197,6 +9697,7 @@ const mainMenuScreenEl = document.getElementById("mainMenuScreen");
 const findTableScreenEl = document.getElementById("findTableScreen");
 const createTableScreenEl = document.getElementById("createTableScreen");
 const friendsScreenEl = document.getElementById("friendsScreen");
+const settingsScreenEl = document.getElementById("settingsScreen");
 const notificationsOverlayEl = document.getElementById("notificationsOverlay");
 
 const screenEls = {
@@ -9206,6 +9707,7 @@ const screenEls = {
     [SCREENS.FIND_TABLE]: findTableScreenEl,
     [SCREENS.CREATE_TABLE]: createTableScreenEl,
     [SCREENS.FRIENDS]: friendsScreenEl,
+    [SCREENS.SETTINGS]: settingsScreenEl,
 };
 
 /* ---------- Screen manager ---------- */
@@ -9235,6 +9737,7 @@ function setScreen(screen) {
     if (screen === SCREENS.FIND_TABLE) renderFindTable();
     if (screen === SCREENS.CREATE_TABLE) renderCreateTable();
     if (screen === SCREENS.FRIENDS) renderFriendsScreen();
+    if (screen === SCREENS.SETTINGS) renderSettingsScreen();
     if (screen === SCREENS.GAME) renderGameTopbar();
 }
 
@@ -9426,6 +9929,8 @@ function showMenuToast(text) {
         toastEl = createTableScreenEl.querySelector("[data-create-toast]");
     } else if (appState.currentScreen === SCREENS.FRIENDS && friendsScreenEl) {
         toastEl = friendsScreenEl.querySelector("[data-friends-toast]");
+    } else if (appState.currentScreen === SCREENS.SETTINGS && settingsScreenEl) {
+        toastEl = settingsScreenEl.querySelector("[data-settings-toast]");
     } else if (mainMenuScreenEl) {
         toastEl = mainMenuScreenEl.querySelector("[data-menu-toast]");
     }
@@ -10127,7 +10632,7 @@ const MENU_ACTION_HANDLERS = {
     share:    () => { handleMenuShare(); },
     rules:    () => showMenuToast(UI_TEXT.menu.toastSoon),
     faq:      () => showMenuToast(UI_TEXT.menu.toastSoon),
-    settings: () => openMenuSheet(),
+    settings: () => { setScreen(SCREENS.SETTINGS); },
 };
 
 function bindMainMenuHandlers() {
@@ -10157,8 +10662,7 @@ function bindMainMenuHandlers() {
 
     const profileBtn = mainMenuScreenEl.querySelector("[data-menu-profile]");
     if (profileBtn) profileBtn.addEventListener("click", () => {
-        // Профиль пока открывает тот же sheet (настройки/выход) — единая точка.
-        openMenuSheet();
+        setScreen(SCREENS.SETTINGS);
     });
 
     // Settings sheet: закрытие по backdrop и кнопке «Закрыть»
@@ -10460,6 +10964,149 @@ const ROW_PEOPLE_SVG = `
         <path d="M10 16 C 10.5 13.5, 17.5 13.5, 18 16 Z" fill="currentColor" opacity="0.82" />
     </svg>
 `;
+
+const APP_SETTINGS_STORAGE_KEY = "azi_app_settings_v1";
+
+function hydrateAppSettingsFromStorage() {
+    try {
+        const raw = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+        if (!raw) return;
+        const o = JSON.parse(raw);
+        if (o && typeof o === "object") Object.assign(appState.settings, o);
+    } catch (e) { /* ignore */ }
+}
+
+function persistAppSettings() {
+    try {
+        localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(appState.settings));
+    } catch (e2) { /* ignore */ }
+}
+
+function syncSettingsShellClasses() {
+    const s = appState.settings || {};
+    document.documentElement.classList.toggle("settings-compact-ui", !!s.compactUi);
+    document.documentElement.setAttribute("data-anim-speed", s.animSpeed === "fast" ? "fast" : "normal");
+}
+
+function renderSettingsScreen() {
+    if (!settingsScreenEl) return;
+    const T = UI_TEXT.settingsScreen;
+    const s = appState.settings;
+    const profile = appState.profile || {};
+    syncSettingsShellClasses();
+
+    const dispName = (appState.user && (appState.user.name || appState.user.email)) || UI_TEXT.menu.fallbackName;
+    const letter = String(dispName || "?").trim().charAt(0).toUpperCase() || "?";
+    const lvl = String(profile.level != null ? profile.level : 1);
+
+    const setTxt = (sel, text) => {
+        const el = settingsScreenEl.querySelector(sel);
+        if (el) el.textContent = text;
+    };
+
+    setTxt("[data-settings-page-title]", T.title);
+    setTxt("[data-settings-top-name]", dispName);
+    setTxt("[data-settings-top-level]", lvl);
+    const fill = settingsScreenEl.querySelector("[data-settings-top-fill]");
+    if (fill) {
+        const xp = Math.max(0, Math.min(1, Number(profile.xp) || 0));
+        fill.style.width = (xp * 100).toFixed(1) + "%";
+    }
+    setTxt("[data-settings-top-balance]", formatBalance(profile.balance));
+    const notifEl = settingsScreenEl.querySelector("[data-settings-notifications]");
+    if (notifEl) {
+        const count = Number(profile.notifications) || 0;
+        if (count > 0) {
+            notifEl.textContent = count > 99 ? "99+" : String(count);
+            notifEl.hidden = false;
+        } else {
+            notifEl.textContent = "";
+            notifEl.hidden = true;
+        }
+    }
+
+    setTxt("[data-settings-avatar-letter]", letter);
+    setTxt("[data-settings-card-name]", dispName);
+    setTxt("[data-settings-card-level-line]", `${UI_TEXT.menu.levelPrefix} ${lvl}`);
+
+    setTxt("[data-settings-lbl-profile]", T.sectionProfile);
+    setTxt("[data-settings-lbl-edit-profile]", T.editProfile);
+    setTxt("[data-settings-lbl-game]", T.sectionGame);
+    setTxt("[data-settings-lbl-sound]", T.gameSound);
+    setTxt("[data-settings-lbl-vibration]", T.vibration);
+    setTxt("[data-settings-lbl-notif]", T.sectionNotifications);
+    setTxt("[data-settings-lbl-privacy]", T.sectionPrivacy);
+    setTxt("[data-settings-lbl-nf]", T.notifFriends);
+    setTxt("[data-settings-lbl-nt]", T.notifTable);
+    setTxt("[data-settings-lbl-nr]", T.notifRewards);
+    setTxt("[data-settings-lbl-nu]", T.notifUpdates);
+    setTxt("[data-settings-lbl-online]", T.privacyOnline);
+    setTxt("[data-settings-lbl-logout]", T.btnLogout);
+
+    settingsScreenEl.querySelectorAll("[data-settings-checkbox]").forEach((inp) => {
+        const k = inp.getAttribute("data-settings-checkbox");
+        if (!k || !(k in s)) return;
+        inp.checked = !!s[k];
+    });
+
+    const scroll = settingsScreenEl.querySelector("[data-settings-scroll]");
+    if (scroll) scroll.scrollTop = 0;
+}
+
+function bindSettingsHandlers() {
+    if (!settingsScreenEl) return;
+
+    const backBtn = settingsScreenEl.querySelector("[data-settings-back]");
+    if (backBtn) backBtn.addEventListener("click", () => setScreen(SCREENS.MAIN_MENU));
+
+    const topupBtn = settingsScreenEl.querySelector("[data-settings-topup]");
+    if (topupBtn) topupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showMenuToast(UI_TEXT.menu.toastSoon);
+    });
+    const bellBtn = settingsScreenEl.querySelector("[data-settings-bell]");
+    if (bellBtn) bellBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleNotificationsPanel(bellBtn);
+    });
+
+    settingsScreenEl.addEventListener("change", (e) => {
+        const inp = e.target.closest("[data-settings-checkbox]");
+        if (!inp) return;
+        const k = inp.getAttribute("data-settings-checkbox");
+        if (!k || !(k in appState.settings)) return;
+        appState.settings[k] = !!inp.checked;
+        persistAppSettings();
+        syncSettingsShellClasses();
+    });
+
+    settingsScreenEl.addEventListener("click", (e) => {
+        if (e.target.closest("[data-settings-edit-profile]")) {
+            showMenuToast(UI_TEXT.menu.toastSoon);
+        }
+    });
+
+    const logoutBtn = settingsScreenEl.querySelector("[data-settings-logout]");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            logoutBtn.disabled = true;
+            try { await authService.logout(); }
+            finally { logoutBtn.disabled = false; }
+            appState.isAuthenticated = false;
+            appState.user = null;
+            appState.pendingAuthData = null;
+            setAuthMode(AUTH_MODES.LOGIN);
+            setScreen(SCREENS.AUTH);
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (appState.currentScreen !== SCREENS.SETTINGS) return;
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        setScreen(SCREENS.MAIN_MENU);
+    });
+}
 
 /* Берём только таблицы выбранного тира + опционально только свободные + текстовый фильтр. */
 function filterTables() {
@@ -14973,12 +15620,16 @@ async function bootstrap() {
     bindFindTableHandlers();
     bindCreateTableHandlers();
     bindFriendsHandlers();
+    bindSettingsHandlers();
     bindGameTopbarHandlers();
     bindGameEventsHandlers();
     bindGameLeaveHandlers();
     bindInviteHandlers();
     bindNotificationsPanelHandlers();
     updateAllNotificationBadgesInDom();
+
+    hydrateAppSettingsFromStorage();
+    syncSettingsShellClasses();
 
     try {
         const res = await authService.loadSession();
