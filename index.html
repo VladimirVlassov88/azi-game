@@ -1220,6 +1220,28 @@ h1 {
     box-shadow: 0 0 0 3px rgba(216, 178, 76, 0.14);
 }
 
+/* Chrome/Safari autofill: по умолчанию красит фон белым/жёлтым.
+   Перекрываем непрозрачной тёмно-бордовой заливкой через inset box-shadow
+   и держим светлый текст. transition 9999s гасит мгновенный белый «промельк». */
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus,
+.auth-field input:-webkit-autofill:active {
+    -webkit-text-fill-color: #f3e3b3;
+    caret-color: #f3e3b3;
+    -webkit-box-shadow: 0 0 0 1000px #16070c inset;
+    box-shadow: 0 0 0 1000px #16070c inset;
+    border: 1px solid rgba(201, 162, 58, 0.5);
+    border-radius: 7px;
+    transition: background-color 9999s ease-out 0s, color 9999s ease-out 0s;
+}
+
+.auth-field input:-webkit-autofill:focus {
+    border-color: #d8b24c;
+    -webkit-box-shadow: 0 0 0 1000px #16070c inset, 0 0 0 3px rgba(216, 178, 76, 0.14);
+    box-shadow: 0 0 0 1000px #16070c inset, 0 0 0 3px rgba(216, 178, 76, 0.14);
+}
+
 .auth-btn {
     display: block;
     width: 100%;
@@ -1645,32 +1667,6 @@ h1 {
 .game-invite-btn:active { transform: translateY(0); }
 .game-invite-btn.hidden { display: none !important; }
 
-/* ------------------ Баннер ожидания ------------------ */
-.game-waiting-banner {
-    position: absolute;
-    top: calc(64px + env(safe-area-inset-top, 0px));
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 18;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 16px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(46, 10, 18, 0.92) 0%, rgba(20, 4, 10, 0.94) 100%);
-    border: 1px solid rgba(216, 178, 76, 0.6);
-    color: #f4d68a;
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 500;
-    font-size: 13.5px;
-    letter-spacing: 0.04em;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 214, 130, 0.1);
-    white-space: nowrap;
-    pointer-events: none;
-}
-.game-waiting-banner.hidden { display: none !important; }
-.game-waiting-banner.pointer-allow { pointer-events: auto; }
-
 .game-ready-btn {
     padding: 8px 26px;
     border-radius: 999px;
@@ -1763,19 +1759,6 @@ h1 {
         box-shadow: none;
     }
 }
-.game-waiting-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffe8a6, #d8b24c 60%, #7b5a1a 100%);
-    box-shadow: 0 0 10px rgba(247, 200, 100, 0.65);
-    animation: gameWaitingPulse 1.6s ease-in-out infinite;
-}
-@keyframes gameWaitingPulse {
-    0%, 100% { opacity: 0.55; transform: scale(0.9); }
-    50%      { opacity: 1;    transform: scale(1.15); }
-}
-
 /* ------------------ Invite modal ------------------ */
 .invite-overlay {
     position: fixed;
@@ -2021,7 +2004,6 @@ h1 {
     .game-invite-btn { padding: 6px 12px; font-size: 12.5px; gap: 5px; }
     .game-invite-btn span { display: none; } /* оставляем только иконку на мобиле */
     .game-invite-btn svg { width: 16px; height: 16px; }
-    .game-waiting-banner { top: calc(56px + env(safe-area-inset-top, 0px)); font-size: 12.5px; padding: 6px 13px; }
     .invite-card { padding: 16px 14px 14px; }
     .invite-title { font-size: 20px; }
 }
@@ -2047,12 +2029,6 @@ h1 {
  * Журнал «События стола»: `#gameEventsShell` вне #gameRoot — не в flex-колонке игры;
  * панель и FAB — position:fixed к viewport, без reflow стола.
  */
-.game--v2 #gameWaitingBanner {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
 #gameEventsShell {
     pointer-events: none;
     position: fixed;
@@ -3319,7 +3295,7 @@ h1 {
 
 /* --- Не-скоупленные правила подсветки winner/loser ---
    Оригинальная карта живёт внутри .game--v2 .played-area, но во время полёта
-   клонируется в document.body (см. animateTableCardsToPile). Чтобы подсветка
+   клонируется в document.body (анимация переноса взятки в движке v2). Чтобы подсветка
    работала и на клонe, держим эти правила без скопа. */
 .fly-card .lead-card-live {
     animation: none;
@@ -4446,34 +4422,12 @@ h1 {
     background: rgba(10, 4, 8, 0.35);
     border-color: rgba(216, 178, 76, 0.2);
 }
-#settingsScreen .settings-link-row .settings-link-icon {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    color: #d8b24c;
-}
-#settingsScreen .settings-link-row .settings-link-icon svg {
-    width: 17px;
-    height: 17px;
-}
 #settingsScreen .settings-link-label {
     flex: 1 1 auto;
     min-width: 0;
     font-family: "Inter", system-ui, sans-serif;
     font-size: 12.5px;
     color: #e7c97a;
-}
-#settingsScreen .settings-link-value {
-    flex: 0 1 auto;
-    text-align: right;
-    font-family: "Inter", system-ui, sans-serif;
-    font-size: 12px;
-    color: rgba(216, 178, 76, 0.52);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 #settingsScreen .settings-link-chevron {
     flex-shrink: 0;
@@ -4549,11 +4503,6 @@ h1 {
 }
 html.settings-compact-ui {
     font-size: 93%;
-}
-@media (max-width: 520px) {
-    #settingsScreen .settings-link-value {
-        max-width: 40%;
-    }
 }
 
 .menu-panel--main {
@@ -5295,58 +5244,6 @@ html.settings-compact-ui {
     opacity: 1;
     transform: translate(-50%, 0);
 }
-
-/* ----- Settings sheet ----- */
-.menu-sheet {
-    position: absolute;
-    inset: 0;
-    z-index: 12;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    animation: splashFadeIn 0.25s ease-out both;
-}
-.menu-sheet.hidden { display: none; }
-
-.menu-sheet-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(10, 4, 8, 0.62);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    cursor: pointer;
-}
-
-.menu-sheet-panel {
-    position: relative;
-    width: min(380px, 100% - 32px);
-    padding: 22px;
-    background: linear-gradient(180deg, rgba(58, 13, 24, 0.98), rgba(36, 7, 15, 0.98));
-    border: 1px solid rgba(201, 162, 58, 0.6);
-    border-radius: 12px;
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), 0 0 20px rgba(216, 178, 76, 0.1);
-    text-align: center;
-    animation: splashRise 0.28s ease-out both;
-}
-
-.menu-sheet-title {
-    margin: 0 0 6px;
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    font-weight: 600;
-    font-size: 24px;
-    color: #f7e3a5;
-}
-
-.menu-sheet-hint {
-    margin: 0 0 14px;
-    font-family: "Cormorant Garamond", serif;
-    font-size: 14px;
-    color: rgba(216, 178, 76, 0.75);
-}
-
-.menu-sheet-panel .auth-btn { margin: 6px 0 0; }
 
 /* =========================================================
    FIND TABLE SCREEN
@@ -6807,19 +6704,9 @@ html.settings-compact-ui {
             </div>
         </div>
 
-        <!-- Toast / Sheet висят на уровне .splash-inner, чтобы их позиционирование
+        <!-- Toast висит на уровне .splash-inner, чтобы его позиционирование
              не зависело от transform-анимации панели. -->
         <div class="menu-toast" data-menu-toast aria-live="polite"></div>
-
-        <div class="menu-sheet hidden" data-menu-sheet>
-            <div class="menu-sheet-backdrop" data-menu-sheet-close aria-hidden="true"></div>
-            <div class="menu-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="menuSheetTitle">
-                <h3 class="menu-sheet-title" id="menuSheetTitle">Настройки</h3>
-                <p class="menu-sheet-hint">Скоро здесь появятся настройки аккаунта и игры.</p>
-                <button type="button" class="auth-btn auth-btn--primary" data-menu-logout>Выйти из аккаунта</button>
-                <button type="button" class="auth-btn auth-btn--ghost" data-menu-sheet-close>Закрыть</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -7615,7 +7502,6 @@ html.settings-compact-ui {
     <!-- ========== ARENA (стабильная высота столбца — см. .game-play-shell) ========== -->
     <div class="game-play-shell" id="gamePlayShell">
     <div class="game-arena" id="tableZone">
-        <div class="impact-layer" id="impactLayer"></div>
         <div class="party-victory-overlay hidden" id="partyVictoryOverlay" role="status" aria-live="polite">
             <div class="party-victory-overlay__panel">
                 <p class="party-victory-overlay__text" id="partyVictoryOverlayText"></p>
@@ -7654,7 +7540,7 @@ html.settings-compact-ui {
             </div>
 
             <!-- Колода: в новом дизайне нет "кирпичика колоды" в углу стола.
-                 Но JS-логика (getDeckTopRect, deckCount) обращается к deckArea/deckStack.
+                 Но движок v2 читает геометрию #deckStack для анимации раздачи.
                  Прячем визуально, но сохраняем в DOM для совместимости. -->
             <div class="deck-area logic-ghost" id="deckArea">
                 <div class="deck-stack" id="deckStack">
@@ -7662,7 +7548,6 @@ html.settings-compact-ui {
                     <div class="deck-layer layer-2 back"></div>
                     <div class="deck-layer layer-3 back"></div>
                 </div>
-                <div class="deck-count" id="deckCount">0</div>
             </div>
         </div>
 
@@ -7710,12 +7595,6 @@ html.settings-compact-ui {
         </div>
     </div>
 
-    </div>
-
-    <!-- Баннер ожидания (тексты перенесены в журнал «События стола»; блок не показывается). -->
-    <div class="game-waiting-banner hidden" id="gameWaitingBanner" role="status" aria-live="polite">
-        <span class="game-waiting-dot" aria-hidden="true"></span>
-        <span class="game-waiting-text" data-game-waiting-text>Ждём игроков…</span>
     </div>
 
     <!-- Панель «Готов» перенесена в .game-you-stack под местом игрока -->
@@ -7844,46 +7723,8 @@ html.settings-compact-ui {
 </div>
 
 <script>
-let initialPlayerCards = ["K♠", "10♦", "J♦"];
-let initialBotCards = ["A♥", "Q♦", "A♦"];
-let trumpCard = "7♦";
-
-let playerCards = [...initialPlayerCards];
-let botCards = [...initialBotCards];
-
-let playerScore = 0;
-let botScore = 0;
-let trickNumber = 1;
-let gameOver = false;
-let gamePhase = "auction";
-
-let auctionWinner = null;
-let currentBid = 0;
-let playerBid = null;
-let botBid = null;
-let auctionTurn = "player";
-let lastBidder = null;
-
-let currentLeader = null;
-let pendingBotLead = null;
-
-let baseStake = 1000;
-let pot = 0;
-let playerBank = 3000;
-let botBank = 3000;
-
-let playerTrickPileCards = 0;
-let botTrickPileCards = 0;
-
-let actionLock = false;
-let dealingInProgress = false;
 let selectedPlayersCount = 2;
-let gamePlayers = [];
 
-const fullDeckSize = 27;
-
-const playerCardEl = document.getElementById("playerCard");
-const botCardEl = document.getElementById("botCard");
 const gameStatusFeedEl = document.getElementById("gameStatusFeed");
 const GAME_STATUS_FEED_CAP = 40;
 
@@ -8088,26 +7929,10 @@ function bindGameEventsHandlers() {
     updateToggleLabel();
 }
 const trumpSlotEl = document.getElementById("trumpSlot");
-const deckCountEl = document.getElementById("deckCount");
 const deckStackEl = document.getElementById("deckStack");
-const playerHandEl = document.getElementById("playerHand");
-const botHandEl = document.getElementById("botHand");
-const impactLayerEl = document.getElementById("impactLayer");
-const tableZoneEl = document.getElementById("tableZone");
 const playedAreaEl = document.getElementById("playedArea");
 const gameRootEl = document.getElementById("gameRoot");
 const splashScreenEl = document.getElementById("splashScreen");
-
-const playerTrickPileEl = document.getElementById("playerTrickPile");
-const botTrickPileEl = document.getElementById("botTrickPile");
-const playerTrickCountEl = document.getElementById("playerTrickCount");
-const botTrickCountEl = document.getElementById("botTrickCount");
-
-const playerBankWrapEl = document.getElementById("playerBankWrap");
-const botBankWrapEl = document.getElementById("botBankWrap");
-const playerBankValueEl = document.getElementById("playerBankValue");
-const botBankValueEl = document.getElementById("botBankValue");
-const potAreaEl = document.getElementById("potArea");
 
 const auctionBarEl = document.getElementById("auctionBar");
 const auctionSummaryEl = document.getElementById("auctionSummary");
@@ -8125,9 +7950,6 @@ const power = {
 };
 const ranks = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const suits = ["♠", "♥", "♦"];
-
-let dealPlayerVisible = 0;
-let dealBotVisible = 0;
 
 bidSliderEl.addEventListener("input", () => {
     sliderValueEl.innerText = bidSliderEl.value;
@@ -8200,29 +8022,6 @@ function shuffleDeck(deck) {
     return shuffled;
 }
 
-function dealNewRoundCards() {
-    const shuffledDeck = shuffleDeck(buildDeck());
-    initialPlayerCards = shuffledDeck.slice(0, 3);
-    initialBotCards = shuffledDeck.slice(3, 6);
-    trumpCard = shuffledDeck[6];
-}
-
-function createPlayersForNewGame(playersCount) {
-    const players = [];
-
-    for (let i = 0; i < playersCount; i++) {
-        players.push({
-            id: i === 0 ? "player" : `bot-${i}`,
-            type: i === 0 ? "human" : "bot",
-            hand: [],
-            bank: 3000,
-            tricks: 0
-        });
-    }
-
-    return players;
-}
-
 function renderCardFace(card) {
     const rank = getRank(card);
     const suit = getSuit(card);
@@ -8239,949 +8038,6 @@ function renderCardFace(card) {
             <div>${suit}</div>
         </div>
     `;
-}
-
-function triggerTableShake() {
-    tableZoneEl.classList.remove("impact-shake");
-    void tableZoneEl.offsetWidth;
-    tableZoneEl.classList.add("impact-shake");
-}
-
-function spawnImpactAtElement(targetEl) {
-    const tableRect = tableZoneEl.getBoundingClientRect();
-    const rect = targetEl.getBoundingClientRect();
-
-    const ring = document.createElement("div");
-    ring.className = "impact-ring";
-    ring.style.left = (rect.left - tableRect.left + rect.width / 2) + "px";
-    ring.style.top = (rect.top - tableRect.top + rect.height / 2) + "px";
-
-    impactLayerEl.appendChild(ring);
-    triggerTableShake();
-
-    ring.addEventListener("animationend", () => ring.remove(), { once: true });
-}
-
-function markTrickResult(winnerSide) {
-    const playerPlayed = playerCardEl.querySelector(".table-played-card");
-    const botPlayed = botCardEl.querySelector(".table-played-card");
-
-    if (!playerPlayed || !botPlayed) return;
-
-    playerPlayed.classList.remove("winner-card", "loser-card");
-    botPlayed.classList.remove("winner-card", "loser-card");
-
-    if (winnerSide === "player") {
-        playerPlayed.classList.add("winner-card");
-        botPlayed.classList.add("loser-card");
-    } else {
-        botPlayed.classList.add("winner-card");
-        playerPlayed.classList.add("loser-card");
-    }
-}
-
-function addImpactToPlayedCard(side) {
-    const wrap = side === "player" ? playerCardEl : botCardEl;
-    const card = wrap.querySelector(".table-played-card");
-    if (!card) return;
-
-    card.classList.remove("impact-bounce");
-    void card.offsetWidth;
-    card.classList.add("impact-bounce");
-
-    spawnImpactAtElement(card);
-}
-
-function renderPlayerHand(countOverride = null) {
-    playerHandEl.innerHTML = "";
-    const cardsToShow = countOverride === null ? playerCards : initialPlayerCards.slice(0, countOverride);
-
-    cardsToShow.forEach(cardValue => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.dataset.cardValue = cardValue;
-        card.innerHTML = renderCardFace(cardValue);
-
-        if (gamePhase !== "play" || actionLock || countOverride !== null) {
-            card.classList.add("disabled");
-        } else {
-            card.addEventListener("click", () => {
-                handlePlayerClick(cardValue);
-            });
-        }
-
-        playerHandEl.appendChild(card);
-    });
-}
-
-function renderBotHand(countOverride = null) {
-    botHandEl.innerHTML = "";
-    const count = countOverride === null ? botCards.length : countOverride;
-
-    for (let i = 0; i < count; i++) {
-        const card = document.createElement("div");
-        card.className = "card back";
-        botHandEl.appendChild(card);
-    }
-}
-
-function renderTableCard(targetEl, cardValue) {
-    targetEl.innerHTML = `
-        <div class="card table-played-card" style="cursor:default; margin:0 auto;">
-            ${renderCardFace(cardValue)}
-        </div>
-    `;
-}
-
-function clearTable() {
-    playerCardEl.innerHTML = "";
-    botCardEl.innerHTML = "";
-}
-
-function compareCards(leadCard, responseCard) {
-    const trumpSuit = getSuit(trumpCard);
-    const leadSuit = getSuit(leadCard);
-    const responseSuit = getSuit(responseCard);
-    const leadRank = getRank(leadCard);
-    const responseRank = getRank(responseCard);
-
-    if (responseSuit === trumpSuit && leadSuit !== trumpSuit) return "response";
-    if (leadSuit === trumpSuit && responseSuit !== trumpSuit) return "lead";
-
-    if (leadSuit === responseSuit) {
-        return power[responseRank] > power[leadRank] ? "response" : "lead";
-    }
-
-    return "lead";
-}
-
-function isValidMove(firstCard, hand, chosenCard) {
-    const firstSuit = getSuit(firstCard);
-    const chosenSuit = getSuit(chosenCard);
-    const trumpSuit = getSuit(trumpCard);
-
-    const hasFirstSuit = hand.some(card => getSuit(card) === firstSuit);
-    const hasTrump = hand.some(card => getSuit(card) === trumpSuit);
-
-    if (hasFirstSuit) return chosenSuit === firstSuit;
-    if (hasTrump) return chosenSuit === trumpSuit;
-    return true;
-}
-
-function findValidBotResponse(firstCard) {
-    for (const card of botCards) {
-        if (isValidMove(firstCard, botCards, card)) {
-            return card;
-        }
-    }
-    return botCards[0];
-}
-
-function findBotLeadCard() {
-    return botCards[0];
-}
-
-function updateDeckCount() {
-    const usedCards = (initialPlayerCards.length - playerCards.length) + (initialBotCards.length - botCards.length) + 1;
-    const remaining = Math.max(0, fullDeckSize - usedCards);
-    deckCountEl.innerText = remaining;
-}
-
-function updateBanks() {
-    playerBankValueEl.innerText = formatCompactMoney(playerBank);
-    botBankValueEl.innerText = formatCompactMoney(botBank);
-}
-
-function updatePot() {
-    potValueEl.innerText = formatCompactMoney(pot);
-}
-
-function updateAuctionUI() {
-    const nextRaiseMin = Math.min(currentBid + 1, 3);
-    bidSliderEl.min = nextRaiseMin;
-    bidSliderEl.max = 3;
-
-    if (Number(bidSliderEl.value) < nextRaiseMin) {
-        bidSliderEl.value = nextRaiseMin;
-    }
-
-    sliderValueEl.innerText = bidSliderEl.value;
-
-    const canAct = gamePhase === "auction" && auctionTurn === "player" && !actionLock && !dealingInProgress;
-    passBtn.disabled = !canAct;
-    callBtn.disabled = !canAct || currentBid === 0;
-    raiseBtn.disabled = !canAct || currentBid >= 3;
-
-    const turnText = auctionTurn === "player" ? "Твой ход" : "Ход бота";
-    const playerText = playerBid === null ? "—" : playerBid;
-    const botText = botBid === null ? "—" : botBid;
-
-    auctionSummaryEl.innerText = `Ставка: ${currentBid} · Ты: ${playerText} · Бот: ${botText} · ${turnText}`;
-}
-
-function renderTrumpOnTable() {
-    trumpSlotEl.innerHTML = `
-        <div class="card trump-card-mini" style="cursor:default;">
-            ${renderCardFace(trumpCard)}
-        </div>
-    `;
-}
-
-function renderTrickPiles() {
-    playerTrickPileEl.innerHTML = "";
-    botTrickPileEl.innerHTML = "";
-
-    const playerLayers = Math.min(playerTrickPileCards, 3);
-    const botLayers = Math.min(botTrickPileCards, 3);
-
-    for (let i = 0; i < playerLayers; i++) {
-        const c = document.createElement("div");
-        c.className = "pile-mini-back";
-        c.style.left = (i * 2) + "px";
-        c.style.top = (playerLayers - i - 1) * 2 + "px";
-        c.style.transform = `rotate(${-4 + i * 2}deg)`;
-        playerTrickPileEl.appendChild(c);
-    }
-
-    for (let i = 0; i < botLayers; i++) {
-        const c = document.createElement("div");
-        c.className = "pile-mini-back";
-        c.style.left = (i * 2) + "px";
-        c.style.top = (botLayers - i - 1) * 2 + "px";
-        c.style.transform = `rotate(${4 - i * 2}deg)`;
-        botTrickPileEl.appendChild(c);
-    }
-
-    playerTrickCountEl.innerText = playerScore;
-    botTrickCountEl.innerText = botScore;
-}
-
-function finishGame() {
-    gameOver = true;
-    gamePhase = "gameover";
-
-    if (playerScore >= 2) {
-        setMessage("ПОБЕДА 🔥 Ты взял 2 взятки");
-    } else if (botScore >= 2) {
-        setMessage("ПОРАЖЕНИЕ ❌ Бот взял 2 взятки");
-    } else {
-        setMessage("Партия завершена");
-    }
-}
-
-function getPileTargetRect(winner) {
-    const pileEl = winner === "player" ? playerTrickPileEl : botTrickPileEl;
-    return pileEl.getBoundingClientRect();
-}
-
-function animateTableCardsToPile(winner, callback) {
-    /* Собираем сыгранные карты вместе с их "стороной", чтобы потом:
-       1) выигрышную отсортировать в конец (выше в z-стеке document.body),
-       2) дать ей более высокий inline z-index,
-       3) сохранить на клоне классы winner-card / loser-card — подсветка применяется
-          через селектор `.fly-card .winner-card` (определён в CSS ниже, без скопа,
-          чтобы работать вне `.game--v2 .played-area`, где живёт оригинал). */
-    const playedCards = [];
-    const playerPlayed = playerCardEl.querySelector(".card");
-    const botPlayed = botCardEl.querySelector(".card");
-
-    if (playerPlayed) playedCards.push({ el: playerPlayed, side: "player" });
-    if (botPlayed)    playedCards.push({ el: botPlayed,    side: "bot"    });
-
-    if (!playedCards.length) {
-        callback();
-        return;
-    }
-
-    // Проигравшая карта клонируется первой → оказывается ниже в document.body,
-    // победная — последней → выше, чтобы быть акцентной на протяжении всего полёта.
-    playedCards.sort((a, b) => (a.side === winner ? 1 : 0) - (b.side === winner ? 1 : 0));
-
-    const pileRect = getPileTargetRect(winner);
-    let finished = 0;
-
-    playedCards.forEach((item, index) => {
-        const card     = item.el;
-        const isWinner = item.side === winner;
-        const rect     = card.getBoundingClientRect();
-        const clone    = card.cloneNode(true);
-
-        clone.classList.add("fly-card");
-        if (isWinner) clone.classList.add("fly-card--winner");
-
-        clone.style.left   = rect.left + "px";
-        clone.style.top    = rect.top + "px";
-        clone.style.width  = rect.width + "px";
-        clone.style.height = rect.height + "px";
-        clone.style.zIndex = isWinner ? "10000" : "9998";
-        document.body.appendChild(clone);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                clone.style.left = (pileRect.left + 1 + index * 3) + "px";
-                clone.style.top  = (pileRect.top + 2 + index * 2) + "px";
-                clone.style.transform = `scale(0.42) rotate(${winner === "player" ? -10 + index * 8 : 10 - index * 8}deg)`;
-                clone.style.opacity = "0.45";
-            });
-        });
-
-        clone.addEventListener("transitionend", () => {
-            clone.remove();
-            finished++;
-            if (finished === playedCards.length) callback();
-        }, { once: true });
-    });
-}
-
-function animateMoneyToPot(fromEl, amount, callback) {
-    if (amount <= 0) {
-        callback();
-        return;
-    }
-
-    const fromRect = fromEl.getBoundingClientRect();
-    const potRect = potAreaEl.getBoundingClientRect();
-    let done = 0;
-    const chipsToFly = 3;
-
-    for (let i = 0; i < chipsToFly; i++) {
-        const chip = document.createElement("div");
-        chip.className = "fly-chip";
-        chip.style.left = (fromRect.left + fromRect.width / 2 - 9) + "px";
-        chip.style.top = (fromRect.top + 8 + i * 2) + "px";
-        document.body.appendChild(chip);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                chip.style.left = (potRect.left + potRect.width / 2 - 9 + (i - 1) * 8) + "px";
-                chip.style.top = (potRect.top + 24 + i * 2) + "px";
-                chip.style.transform = "scale(0.92)";
-                chip.style.opacity = "0.9";
-            });
-        });
-
-        chip.addEventListener("transitionend", () => {
-            chip.remove();
-            done++;
-            if (done === chipsToFly) callback();
-        }, { once: true });
-    }
-}
-
-function addToPotFromPlayer(amount, callback) {
-    if (playerBank < amount) amount = playerBank;
-    playerBank -= amount;
-    updateBanks();
-
-    animateMoneyToPot(playerBankWrapEl, amount, () => {
-        pot += amount;
-        updatePot();
-        callback();
-    });
-}
-
-function addToPotFromBot(amount, callback) {
-    if (botBank < amount) amount = botBank;
-    botBank -= amount;
-    updateBanks();
-
-    animateMoneyToPot(botBankWrapEl, amount, () => {
-        pot += amount;
-        updatePot();
-        callback();
-    });
-}
-
-function afterTrick(winner) {
-    if (winner === "player") {
-        playerScore++;
-        playerTrickPileCards++;
-        currentLeader = "player";
-        setMessage("Ты забрал взятку");
-    } else {
-        botScore++;
-        botTrickPileCards++;
-        currentLeader = "bot";
-        setMessage("Соперник забрал взятку");
-    }
-
-    renderTrickPiles();
-    markTrickResult(winner);
-
-    setTimeout(() => {
-        animateTableCardsToPile(winner, () => {
-            clearTable();
-
-            if (playerScore >= 2 || botScore >= 2 || trickNumber >= 3) {
-                finishGame();
-                return;
-            }
-
-            trickNumber++;
-            startNextTrick();
-        });
-    }, 420);
-}
-
-function getDeckTopRect() {
-    if (deckStackEl && document.querySelector(".game--v2 .game-center") && typeof engineGetDealSourceRect === "function") {
-        try {
-            const logical = engineGetDealSourceRect();
-            if (logical && logical.width > 3 && logical.height > 3) return logical;
-        } catch (_) {}
-    }
-    const rect = deckStackEl.getBoundingClientRect();
-    return {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-    };
-}
-
-function getHandCardTargetRect(handEl, index, total) {
-    const handRect = handEl.getBoundingClientRect();
-    const cardW = Math.min(76, handRect.width / 4.2);
-    const cardH = cardW * 1.42;
-    const spacing = Math.min(cardW * 0.9, 82);
-    const totalWidth = spacing * (total - 1) + cardW;
-    const startLeft = handRect.left + (handRect.width - totalWidth) / 2;
-
-    return {
-        left: startLeft + index * spacing,
-        top: handRect.top + Math.max(0, (handRect.height - cardH) / 2),
-        width: cardW,
-        height: cardH
-    };
-}
-
-function animateDealSequence(callback) {
-    dealingInProgress = true;
-    actionLock = true;
-    updateAuctionUI();
-
-    playerHandEl.innerHTML = "";
-    botHandEl.innerHTML = "";
-    dealPlayerVisible = 0;
-    dealBotVisible = 0;
-
-    const sequence = [
-        { owner: "bot", index: 0 },
-        { owner: "player", index: 0 },
-        { owner: "bot", index: 1 },
-        { owner: "player", index: 1 },
-        { owner: "bot", index: 2 },
-        { owner: "player", index: 2 }
-    ];
-
-    let i = 0;
-
-    function dealNext() {
-        if (i >= sequence.length) {
-            renderBotHand();
-            renderPlayerHand();
-            dealingInProgress = false;
-            actionLock = false;
-            updateAuctionUI();
-            callback();
-            return;
-        }
-
-        const item = sequence[i];
-        const from = getDeckTopRect();
-        const targetHand = item.owner === "bot" ? botHandEl : playerHandEl;
-        const visibleCount = item.owner === "bot" ? dealBotVisible + 1 : dealPlayerVisible + 1;
-        const to = getHandCardTargetRect(targetHand, item.index, visibleCount);
-
-        const clone = document.createElement("div");
-        clone.className = "card back fly-card";
-        clone.style.left = from.left + "px";
-        clone.style.top = from.top + "px";
-        clone.style.width = from.width + "px";
-        clone.style.height = from.height + "px";
-        document.body.appendChild(clone);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                clone.style.left = to.left + "px";
-                clone.style.top = to.top + "px";
-                clone.style.width = to.width + "px";
-                clone.style.height = to.height + "px";
-            });
-        });
-
-        clone.addEventListener("transitionend", () => {
-            clone.remove();
-
-            if (item.owner === "player") {
-                dealPlayerVisible++;
-                renderPlayerHand(dealPlayerVisible);
-            } else {
-                dealBotVisible++;
-                renderBotHand(dealBotVisible);
-            }
-
-            i++;
-            setTimeout(dealNext, 80);
-        }, { once: true });
-    }
-
-    dealNext();
-}
-
-function animatePlayerPlayToTable(cardValue, callback) {
-    const sourceEl = playerHandEl.querySelector(`[data-card-value="${CSS.escape(cardValue)}"]`);
-    if (!sourceEl) {
-        callback();
-        return;
-    }
-
-    const from = sourceEl.getBoundingClientRect();
-    const to = playerCardEl.getBoundingClientRect();
-
-    const clone = sourceEl.cloneNode(true);
-    clone.classList.add("fly-card");
-    clone.style.left = from.left + "px";
-    clone.style.top = from.top + "px";
-    clone.style.width = from.width + "px";
-    clone.style.height = from.height + "px";
-    document.body.appendChild(clone);
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            clone.style.left = to.left + "px";
-            clone.style.top = to.top + "px";
-        });
-    });
-
-    clone.addEventListener("transitionend", () => {
-        clone.remove();
-        callback();
-    }, { once: true });
-}
-
-function animateBotPlayToTable(botIndex, callback) {
-    const botEls = botHandEl.querySelectorAll(".card");
-    const sourceEl = botEls[botIndex];
-    if (!sourceEl) {
-        callback();
-        return;
-    }
-
-    const from = sourceEl.getBoundingClientRect();
-    const to = botCardEl.getBoundingClientRect();
-
-    const clone = document.createElement("div");
-    clone.className = "card back fly-card";
-    clone.style.left = from.left + "px";
-    clone.style.top = from.top + "px";
-    clone.style.width = from.width + "px";
-    clone.style.height = from.height + "px";
-    document.body.appendChild(clone);
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            clone.style.left = to.left + "px";
-            clone.style.top = to.top + "px";
-        });
-    });
-
-    clone.addEventListener("transitionend", () => {
-        clone.remove();
-        callback();
-    }, { once: true });
-}
-
-function startNextTrick() {
-    if (gameOver || gamePhase !== "play") return;
-
-    renderPlayerHand();
-    renderBotHand();
-    updateDeckCount();
-
-    if (currentLeader === "player") {
-        pendingBotLead = null;
-        actionLock = false;
-        setMessage("Твой ход");
-    } else {
-        actionLock = true;
-        const botLead = findBotLeadCard();
-        const botIndex = botCards.indexOf(botLead);
-
-        setMessage("Соперник ходит...");
-        animateBotPlayToTable(botIndex, () => {
-            botCards.splice(botIndex, 1);
-            renderBotHand();
-            updateDeckCount();
-
-            pendingBotLead = botLead;
-            renderTableCard(botCardEl, botLead);
-            addImpactToPlayedCard("bot");
-            playerCardEl.innerHTML = "";
-
-            actionLock = false;
-            setMessage("Соперник ходит. Ответь картой");
-            renderPlayerHand();
-        });
-    }
-}
-
-function handlePlayerClick(playerCard) {
-    if (gameOver || gamePhase !== "play" || actionLock) return;
-
-    if (currentLeader === "player" && pendingBotLead === null) {
-        actionLock = true;
-
-        animatePlayerPlayToTable(playerCard, () => {
-            const playerIndex = playerCards.indexOf(playerCard);
-            playerCards.splice(playerIndex, 1);
-            renderPlayerHand();
-            updateDeckCount();
-            renderTableCard(playerCardEl, playerCard);
-            addImpactToPlayedCard("player");
-
-            const botResponse = findValidBotResponse(playerCard);
-            const botIndex = botCards.indexOf(botResponse);
-
-            setMessage("Соперник отвечает...");
-            animateBotPlayToTable(botIndex, () => {
-                botCards.splice(botIndex, 1);
-                renderBotHand();
-                updateDeckCount();
-                renderTableCard(botCardEl, botResponse);
-                addImpactToPlayedCard("bot");
-
-                const trickWinner = compareCards(playerCard, botResponse);
-                actionLock = false;
-                setTimeout(() => {
-                    trickWinner === "lead" ? afterTrick("player") : afterTrick("bot");
-                }, 180);
-            });
-        });
-
-        return;
-    }
-
-    if (currentLeader === "bot" && pendingBotLead !== null) {
-        const valid = isValidMove(pendingBotLead, playerCards, playerCard);
-
-        if (!valid) {
-            setMessage("Нужно ходить в масть или козырем");
-            return;
-        }
-
-        actionLock = true;
-
-        animatePlayerPlayToTable(playerCard, () => {
-            const playerIndex = playerCards.indexOf(playerCard);
-            playerCards.splice(playerIndex, 1);
-            renderPlayerHand();
-            updateDeckCount();
-            renderTableCard(playerCardEl, playerCard);
-            addImpactToPlayedCard("player");
-
-            const trickWinner = compareCards(pendingBotLead, playerCard);
-            pendingBotLead = null;
-            actionLock = false;
-
-            setTimeout(() => {
-                trickWinner === "lead" ? afterTrick("bot") : afterTrick("player");
-            }, 180);
-        });
-    }
-}
-
-function startPlayPhase() {
-    gamePhase = "play";
-    auctionBarEl.classList.add("hidden");
-
-    currentLeader = auctionWinner;
-    pendingBotLead = null;
-
-    setMessage("Торги завершены. Первый ход: " + (auctionWinner === "player" ? "ты" : "бот"));
-    renderPlayerHand();
-    renderBotHand();
-    updateDeckCount();
-
-    setTimeout(() => {
-        startNextTrick();
-    }, 700);
-}
-
-function resolveAuctionAfterPass(passedBy) {
-    if (actionLock) return;
-
-    if (passedBy === "player") {
-        animatePlayerFoldToCenter(() => {
-            auctionWinner = botBid !== null ? "bot" : (lastBidder || "bot");
-            setMessage("Ты спасовал. Первый ход за ботом");
-            updateAuctionUI();
-
-            setTimeout(() => {
-                startPlayPhase();
-            }, 500);
-        });
-        return;
-    }
-
-    auctionWinner = playerBid !== null ? "player" : (lastBidder || "player");
-    setMessage("Бот спасовал. Первый ход за тобой");
-    updateAuctionUI();
-
-    setTimeout(() => {
-        startPlayPhase();
-    }, 500);
-}
-
-function resolveAuctionByCall(caller) {
-    if (currentBid === 0) return;
-
-    if (caller === "player") {
-        playerBid = currentBid;
-        auctionWinner = lastBidder || "player";
-    } else {
-        botBid = currentBid;
-        auctionWinner = lastBidder || "bot";
-    }
-
-    setMessage("Торги завершены.");
-    updateAuctionUI();
-
-    setTimeout(() => {
-        startPlayPhase();
-    }, 500);
-}
-
-function botAuctionDecision() {
-    if (gamePhase !== "auction" || auctionTurn !== "bot" || actionLock) return;
-
-    setMessage("Бот думает над ставкой...");
-
-    setTimeout(() => {
-        const maxBotBid = evaluateBotAuctionStrength();
-
-        if (currentBid === 0) {
-            const openingBid = maxBotBid >= 2 ? 2 : 1;
-            currentBid = openingBid;
-            botBid = openingBid;
-            lastBidder = "bot";
-            auctionTurn = "player";
-
-            const targetPot = currentBid * baseStake;
-            const addAmount = Math.max(0, targetPot - pot);
-
-            addToPotFromBot(addAmount, () => {
-                setMessage("Бот открыл торги со ставки " + openingBid);
-                updateAuctionUI();
-            });
-            return;
-        }
-
-        if (currentBid < maxBotBid) {
-            const newBid = currentBid + 1;
-            currentBid = newBid;
-            botBid = newBid;
-            lastBidder = "bot";
-            auctionTurn = "player";
-
-            const targetPot = currentBid * baseStake;
-            const addAmount = Math.max(0, targetPot - pot);
-
-            addToPotFromBot(addAmount, () => {
-                setMessage("Бот поднял ставку до " + newBid);
-                updateAuctionUI();
-            });
-            return;
-        }
-
-        if (currentBid <= maxBotBid) {
-            resolveAuctionByCall("bot");
-            return;
-        }
-
-        resolveAuctionAfterPass("bot");
-    }, 650);
-}
-
-function evaluateBotAuctionStrength() {
-    let score = 0;
-    const trumpSuit = getSuit(trumpCard);
-
-    for (const card of initialBotCards) {
-        const rank = getRank(card);
-        const suit = getSuit(card);
-
-        score += power[rank];
-        if (suit === trumpSuit) score += 2;
-    }
-
-    if (score >= 24) return 3;
-    if (score >= 18) return 2;
-    return 1;
-}
-
-function onPlayerPass() {
-    if (gamePhase !== "auction" || auctionTurn !== "player" || actionLock || dealingInProgress) return;
-    resolveAuctionAfterPass("player");
-}
-
-function onPlayerCall() {
-    if (gamePhase !== "auction" || auctionTurn !== "player" || currentBid === 0 || actionLock || dealingInProgress) return;
-    playerBid = currentBid;
-    resolveAuctionByCall("player");
-}
-
-function onPlayerRaise() {
-    if (gamePhase !== "auction" || auctionTurn !== "player" || actionLock || dealingInProgress) return;
-
-    const raiseTo = Number(bidSliderEl.value);
-
-    if (raiseTo <= currentBid) {
-        setMessage("Нужно поднять выше текущей ставки");
-        return;
-    }
-
-    currentBid = raiseTo;
-    playerBid = raiseTo;
-    lastBidder = "player";
-    auctionTurn = "bot";
-
-    const targetPot = currentBid * baseStake;
-    const addAmount = Math.max(0, targetPot - pot);
-
-    addToPotFromPlayer(addAmount, () => {
-        setMessage("Ты поднял ставку до " + raiseTo);
-        updateAuctionUI();
-        botAuctionDecision();
-    });
-}
-
-function beginAuctionAfterDeal() {
-    gamePhase = "auction";
-    auctionBarEl.classList.remove("hidden");
-
-    currentBid = 0;
-    playerBid = null;
-    botBid = null;
-    auctionTurn = "player";
-    lastBidder = null;
-    auctionWinner = null;
-
-    pot = 0;
-    updatePot();
-
-    clearTable();
-    renderPlayerHand();
-    renderBotHand();
-    updateDeckCount();
-    updateAuctionUI();
-
-    setMessage("Начинаются торги. Выбери действие.");
-}
-
-function resetBanks() {
-    playerBank = 3000;
-    botBank = 3000;
-    updateBanks();
-}
-
-function resetGame() {
-    dealNewRoundCards();
-    gamePlayers = createPlayersForNewGame(selectedPlayersCount);
-
-    playerCards = [...initialPlayerCards];
-    botCards = [...initialBotCards];
-    if (gamePlayers[0]) gamePlayers[0].hand = [...playerCards];
-    if (gamePlayers[1]) gamePlayers[1].hand = [...botCards];
-
-    playerScore = 0;
-    botScore = 0;
-    trickNumber = 1;
-    gameOver = false;
-
-    currentLeader = null;
-    pendingBotLead = null;
-
-    playerTrickPileCards = 0;
-    botTrickPileCards = 0;
-
-    actionLock = true;
-    dealingInProgress = false;
-
-    resetBanks();
-    pot = 0;
-    updatePot();
-    renderTrumpOnTable();
-    renderTrickPiles();
-    updateDeckCount();
-    clearTable();
-    impactLayerEl.innerHTML = "";
-
-    playerHandEl.innerHTML = "";
-    botHandEl.innerHTML = "";
-    auctionBarEl.classList.add("hidden");
-    setMessage("Раздача карт...");
-
-    animateDealSequence(() => {
-        beginAuctionAfterDeal();
-    });
-}
-
-function animatePlayerFoldToCenter(callback) {
-    actionLock = true;
-    const cards = Array.from(playerHandEl.querySelectorAll(".card"));
-    let targetRect = playedAreaEl && playedAreaEl.getBoundingClientRect
-        ? playedAreaEl.getBoundingClientRect()
-        : null;
-    if (!targetRect || targetRect.width < 4 || targetRect.height < 4) {
-        targetRect =
-            typeof tableZoneEl !== "undefined" && tableZoneEl && tableZoneEl.getBoundingClientRect
-                ? tableZoneEl.getBoundingClientRect()
-                : { left: 0, top: 120, width: 320, height: 96 };
-    }
-
-    if (!cards.length) {
-        playerCards = [];
-        renderPlayerHand();
-        actionLock = false;
-        callback();
-        return;
-    }
-
-    let finished = 0;
-
-    cards.forEach((card, index) => {
-        const rect = card.getBoundingClientRect();
-        const clone = card.cloneNode(true);
-
-        clone.classList.add("fly-card");
-        clone.style.left = rect.left + "px";
-        clone.style.top = rect.top + "px";
-        clone.style.width = rect.width + "px";
-        clone.style.height = rect.height + "px";
-
-        document.body.appendChild(clone);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                clone.style.left = (targetRect.left + targetRect.width / 2 - rect.width / 2 + (index - 1) * 12) + "px";
-                clone.style.top = (targetRect.top - 20) + "px";
-                clone.style.transform = "scale(0.82) rotate(" + ((index - 1) * 10) + "deg)";
-                clone.style.opacity = "0.15";
-            });
-        });
-
-        clone.addEventListener("transitionend", () => {
-            clone.remove();
-            finished++;
-            if (finished === cards.length) {
-                playerCards = [];
-                renderPlayerHand();
-                actionLock = false;
-                callback();
-            }
-        }, { once: true });
-    });
 }
 
 function applyPlayersCountSelection() {
@@ -9268,10 +8124,6 @@ const UI_TEXT = Object.freeze({
         btnAboutGame:        "Об игре",
         btnSettings:         "Настройки",
         btnLogout:           "Выйти",
-        logoutFull:          "Выйти из аккаунта",
-        sheetTitle:          "Настройки",
-        sheetHint:           "Скоро здесь появятся настройки аккаунта и игры.",
-        sheetClose:          "Закрыть",
         toastSoon:           "Скоро",
         toastLinkCopied:     "Ссылка скопирована",
         toastNoNotifications: "Нет новых уведомлений",
@@ -9283,43 +8135,17 @@ const UI_TEXT = Object.freeze({
     settingsScreen: {
         title:                     "Настройки",
         sectionProfile:           "Профиль",
+        editProfile:               "Редактировать профиль",
         sectionGame:               "Игра",
-        sectionNotifications:      "Уведомления",
         gameSound:                 "Звук",
         vibration:                 "Вибрация",
-        hints:                     "Подсказки",
-        confirmReset:              "Подтверждение «Сброс»",
-        confirmLobbyExit:          "Подтверждение выхода в лобби",
-        animSpeed:                 "Скорость анимации",
-        animNormal:                "Обычная",
-        animFast:                  "Быстрая",
+        sectionNotifications:      "Уведомления",
         notifFriends:              "Друзья",
         notifTable:                "Приглашения в стол",
         notifRewards:              "Награды",
         notifUpdates:              "Обновления",
-        notifFriendRequests:       "Заявки в друзья",
-        language:                  "Язык",
-        langRu:                    "Русский",
-        langEn:                    "English",
-        density:                   "Плотность интерфейса",
-        compactMode:               "Компактный режим",
-        densityComfort:           "Обычная",
-        densityCompact:           "Компактная",
-        tableEvents:               "События стола",
-        tableEventsShow:           "Показывать",
-        tableEventsCompact:        "Компактно",
-        tableEventsHide:           "Скрыть",
+        sectionPrivacy:            "Приватность",
         privacyOnline:             "Показывать онлайн-статус",
-        whoCanFriendRequest:       "Кто может отправлять заявки в друзья",
-        whoCanPrivateInvite:       "Кто может приглашать в приватный стол",
-        privacyEveryone:           "Все игроки",
-        privacyFoF:               "Друзья друзей",
-        privacyFriendsOnly:        "Только друзья",
-        privacyNobody:             "Никто",
-        supportFaq:                "FAQ",
-        supportRules:              "Правила",
-        supportAbout:              "О приложении",
-        supportContact:           "Поддержка",
         btnLogout:                 "Выйти",
     },
     findTable: {
@@ -9486,21 +8312,13 @@ const appState = {
     settings: {
         gameSound: true,
         vibration: true,
-        hints: true,
-        confirmDiscardReset: true,
-        confirmLobbyExit: true,
         animSpeed: "normal",
         notifFriends: true,
         notifTableInvites: true,
         notifRewards: true,
         notifUpdates: true,
-        notifFriendRequests: true,
-        language: "ru",
         compactUi: false,
-        tableEvents: "show",
         privacyOnlineStatus: true,
-        privacyFriendRequests: "friends_only",
-        privacyPrivateInvite: "friends",
     },
     /* createTable — клиентское состояние экрана «Создать стол».
        При появлении бэкенда submit будет идти в POST /tables с этими значениями. */
@@ -9764,13 +8582,6 @@ function setAuthMode(mode) {
     }
 }
 
-/* Backward-compat: кое-где в игровом коде ещё может вызываться setUiLayerState. */
-function setUiLayerState(nextState) {
-    if (nextState === "splash") setScreen(SCREENS.SPLASH);
-    else if (nextState === "game") setScreen(SCREENS.GAME);
-    else setScreen(nextState);
-}
-
 /* ---------- Декоративная рамка для всех .ui-screen[data-frame] ---------- */
 function injectSplashFrames() {
     const CORNER_SVG = `
@@ -9944,15 +8755,6 @@ function showMenuToast(text) {
     }, 2000);
 }
 
-function openMenuSheet() {
-    const sheetEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-sheet]");
-    if (sheetEl) sheetEl.classList.remove("hidden");
-}
-function closeMenuSheet() {
-    const sheetEl = mainMenuScreenEl && mainMenuScreenEl.querySelector("[data-menu-sheet]");
-    if (sheetEl) sheetEl.classList.add("hidden");
-}
-
 async function handleMenuShare() {
     const shareData = {
         title: UI_TEXT.menu.shareTitle,
@@ -10117,19 +8919,6 @@ function normalizeNotificationRow(partial) {
  * Сервер позже может прислать пачку; слить можно так:
  * merged.map(r => normalizeNotificationRow({ ...serverRow, timestamp: Date.parse(...) }))
  */
-function applyNotificationPatchesFromApi(rows) {
-    if (!Array.isArray(rows)) return;
-    const store = getNotificationsStore();
-    rows.forEach((raw) => {
-        const nr = normalizeNotificationRow(raw);
-        const ix = store.items.findIndex((x) =>
-            String(x.serverEventId || x.id) === String(nr.serverEventId || nr.id));
-        if (ix === -1) store.items.unshift(nr);
-        else store.items[ix] = Object.assign(store.items[ix], nr);
-    });
-    notifyNotificationsDatasetChanged();
-}
-
 function pushAppNotification(input) {
     const store = getNotificationsStore();
     const dedupeKey = input && input.dedupeKey != null ? String(input.dedupeKey) : "";
@@ -10664,38 +9453,6 @@ function bindMainMenuHandlers() {
     if (profileBtn) profileBtn.addEventListener("click", () => {
         setScreen(SCREENS.SETTINGS);
     });
-
-    // Settings sheet: закрытие по backdrop и кнопке «Закрыть»
-    mainMenuScreenEl.querySelectorAll("[data-menu-sheet-close]").forEach((el) => {
-        el.addEventListener("click", closeMenuSheet);
-    });
-
-    // Logout (лежит внутри sheet)
-    const logoutBtn = mainMenuScreenEl.querySelector("[data-menu-logout]");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-            logoutBtn.disabled = true;
-            try { await authService.logout(); }
-            finally { logoutBtn.disabled = false; }
-            appState.isAuthenticated = false;
-            appState.user = null;
-            appState.pendingAuthData = null;
-            closeMenuSheet();
-            setAuthMode(AUTH_MODES.LOGIN);
-            setScreen(SCREENS.AUTH);
-        });
-    }
-
-    // Esc закрывает sheet, если он открыт и мы в меню
-    document.addEventListener("keydown", (e) => {
-        if (appState.currentScreen !== SCREENS.MAIN_MENU) return;
-        if (e.key !== "Escape") return;
-        const sheetEl = mainMenuScreenEl.querySelector("[data-menu-sheet]");
-        if (sheetEl && !sheetEl.classList.contains("hidden")) {
-            e.preventDefault();
-            closeMenuSheet();
-        }
-    });
 }
 
 function formatBalance(value) {
@@ -10742,9 +9499,6 @@ function renderMainMenu() {
             notifEl.hidden = true;
         }
     }
-
-    // Закрыть sheet при каждом входе в меню (на случай если остался открыт)
-    closeMenuSheet();
 
     if (typeof notificationsPostMenuSignalsOnce === "function") {
         notificationsPostMenuSignalsOnce();
@@ -10807,9 +9561,6 @@ function renderGameTopbar() {
 
     const inviteBtn = rootEl.querySelector("[data-game-invite]");
     if (inviteBtn) inviteBtn.classList.toggle("hidden", !(isTableWaiting && isOwner));
-
-    const banner = document.getElementById("gameWaitingBanner");
-    if (banner) banner.classList.add("hidden");
 
     const showWaitingBannerScenario = isTableWaiting || isPlayerWaiting;
     const waitingLabel = deriveGameWaitingBannerText(room, human, engine);
@@ -11319,16 +10070,10 @@ function bindFindTableHandlers() {
    ====================================================================== */
 
 const CREATE_STAKE_STEPS  = [100, 1000, 10000, 100000, 1000000, 10000000];
-const CREATE_STAKE_LABELS = ["100", "1K", "10K", "100K", "1M", "10M"];
 
 function getCreateStake() {
     const step = Math.max(0, Math.min(CREATE_STAKE_STEPS.length - 1, Number(appState.createTable.stakeStep) || 0));
     return CREATE_STAKE_STEPS[step];
-}
-function formatStakeShort(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(n % 1000000 ? 1 : 0).replace(".0", "") + "M";
-    if (n >= 1000)    return (n / 1000).toFixed(n % 1000 ? 1 : 0).replace(".0", "") + "K";
-    return String(n);
 }
 
 /* Определить tier по ставке — чтобы созданный стол правильно попал во вкладку
@@ -12906,9 +11651,9 @@ function goAfterSplash() {
      старая игровая логика была жёстко написана под "player vs bot":
      playerCards/botCards, playerScore/botScore, auctionTurn === "player",
      compareCards(lead, response) — всё бинарное. Растянуть её до N
-     игроков = аккуратно переписать петлю. Утилиты (getRank, getSuit,
-     buildDeck, shuffleDeck, isValidMove, renderCardFace, formatCompactMoney,
-     animateMoneyToPot, triggerTableShake) остаются — на них движок опирается.
+     игроков = аккуратно переписать петлю. Общие утилиты (getRank, getSuit,
+     buildDeck, shuffleDeck, renderCardFace, formatCompactMoney) остаются —
+     на них движок опирается.
 
    Ниже:
      1) state движка (engine.*)
@@ -12997,46 +11742,9 @@ function tableIsPreGameLobby() {
     return participants.every((p) => p.status === "seated");
 }
 
-function tableGetPhase() {
-    if (!engine.currentTable) return "lobby";
-    const p = engine.phase;
-    if (p === "waiting")  return "waitingPlayers";
-    if (p === "dealing")  return "bidding";
-    if (p === "auction")  return "bidding";
-    if (p === "play")     return "playing";
-    if (p === "gameover") return "roundFinished";
-    return "lobby";
-}
-
 function tableHasActiveRound() {
     const p = engine.phase;
     return p === "dealing" || p === "auction" || p === "play";
-}
-
-function tableActivePlayers() {
-    return engine.players.filter((p) => p.status === "active");
-}
-
-function tableWaitingPlayers() {
-    return engine.players.filter((p) => p.status === "waiting");
-}
-
-function tableSeatedOnlyPlayers() {
-    return engine.players.filter((p) => p.status === "seated");
-}
-
-function tableAwayPlayers() {
-    return engine.players.filter((p) => p.status === "away");
-}
-
-/** Все, кто держит за собой место (включая away — они заняли слот). */
-function tableSeatedPlayers() {
-    return engine.players.filter((p) =>
-        p.status === "active"  ||
-        p.status === "seated"  ||
-        p.status === "waiting" ||
-        p.status === "away"
-    );
 }
 
 /** Игроки, готовые войти в СЛЕДУЮЩУЮ раздачу (не away, не removed/spectator). */
@@ -13664,28 +12372,6 @@ function engineGetSeatEl(slotName) {
     return document.querySelector('#gameRoot .game-arena [data-seat-slot="' + slotName + '"]');
 }
 
-/* ---------- PUBLIC QUERY HELPERS (архитектурные геттеры) ----------
-   seatedPlayers — все, чьё место закреплено за столом (active/seated/waiting/away);
-                   away удерживает место 7 минут, поэтому включён.
-   activePlayers — строго участники текущей раздачи (status === "active").
-   waitingPlayers — сидящие, но ожидающие следующую раздачу (joined mid-game).
-   awayPlayers    — временно отошедшие (таймер удержания активен).
-   Эти функции удобны для будущей серверной синхронизации состояний стола. */
-function engineGetSeatedPlayers() {
-    return engine.players.filter(
-        (p) => p.status !== "spectator" && p.status !== "removed"
-    );
-}
-function engineGetActivePlayers() {
-    return engine.players.filter((p) => p.status === "active");
-}
-function engineGetWaitingPlayers() {
-    return engine.players.filter((p) => p.status === "waiting");
-}
-function engineGetAwayPlayers() {
-    return engine.players.filter((p) => p.status === "away");
-}
-
 function engineBuildPlayers(playersCount, options) {
     options = options || {};
     const list = [];
@@ -13846,13 +12532,6 @@ function engineGetHandEl(playerIdx) {
     if (!p) return null;
     const seatEl = engineGetSeatEl(p.seatSlot);
     return seatEl ? seatEl.querySelector("[data-seat-hand]") : null;
-}
-
-function engineGetBankGhostEl(playerIdx) {
-    const p = engine.players[playerIdx];
-    if (!p) return null;
-    const seatEl = engineGetSeatEl(p.seatSlot);
-    return seatEl ? seatEl.querySelector("[data-seat-bank]") : null;
 }
 
 function engineRenderHands() {
@@ -14804,7 +13483,6 @@ function enginePlayCard(playerIdx, card) {
     }
 }
 
-let _playCommitGuard = new WeakSet();
 function enginePlayCardCommit(playerIdx, card, idxInHand) {
     const p = engine.players[playerIdx];
     if (!p.hand.includes(card)) return; // уже применено (страховка сработала раньше)
